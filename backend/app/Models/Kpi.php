@@ -8,13 +8,13 @@ class Kpi extends Model
 {
     use HasUuids;
 
-    protected \ = [];
+    protected $guarded = [];
     
-    protected \ = [
+    protected $casts = [
         'target_date' => 'datetime',
     ];
 
-    public function department() { return \->belongsTo(Department::class); }
-    public function user() { return \->belongsTo(User::class); }
-    public function boards() { return \->hasMany(Board::class); }
+    public function department() { return $this->belongsTo(Department::class); }
+    public function user() { return $this->belongsTo(User::class); }
+    public function boards() { return $this->hasMany(Board::class); }
 }

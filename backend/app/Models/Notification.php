@@ -8,11 +8,11 @@ class Notification extends Model
 {
     use HasUuids;
 
-    protected \ = [];
+    protected $guarded = [];
 
-    protected \ = [
+    protected $casts = [
         'read' => 'boolean',
     ];
 
-    public function user() { return \->belongsTo(User::class); }
+    public function user() { return $this->belongsTo(User::class); }
 }

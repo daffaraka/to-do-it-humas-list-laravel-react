@@ -8,7 +8,7 @@ class Role extends Model
 {
     use HasUuids;
 
-    protected \ = [];
+    protected $guarded = [];
 
-    public function users() { return \->hasMany(User::class); }
+    public function users() { return $this->hasMany(User::class); }
 }

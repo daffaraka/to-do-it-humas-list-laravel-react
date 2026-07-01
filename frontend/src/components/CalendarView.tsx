@@ -12,7 +12,6 @@ import {
   isSameMonth,
   isSameDay,
   addDays,
-  parseISO,
   getDay,
 } from "date-fns";
 import { id } from "date-fns/locale";
@@ -22,14 +21,70 @@ import { CardModal } from "./CardModal";
 import type { Card } from "../types";
 
 export function CalendarView() {
-  const { cards } = useKanban();
+  const { cards, activeDepartment, departments } = useKanban();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
-  // Filter cards by active department and those that have a requestDate
+  // Fallback to 'all' if the activeDepartment UUID from localStorage is stale
+  const effectiveActiveDepartment = activeDepartment === 'all' || departments.some(d => d.id === activeDepartment) 
+    ? activeDepartment 
+    : 'all';
+
+  // Helper to parse dates safely (supporting space separated dates from SQLite/Laravel)
+  const parseDateSafe = (dateStr?: string | null) => {
+    if (!dateStr) return new Date(NaN);
+    const normalized = dateStr.includes(' ') && !dateStr.includes('T')
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    return new Date(normalized);
+  };
+
+  // Helper to extract first 2 letters of PIC name
+  const getPicInitials = (pic: any) => {
+    let name = "";
+    if (typeof pic === "object" && pic !== null) {
+      name = pic.name || "";
+    } else if (typeof pic === "string") {
+      name = pic;
+    }
+    
+    if (!name) return "??";
+    
+    name = name.trim();
+    const words = name.split(/\s+/);
+    if (words.length >= 2) {
+      return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  // Helper to get color classes based on department name
+  const getDeptColor = (deptName?: string) => {
+    const name = deptName?.toLowerCase() || '';
+    if (name === 'it') {
+      return 'bg-blue-500 border-blue-600 text-white dark:bg-blue-600 dark:border-blue-500 hover:bg-blue-600 dark:hover:bg-blue-500';
+    }
+    if (name === 'humas') {
+      return 'bg-purple-500 border-purple-600 text-white dark:bg-purple-600 dark:border-purple-500 hover:bg-purple-600 dark:hover:bg-purple-500';
+    }
+    if (name === 'jaringan') {
+      return 'bg-emerald-500 border-emerald-600 text-white dark:bg-emerald-600 dark:border-emerald-500 hover:bg-emerald-600 dark:hover:bg-emerald-500';
+    }
+    return 'bg-gray-500 border-gray-600 text-white dark:bg-gray-600 dark:border-gray-500 hover:bg-gray-600 dark:hover:bg-gray-500';
+  };
+
+  // Filter cards by active department and date availability
   const departmentCards = useMemo(() => {
-    return cards.filter((card) => card.requestDate);
-  }, [cards]);
+    return cards.filter((card) => {
+      const hasDate = card.requestDate || card.dueDate || card.createdAt;
+      if (!hasDate) return false;
+
+      if (effectiveActiveDepartment !== 'all' && card.departmentId !== effectiveActiveDepartment) {
+        return false;
+      }
+      return true;
+    });
+  }, [cards, effectiveActiveDepartment]);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -70,8 +125,9 @@ export function CalendarView() {
 
       // Find cards for this specific day
       const dayCards = departmentCards.filter((c) => {
-        if (!c.requestDate) return false;
-        return isSameDay(parseISO(c.requestDate), cloneDay);
+        const dateStr = c.requestDate || c.dueDate || c.createdAt;
+        if (!dateStr) return false;
+        return isSameDay(parseDateSafe(dateStr), cloneDay);
       });
 
       days.push(
@@ -100,38 +156,30 @@ export function CalendarView() {
           </div>
 
           {/* Cards for the day */}
-          <div className="flex flex-col gap-1 mt-1">
+          <div className="flex flex-col gap-1.5 mt-1">
             {dayCards.map((card) => {
-              const isDone = card.columnId === "done";
-              const isInProgress = card.columnId === "progress";
-
               const picObj =
                 typeof card.pic === "object" && card.pic !== null
                   ? (card.pic as any)
                   : null;
-              const initials = picObj
-                ? picObj.name.charAt(0).toUpperCase()
-                : typeof card.pic === "string"
-                  ? card.pic.charAt(0).toUpperCase()
-                  : "";
-              const displayText = initials
-                ? `(${initials}) ${card.title}`
-                : card.title;
 
               return (
                 <div
                   key={card.id}
                   onClick={() => setSelectedCard(card)}
-                  className={`text-xs px-2 py-1 rounded whitespace-normal break-words cursor-pointer transition-transform hover:scale-[1.02] shadow-sm ${
-                    isDone
-                      ? "bg-emerald-500 text-white"
-                      : isInProgress
-                        ? "bg-amber-500 text-white"
-                        : "bg-indigo-500 text-white"
-                  }`}
-                  title={card.title}
+                  className={`
+                    text-xs p-1.5 rounded-md mb-1 cursor-pointer 
+                    border transition-all duration-200 
+                    hover:shadow-sm hover:scale-[1.02] flex flex-row items-start gap-1.5 h-auto min-h-[30px]
+                    ${getDeptColor(card.department?.name)}
+                  `}
                 >
-                  {displayText}
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 mt-0.5 ${card.pic ? 'bg-black/20 dark:bg-black/40' : 'bg-black/10 dark:bg-black/20'}`}>
+                    {getPicInitials(card.pic)}
+                  </div>
+                  <div className="font-medium flex-1 break-words whitespace-normal leading-tight">
+                    {card.title}
+                  </div>
                 </div>
               );
             })}

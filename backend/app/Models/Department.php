@@ -8,10 +8,10 @@ class Department extends Model
 {
     use HasUuids;
 
-    protected \ = [];
+    protected $guarded = [];
 
-    public function users() { return \->hasMany(User::class); }
-    public function boards() { return \->hasMany(Board::class); }
-    public function tasks() { return \->hasMany(Task::class); }
-    public function kpis() { return \->hasMany(Kpi::class); }
+    public function users() { return $this->hasMany(User::class); }
+    public function boards() { return $this->hasMany(Board::class); }
+    public function tasks() { return $this->hasMany(Task::class); }
+    public function kpis() { return $this->hasMany(Kpi::class); }
 }

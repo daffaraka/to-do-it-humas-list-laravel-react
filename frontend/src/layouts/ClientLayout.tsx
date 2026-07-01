@@ -12,8 +12,10 @@ export default function ClientLayout() {
 
   useEffect(() => {
     setMounted(true);
-    fetchDepartments();
-  }, [fetchDepartments]);
+    if (token) {
+      fetchDepartments();
+    }
+  }, [fetchDepartments, token]);
 
   useEffect(() => {
     if (isDarkMode) {

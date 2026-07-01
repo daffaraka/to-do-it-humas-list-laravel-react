@@ -8,11 +8,11 @@ class Checklist extends Model
 {
     use HasUuids;
 
-    protected \ = [];
+    protected $guarded = [];
 
-    protected \ = [
+    protected $casts = [
         'completed' => 'boolean',
     ];
 
-    public function task() { return \->belongsTo(Task::class); }
+    public function task() { return $this->belongsTo(Task::class); }
 }

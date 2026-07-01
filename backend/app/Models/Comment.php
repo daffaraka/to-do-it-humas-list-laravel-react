@@ -8,8 +8,8 @@ class Comment extends Model
 {
     use HasUuids;
 
-    protected \ = [];
+    protected $guarded = [];
 
-    public function task() { return \->belongsTo(Task::class); }
-    public function user() { return \->belongsTo(User::class); }
+    public function task() { return $this->belongsTo(Task::class); }
+    public function user() { return $this->belongsTo(User::class); }
 }

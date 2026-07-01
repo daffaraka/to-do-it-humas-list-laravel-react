@@ -60,7 +60,14 @@ export const useKanban = create<KanbanState>()(
       fetchDepartments: async () => {
         try {
           const response = await api.get('/departments');
-          set({ departments: response.data });
+          const departments = response.data;
+          
+          const currentActive = get().activeDepartment;
+          if (currentActive !== 'all' && !departments.some((d: any) => d.id === currentActive)) {
+            set({ departments, activeDepartment: 'all' });
+          } else {
+            set({ departments });
+          }
         } catch (err) {
           console.error('Failed to fetch departments', err);
         }

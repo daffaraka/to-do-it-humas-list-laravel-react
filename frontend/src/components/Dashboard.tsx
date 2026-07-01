@@ -7,6 +7,7 @@ import { useKanban } from '../store/kanbanStore';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { useKpiStore } from '../store/kpiStore';
+import { DashboardSkeleton } from './Skeleton';
 
 export function Dashboard() {
   const navigate = useNavigate();
@@ -38,11 +39,7 @@ export function Dashboard() {
   };
 
   if (isLoading && boards.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-textSecondary">Memuat papan kerja...</div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (

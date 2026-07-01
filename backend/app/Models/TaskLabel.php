@@ -8,7 +8,7 @@ class TaskLabel extends Model
 {
     use HasUuids;
 
-    protected \ = [];
+    protected $guarded = [];
 
-    public function task() { return \->belongsTo(Task::class); }
+    public function task() { return $this->belongsTo(Task::class); }
 }

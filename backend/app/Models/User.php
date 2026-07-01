@@ -10,9 +10,9 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasUuids, Notifiable;
 
-    protected \ = [];
+    protected $guarded = [];
 
-    protected \ = [
+    protected $hidden = [
         'password',
         'remember_token',
     ];
@@ -25,11 +25,11 @@ class User extends Authenticatable
         ];
     }
 
-    public function department() { return \->belongsTo(Department::class); }
-    public function role() { return \->belongsTo(Role::class); }
-    public function tasks() { return \->hasMany(Task::class, 'pic_id'); }
-    public function boards() { return \->hasMany(Board::class); }
-    public function kpis() { return \->hasMany(Kpi::class); }
-    public function comments() { return \->hasMany(Comment::class); }
-    public function notifications() { return \->hasMany(Notification::class); }
+    public function department() { return $this->belongsTo(Department::class); }
+    public function role() { return $this->belongsTo(Role::class); }
+    public function tasks() { return $this->hasMany(Task::class, 'pic_id'); }
+    public function boards() { return $this->hasMany(Board::class); }
+    public function kpis() { return $this->hasMany(Kpi::class); }
+    public function comments() { return $this->hasMany(Comment::class); }
+    public function notifications() { return $this->hasMany(Notification::class); }
 }

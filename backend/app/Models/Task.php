@@ -8,17 +8,17 @@ class Task extends Model
 {
     use HasUuids;
 
-    protected \ = [];
+    protected $guarded = [];
 
-    protected \ = [
+    protected $casts = [
         'request_date' => 'datetime',
         'due_date' => 'datetime',
     ];
 
-    public function pic() { return \->belongsTo(User::class, 'pic_id'); }
-    public function board() { return \->belongsTo(Board::class); }
-    public function department() { return \->belongsTo(Department::class); }
-    public function checklists() { return \->hasMany(Checklist::class); }
-    public function labels() { return \->hasMany(TaskLabel::class); }
-    public function comments() { return \->hasMany(Comment::class); }
+    public function pic() { return $this->belongsTo(User::class, 'pic_id'); }
+    public function board() { return $this->belongsTo(Board::class); }
+    public function department() { return $this->belongsTo(Department::class); }
+    public function checklists() { return $this->hasMany(Checklist::class); }
+    public function labels() { return $this->hasMany(TaskLabel::class); }
+    public function comments() { return $this->hasMany(Comment::class); }
 }

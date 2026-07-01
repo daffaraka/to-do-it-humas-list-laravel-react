@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useKpiStore } from '../store/kpiStore';
 import { useKanban } from '../store/kanbanStore';
 import type { Kpi, Board } from '../types';
+import { KpiSkeleton } from '../components/Skeleton';
 import { Plus, Edit, Trash2, Calendar, Target, LayoutGrid, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
@@ -19,7 +20,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
   const { kpis, fetchKpis, createKpi, updateKpi, deleteKpi, isLoading } = useKpiStore();
   const { user } = useAuthStore();
   const isAdmin = user?.role?.name?.toLowerCase() === 'admin';
-  const { fetchBoards } = useKanban(); // ensure boards are refreshed in backend too if needed, but fetchKpis brings its own boards
+  const { boards, fetchBoards } = useKanban();
   const navigate = useNavigate();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -108,8 +109,9 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
   };
 
   const displayKpis = viewType === 'me' ? kpis.filter(k => k.userId === user?.id) : kpis;
+  const independentBoards = boards.filter(board => !board.kpiId);
 
-  if (isLoading && kpis.length === 0) return <div className="p-6 text-center text-textSecondary">Memuat {viewType === 'me' ? 'Pekerjaan Saya' : 'Dashboard KPI'}...</div>;
+  if (isLoading && kpis.length === 0) return <KpiSkeleton />;
 
   return (
     <div className="flex-1 overflow-auto p-6 bg-bgPrimary">
@@ -225,7 +227,62 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
           );
         })}
 
-        {displayKpis.length === 0 && !isLoading && (
+        {/* Section for Independent Boards (Boards without KPI) */}
+        {independentBoards.length > 0 && (
+          <div className="mb-10 bg-bgPrimary rounded-2xl p-6 shadow-sm border border-black/[0.03] dark:border-white/[0.03] hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white shadow-md shadow-gray-500/20">
+                  <LayoutGrid size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-textPrimary">Board Tanpa KPI (Proyek Mandiri)</h2>
+                  <p className="text-xs text-textSecondary mt-0.5">Board yang tidak terkait dengan indikator kinerja (KPI) manapun</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              {independentBoards.map(board => {
+                const tasks = board.tasks || [];
+                const todoTasks = tasks.filter((t: any) => t.columnId === 'new').length;
+                const progressTasks = tasks.filter((t: any) => t.columnId === 'progress').length;
+                const doneTasks = tasks.filter((t: any) => t.columnId === 'done').length;
+
+                return (
+                  <div 
+                    key={board.id} 
+                    onClick={() => navigate(`/board/${board.id}`)}
+                    className="bg-bgSecondary rounded-xl p-4 border border-border/30 shadow-sm hover:shadow-[0_4px_12px_-4px_rgba(6,81,237,0.15)] transition-all cursor-pointer group flex flex-col min-h-[140px] transform hover:-translate-y-1"
+                  >
+                    <div className="mb-3 flex-1">
+                      <h5 className="font-semibold text-sm text-textPrimary group-hover:text-indigo-500 transition-all mb-1 line-clamp-2 leading-tight">{board.title}</h5>
+                      {board.description && <p className="text-[11px] text-textSecondary line-clamp-1 mt-1">{board.description}</p>}
+                      <p className="text-[10px] text-indigo-400 mt-2 font-medium">Oleh: {board.user?.name || 'Sistem'}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-1.5 text-center mt-auto">
+                      <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
+                        <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">TODO</div>
+                        <div className="font-bold text-textPrimary text-sm">{todoTasks}</div>
+                      </div>
+                      <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
+                        <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">PROG</div>
+                        <div className="font-bold text-amber-500 text-sm">{progressTasks}</div>
+                      </div>
+                      <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
+                        <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">DONE</div>
+                        <div className="font-bold text-emerald-500 text-sm">{doneTasks}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {displayKpis.length === 0 && independentBoards.length === 0 && !isLoading && (
           <div className="text-center py-20 bg-gradient-to-br from-bgSecondary to-bgPrimary rounded-3xl shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
             <div className="w-20 h-20 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <Target size={32} className="text-indigo-500" />

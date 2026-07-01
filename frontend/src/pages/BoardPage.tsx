@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { useKanban } from '@/store/kanbanStore';
+import { KanbanSkeleton } from '@/components/Skeleton';
 
 export default function BoardPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,11 +20,7 @@ export default function BoardPage() {
   }, [id, setActiveBoardId, fetchCards]);
 
   if (isLoading || activeBoardId !== id) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-textSecondary">Memuat tugas...</div>
-      </div>
-    );
+    return <KanbanSkeleton />;
   }
 
   return <KanbanBoard />;
