@@ -8,6 +8,7 @@ import { id } from 'date-fns/locale';
 import { X, Type, FileText, User, Calendar, Briefcase } from 'lucide-react';
 import type { ColumnId } from '../types';
 import { useKanban } from '../store/kanbanStore';
+import api from '../lib/api';
 
 interface CreateTaskModalProps {
   columnId: ColumnId;
@@ -42,7 +43,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
       if (dueDate) formData.append('dueDate', dueDate.toISOString());
       if (attachment) formData.append('attachment', attachment);
 
-      const { data } = await import('../lib/api').then(m => m.default).post('/tasks', formData, {
+      const { data } = await api.post('/tasks', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       useKanban.setState(state => ({ cards: [...state.cards, data] }));

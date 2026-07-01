@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import DatePicker from 'react-datepicker';
 import { id as dateFnsIdLocale } from 'date-fns/locale';
 import {
-  X, Tag, Flag, CalendarDays, CheckSquare, Plus, Trash2
+  X, Tag, Flag, CalendarDays, CheckSquare, Plus, Trash2, FileText
 } from 'lucide-react';
 import { COLUMNS, AVAILABLE_LABELS } from '../types';
 import type { Card, ColumnId } from '../types';

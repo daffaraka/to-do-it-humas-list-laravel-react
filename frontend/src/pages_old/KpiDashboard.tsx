@@ -83,9 +83,9 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
 
   const handleCreateBoardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!boardTitle.trim() || !targetKpiIdForBoard) return;
+    if (!boardTitle.trim()) return;
     
-    await createBoard(boardTitle, boardDesc, targetKpiIdForBoard);
+    await createBoard(boardTitle, boardDesc, targetKpiIdForBoard || undefined);
     setIsBoardModalOpen(false);
     setBoardTitle('');
     setBoardDesc('');
@@ -115,22 +115,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
 
   return (
     <div className="flex-1 overflow-auto p-6 bg-bgPrimary">
-      <div className="flex justify-between items-start mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-textPrimary tracking-tight">{viewType === 'me' ? 'Pekerjaan Saya' : 'Dashboard KPI'}</h1>
-          <p className="text-textSecondary mt-2">
-            {viewType === 'me' ? 'Daftar KPI dan Proyek yang ditugaskan kepada Anda' : 'Pantau pencapaian target KPI dan Proyek terkait seluruh pengguna'}
-          </p>
-        </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all shadow-sm shadow-indigo-500/20 flex items-center gap-2"
-        >
-          <Plus size={18} />
-          Buat KPI Baru
-        </button>
-      </div>
-      
+
       <div className="space-y-8">
         {displayKpis.map(kpi => {
           const progress = calculateProgress(kpi.boards || []);
@@ -228,21 +213,30 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
         })}
 
         {/* Section for Independent Boards (Boards without KPI) */}
-        {independentBoards.length > 0 && (
-          <div className="mb-10 bg-bgPrimary rounded-2xl p-6 shadow-sm border border-black/[0.03] dark:border-white/[0.03] hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white shadow-md shadow-gray-500/20">
-                  <LayoutGrid size={20} />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-textPrimary">Board Tanpa KPI (Proyek Mandiri)</h2>
-                  <p className="text-xs text-textSecondary mt-0.5">Board yang tidak terkait dengan indikator kinerja (KPI) manapun</p>
-                </div>
+        <div className="mb-10 bg-bgPrimary rounded-2xl p-6 shadow-sm border border-black/[0.03] dark:border-white/[0.03] hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white shadow-md shadow-gray-500/20">
+                <LayoutGrid size={20} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-textPrimary">Board Tanpa KPI (Proyek Mandiri)</h2>
+                <p className="text-xs text-textSecondary mt-0.5">Board yang tidak terkait dengan indikator kinerja (KPI) manapun</p>
               </div>
             </div>
+            <button 
+              onClick={() => {
+                setTargetKpiIdForBoard('');
+                setIsBoardModalOpen(true);
+              }}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm shadow-indigo-500/20 flex items-center gap-2"
+            >
+              <Plus size={16} />
+              Buat Board Baru
+            </button>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
               {independentBoards.map(board => {
                 const tasks = board.tasks || [];
                 const todoTasks = tasks.filter((t: any) => t.columnId === 'new').length;
@@ -280,7 +274,6 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
               })}
             </div>
           </div>
-        )}
 
         {displayKpis.length === 0 && independentBoards.length === 0 && !isLoading && (
           <div className="text-center py-20 bg-gradient-to-br from-bgSecondary to-bgPrimary rounded-3xl shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
@@ -388,6 +381,13 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
             </div>
             
             <form onSubmit={handleCreateBoardSubmit} className="p-7 space-y-5">
+              {!targetKpiIdForBoard && (
+                <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 text-sm text-indigo-700 dark:text-indigo-300 flex items-center gap-2">
+                  <Target size={16} />
+                  <span>Ini adalah Board mandiri tanpa terhubung ke Main Project (KPI) mana pun.</span>
+                </div>
+              )}
+              
               <div>
                 <label className="block text-sm font-semibold text-textSecondary mb-2">Judul Board <span className="text-red-400">*</span></label>
                 <input

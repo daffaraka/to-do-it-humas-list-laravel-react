@@ -45,8 +45,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
 
       if (!initialData && departments.length > 0) setDepartmentId(departments[0].id);
     } else if (type === 'kpis') {
-      if (!initialData && user?.department?.id) {
-        setDepartmentId(user.department.id);
+      if (!initialData && (user as any)?.department?.id) {
+        setDepartmentId((user as any).department.id);
       }
     }
   }, [type, departments, initialData, user]);
