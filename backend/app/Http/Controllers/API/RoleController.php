@@ -26,7 +26,14 @@ class RoleController extends Controller
     }
 
     public function destroy($id) {
-        Role::destroy($id);
-        return response()->json(['message' => 'Deleted']);
+        try {
+            Role::destroy($id);
+            return response()->json(['message' => 'Deleted']);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return response()->json(['message' => 'Gagal menghapus: Jabatan ini sedang digunakan oleh Pengguna.'], 400);
+            }
+            return response()->json(['message' => 'Gagal menghapus data jabatan.'], 500);
+        }
     }
 }

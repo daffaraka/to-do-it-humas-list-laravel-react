@@ -36,8 +36,8 @@ export function MasterData() {
     try {
       await api.delete(`/${activeTab}/${id}`);
       fetchData();
-    } catch (err) {
-      alert('Gagal menghapus data');
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || 'Gagal menghapus data');
     }
   };
 
@@ -75,7 +75,7 @@ export function MasterData() {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-textPrimary">Master Data</h1>
-              <p className="text-textSecondary text-sm">Kelola pengguna, departemen, jabatan, dan KPI</p>
+              <p className="text-textSecondary text-sm">Kelola pengguna, departemen, jabatan, dan Main Project</p>
             </div>
           </div>
         </div>
@@ -103,7 +103,7 @@ export function MasterData() {
             onClick={() => setActiveTab('kpis')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === 'kpis' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-textSecondary hover:bg-bgGlass'}`}
           >
-            <Briefcase size={16} /> KPIs
+            <Briefcase size={16} /> Main Project
           </button>
         </div>
 
@@ -116,7 +116,7 @@ export function MasterData() {
             <div className="p-4 border-b border-borderBase flex justify-end bg-bgGlass">
               <button onClick={handleAdd} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
                 <UserPlus size={16} />
-                Tambah {activeTab === 'kpis' ? 'KPI' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                Tambah {activeTab === 'kpis' ? 'Main Project' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
               </button>
             </div>
             <div className="overflow-x-auto">
@@ -129,7 +129,6 @@ export function MasterData() {
                     {activeTab === 'users' && <th className="px-6 py-4 font-medium">Role</th>}
                     {activeTab === 'kpis' && <th className="px-6 py-4 font-medium">Deskripsi</th>}
                     {activeTab === 'kpis' && <th className="px-6 py-4 font-medium">Target Date</th>}
-                    <th className="px-6 py-4 font-medium">ID (Reference)</th>
                     <th className="px-6 py-4 font-medium text-right">Aksi</th>
                   </tr>
                 </thead>
@@ -142,7 +141,6 @@ export function MasterData() {
                       {activeTab === 'users' && <td className="px-6 py-4">{item.role?.name}</td>}
                       {activeTab === 'kpis' && <td className="px-6 py-4 max-w-[300px] truncate">{item.description}</td>}
                       {activeTab === 'kpis' && <td className="px-6 py-4">{item.targetDate ? new Date(item.targetDate).toLocaleDateString('id-ID') : '-'}</td>}
-                      <td className="px-6 py-4 font-mono text-xs opacity-50">{item.id}</td>
                       <td className="px-6 py-4 text-right space-x-2">
                         <button onClick={() => handleEdit(item)} className="px-3 py-1.5 bg-white dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-medium border border-indigo-200 dark:border-indigo-500/30 rounded-lg shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">Edit</button>
                         <button onClick={() => handleDelete(item.id)} className="px-3 py-1.5 bg-white dark:bg-red-500/10 text-red-600 dark:text-red-400 text-xs font-medium border border-red-200 dark:border-red-500/30 rounded-lg shadow-sm hover:bg-red-50 dark:hover:bg-red-500/20 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all">Hapus</button>

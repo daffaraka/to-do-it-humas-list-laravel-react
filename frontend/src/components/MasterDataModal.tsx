@@ -8,6 +8,7 @@ import { id as dateFnsIdLocale } from 'date-fns/locale';
 import { X, User, Briefcase, Lock, Mail, Tag } from 'lucide-react';
 import api from '../lib/api';
 import { useKanban } from '../store/kanbanStore';
+import { useAuthStore } from '../store/authStore';
 
 interface MasterDataModalProps {
   type: 'users' | 'departments' | 'roles' | 'kpis';
@@ -32,6 +33,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
   const [description, setDescription] = useState('');
   const [targetDate, setTargetDate] = useState<Date | null>(null);
 
+  const user = useAuthStore(state => state.user);
+
   useEffect(() => {
     if (type === 'users') {
       // Fetch roles for user creation
@@ -41,8 +44,12 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
       }).catch(console.error);
 
       if (!initialData && departments.length > 0) setDepartmentId(departments[0].id);
+    } else if (type === 'kpis') {
+      if (!initialData && user?.department?.id) {
+        setDepartmentId(user.department.id);
+      }
     }
-  }, [type, departments]);
+  }, [type, departments, initialData, user]);
 
   useEffect(() => {
     if (initialData) {
@@ -54,6 +61,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
       } else if (type === 'kpis') {
         setTitle(initialData.title || '');
         setDescription(initialData.description || '');
+        setDepartmentId(initialData.departmentId || (initialData.department?.id) || '');
         if (initialData.targetDate) setTargetDate(new Date(initialData.targetDate));
       } else {
         setName(initialData.name || '');
@@ -65,7 +73,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
     e.preventDefault();
     if (type !== 'kpis' && !name.trim()) return;
     if (type === 'kpis' && !title.trim()) return;
-    
+
     setLoading(true);
     try {
       if (initialData) {
@@ -75,7 +83,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           if (password) payload.password = password;
           await api.patch(`/users/${initialData.id}`, payload);
         } else if (type === 'kpis') {
-          await api.put(`/kpis/${initialData.id}`, { title, description, targetDate: targetDate ? targetDate.toISOString() : null });
+          await api.put(`/kpis/${initialData.id}`, { title, description, targetDate: targetDate ? targetDate.toISOString() : null, departmentId });
         } else {
           await api.patch(`/${type}/${initialData.id}`, { name });
         }
@@ -85,7 +93,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           if (!email || !password || !departmentId || !roleId) return;
           await api.post('/users', { name, email, password, departmentId, roleId });
         } else if (type === 'kpis') {
-          await api.post('/kpis', { title, description, targetDate: targetDate ? targetDate.toISOString() : null });
+          await api.post('/kpis', { title, description, targetDate: targetDate ? targetDate.toISOString() : null, departmentId });
         } else {
           await api.post(`/${type}`, { name });
         }
@@ -102,13 +110,13 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
     const action = initialData ? 'Edit' : 'Tambah';
     if (type === 'users') return `${action} Pengguna`;
     if (type === 'departments') return `${action} Departemen`;
-    if (type === 'kpis') return `${action} KPI`;
+    if (type === 'kpis') return `${action} Main Project`;
     return `${action} Jabatan (Role)`;
   };
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
+      <div
         className="bg-bgPrimary w-full max-w-md max-h-[95vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-black/[0.05] dark:border-white/[0.05] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
@@ -144,13 +152,13 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
             </div>
           )}
 
-          {/* KPI Specific Fields */}
+          {/* Main Project Specific Fields */}
           {type === 'kpis' && (
             <>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
                   <Tag size={14} className="text-indigo-400" />
-                  Judul KPI <span className="text-red-400">*</span>
+                  Judul Main Project <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -162,6 +170,31 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
                 />
               </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
+                  <Briefcase size={14} className="text-indigo-400" />
+                  Departemen
+                </label>
+                <div className="relative">
+                  <select
+                    required
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                    className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 pr-10 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all appearance-none"
+                  >
+                    <option value="" disabled>Pilih Departemen</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.id} className="bg-bgSecondary text-textPrimary">{d.name}</option>
+                    ))}
+                  </select>
+                  <div className="absolute top-1/2 -translate-y-1/2 right-3 pointer-events-none">
+                    <svg className="w-4 h-4 text-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+                <p className='text-red-400 text-xs'>* Jika tidak dipilih maka akan otomatis menyimpan sesuai departmen user yang sedang login</p>
+              </div>
+
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
                   Deskripsi Singkat
@@ -169,7 +202,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Jelaskan tujuan dan ruang lingkup KPI ini..."
+                  placeholder="Jelaskan tujuan dan ruang lingkup Main Project ini..."
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary min-h-[100px]"
                 />
               </div>
@@ -183,9 +216,13 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                   dateFormat="dd/MM/yyyy"
                   locale={dateFnsIdLocale}
                   placeholderText="dd/mm/yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
                 />
               </div>
+
             </>
           )}
 
@@ -233,13 +270,13 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                       required
                       value={departmentId}
                       onChange={(e) => setDepartmentId(e.target.value)}
-                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all appearance-none"
+                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 pr-10 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all appearance-none"
                     >
                       {departments.map(d => (
                         <option key={d.id} value={d.id} className="bg-bgSecondary text-textPrimary">{d.name}</option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <div className="absolute top-1/2 -translate-y-1/2 right-3 pointer-events-none">
                       <svg className="w-4 h-4 text-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                   </div>
@@ -255,13 +292,13 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                       required
                       value={roleId}
                       onChange={(e) => setRoleId(e.target.value)}
-                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all appearance-none"
+                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 pr-10 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all appearance-none"
                     >
                       {roles.map(r => (
                         <option key={r.id} value={r.id} className="bg-bgSecondary text-textPrimary">{r.name}</option>
                       ))}
                     </select>
-                    <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
+                    <div className="absolute top-1/2 -translate-y-1/2 right-3 pointer-events-none">
                       <svg className="w-4 h-4 text-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                   </div>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Kpi;
+use Carbon\Carbon;
 
 class KpiController extends Controller
 {
@@ -12,11 +13,14 @@ class KpiController extends Controller
     }
 
     public function store(Request $request) {
+        
         $user = $request->user();
+
+        $date = Carbon::parse($request->targetDate)->toFormattedDateString();
         $kpi = Kpi::create([
             'title' => $request->title,
             'description' => $request->description,
-            'target_date' => $request->targetDate,
+            'target_date' => $date,
             'department_id' => $request->departmentId ?? $user->department_id,
             'user_id' => $user->id,
         ]);
@@ -41,7 +45,14 @@ class KpiController extends Controller
     }
 
     public function destroy($id) {
-        Kpi::destroy($id);
-        return response()->json(['message' => 'Deleted']);
+        try {
+            Kpi::destroy($id);
+            return response()->json(['message' => 'Deleted']);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return response()->json(['message' => 'Gagal menghapus: Main Project ini masih terkait dengan data lain.'], 400);
+            }
+            return response()->json(['message' => 'Gagal menghapus data Main Project.'], 500);
+        }
     }
 }

@@ -82,9 +82,9 @@ export function Header() {
           <Link
             to="/view-jobs"
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/view-jobs" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-            title="View Jobs"
+            title="Semua Pekerjaan"
           >
-            View Jobs
+            Semua Pekerjaan
           </Link>
           <Link
             to="/calendar"

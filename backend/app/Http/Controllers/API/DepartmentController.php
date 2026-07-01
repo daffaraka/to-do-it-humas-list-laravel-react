@@ -26,7 +26,14 @@ class DepartmentController extends Controller
     }
 
     public function destroy($id) {
-        Department::destroy($id);
-        return response()->json(['message' => 'Deleted']);
+        try {
+            Department::destroy($id);
+            return response()->json(['message' => 'Deleted']);
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() === '23000') {
+                return response()->json(['message' => 'Gagal menghapus: Departemen ini sedang digunakan oleh data lain (User/Board/Project/Task).'], 400);
+            }
+            return response()->json(['message' => 'Gagal menghapus data departemen.'], 500);
+        }
     }
 }

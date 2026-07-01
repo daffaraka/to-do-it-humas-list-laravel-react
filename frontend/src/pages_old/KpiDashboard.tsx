@@ -109,7 +109,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
   };
 
   const displayKpis = viewType === 'me' ? kpis.filter(k => k.userId === user?.id) : kpis;
-  const independentBoards = boards.filter(board => !board.kpiId);
+  const independentBoards = boards.filter(board => !board.kpiId && !board.kpi_id);
 
   if (isLoading && kpis.length === 0) return <KpiSkeleton />;
 
@@ -143,7 +143,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
                     <Target size={20} />
                   </div>
-                  <h2 className="text-xl font-bold text-textPrimary">{kpi.title}</h2>
+                  <h2 className="text-xl font-bold text-textPrimary">Main Project -  {kpi.title}</h2>
                 </div>
                 {canViewDetails && (
                   <div className="flex gap-2">
@@ -342,6 +342,9 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({ viewType = 'me' }) =
                   dateFormat="dd/MM/yyyy"
                   locale={dateFnsIdLocale}
                   placeholderText="dd/mm/yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
                 />
               </div>

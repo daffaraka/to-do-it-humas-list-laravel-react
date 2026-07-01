@@ -16,7 +16,7 @@ class BoardController extends Controller
         $board = Board::create([
             'title' => $request->title,
             'description' => $request->description,
-            'kpi_id' => $request->kpiId,
+            'kpi_id' => $request->kpi_id ?? $request->kpiId,
             'user_id' => $user->id,
             'department_id' => $user->department_id,
         ]);
