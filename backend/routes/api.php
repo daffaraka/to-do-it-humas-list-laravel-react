@@ -12,7 +12,7 @@ use App\Http\Controllers\API\TaskLabelController;
 use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\KpiController;
-
+use App\Http\Controllers\API\UserController;
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
@@ -31,9 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('kpis', KpiController::class);
 
     // Custom Routes for Frontend compatibility
-    Route::get('/users', function () {
-        return response()->json(\App\Models\User::with(['role', 'department'])->get());
-    });
+    Route::apiResource('users', UserController::class);
 
     Route::get('/tasks/{task}/comments', function ($taskId) {
         return response()->json(
