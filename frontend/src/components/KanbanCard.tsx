@@ -2,7 +2,7 @@
 
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CheckSquare, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Edit2, Trash2, FileText } from 'lucide-react';
 import type { Card } from '../types';
 import { useState } from 'react';
 import { CardModal } from './CardModal';
@@ -108,7 +108,7 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
       </h3>
 
       <div className="flex flex-col gap-2 mt-auto pt-2 border-t border-borderBase">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 flex-wrap">
             {checklist.length > 0 && (
               <div className="text-[11px] font-semibold text-textSecondary bg-bgSecondary border border-borderBase px-1.5 py-0.5 rounded">
@@ -133,11 +133,34 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
                 })}
               </div>
             )}
+            {card.attachment && (
+              <div className="flex items-center text-textSecondary" title="Ada Lampiran">
+                <FileText size={12} className="text-blue-500" />
+              </div>
+            )}
           </div>
           
           <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-sm shrink-0 ${PRIORITY_COLORS[card.priority]}`}>
             {card.priority}
           </span>
+        </div>
+
+        <div className="flex gap-2">
+          {card.columnId === 'new' && card.new_date && (
+            <div className="text-[10px] text-textSecondary bg-bgSecondary border border-borderBase px-1.5 py-0.5 rounded">
+              Masuk: {new Date(card.new_date).toLocaleDateString('id-ID')}
+            </div>
+          )}
+          {card.columnId === 'progress' && card.proses_date && (
+            <div className="text-[10px] text-textSecondary bg-bgSecondary border border-borderBase px-1.5 py-0.5 rounded">
+              Mulai: {new Date(card.proses_date).toLocaleDateString('id-ID')}
+            </div>
+          )}
+          {card.columnId === 'done' && card.end_date && (
+            <div className="text-[10px] text-textSecondary bg-bgSecondary border border-borderBase px-1.5 py-0.5 rounded">
+              Selesai: {new Date(card.end_date).toLocaleDateString('id-ID')}
+            </div>
+          )}
         </div>
 
         {/* PIC Row */}

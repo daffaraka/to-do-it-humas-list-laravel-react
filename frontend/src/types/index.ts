@@ -36,6 +36,7 @@ export interface Board {
   departmentId: string;
   department?: Department;
   kpiId?: string | null;
+  kpi_id?: string | null;
   kpi?: Kpi;
   createdAt: string;
   updatedAt: string;
@@ -60,6 +61,10 @@ export interface Card {
   priority: 'low' | 'medium' | 'high';
   createdAt: string;
   updatedAt: string;
+  attachment?: string | null;
+  new_date?: string | null;
+  proses_date?: string | null;
+  end_date?: string | null;
 }
 
 export interface Column {

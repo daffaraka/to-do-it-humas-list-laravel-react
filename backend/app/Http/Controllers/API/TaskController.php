@@ -27,7 +27,13 @@ class TaskController extends Controller
             'priority' => 'nullable',
             'requestDate' => 'nullable',
             'dueDate' => 'nullable',
+            'attachment' => 'nullable|file|mimes:jpg,jpeg,png,doc,docx,xls,xlsx,ppt,pptx,pdf|max:10240',
         ]);
+
+        $attachmentPath = null;
+        if ($request->hasFile('attachment')) {
+            $attachmentPath = $request->file('attachment')->store('attachments', 'public');
+        }
 
         $task = Task::create([
             'title' => $data['title'],
@@ -39,6 +45,9 @@ class TaskController extends Controller
             'request_date' => $data['requestDate'] ?? null,
             'due_date' => $data['dueDate'] ?? null,
             'position' => Task::where('board_id', $data['boardId'])->max('position') + 1,
+            'attachment' => $attachmentPath,
+            'new_date' => now(),
+            'column_id' => 'new',
         ]);
 
         return response()->json($task, 201);
@@ -52,12 +61,26 @@ class TaskController extends Controller
         if(isset($data['title'])) $updateData['title'] = $data['title'];
         if(isset($data['description'])) $updateData['description'] = $data['description'];
         if(isset($data['boardId'])) $updateData['board_id'] = $data['boardId'];
-        if(isset($data['columnId'])) $updateData['column_id'] = $data['columnId'];
         if(isset($data['position'])) $updateData['position'] = $data['position'];
+        
+        if($request->hasFile('attachment')) {
+            $updateData['attachment'] = $request->file('attachment')->store('attachments', 'public');
+        }
+
+        if(isset($data['columnId']) && $data['columnId'] !== $task->column_id) {
+            $updateData['column_id'] = $data['columnId'];
+            if ($data['columnId'] === 'new') {
+                $updateData['new_date'] = now();
+            } elseif ($data['columnId'] === 'progress') {
+                $updateData['proses_date'] = now();
+            } elseif ($data['columnId'] === 'done') {
+                $updateData['end_date'] = now();
+            }
+        }
         
         $task->update($updateData);
 
-        return response()->json($task);
+        return response()->json($task->fresh());
     }
 
     public function destroy($id) {

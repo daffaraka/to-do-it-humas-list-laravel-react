@@ -17,7 +17,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->foreignUuid('department_id')->constrained('departments');
             $table->foreignUuid('user_id')->constrained('users');
-            $table->dateTime('target_date');
+            $table->date('target_date');
             $table->timestamps();
         });
 
@@ -38,8 +38,8 @@ return new class extends Migration
             $table->string('document_link')->nullable();
             $table->foreignUuid('pic_id')->nullable()->constrained('users');
             $table->foreignUuid('board_id')->constrained('boards')->cascadeOnDelete();
-            $table->dateTime('request_date')->nullable();
-            $table->dateTime('due_date')->nullable();
+            $table->date('request_date')->nullable();
+            $table->date('due_date')->nullable();
             $table->enum('priority', ['low', 'medium', 'high'])->default('low');
             $table->enum('column_id', ['new', 'progress', 'done'])->default('new');
             $table->foreignUuid('department_id')->constrained('departments');

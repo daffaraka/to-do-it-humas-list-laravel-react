@@ -207,6 +207,9 @@ export function CardModal({ card, onClose }: CardModalProps) {
                   dateFormat="dd/MM/yyyy"
                   locale={dateFnsIdLocale}
                   placeholderText="dd/mm/yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
                 />
               </div>
@@ -219,6 +222,9 @@ export function CardModal({ card, onClose }: CardModalProps) {
                   dateFormat="dd/MM/yyyy"
                   locale={dateFnsIdLocale}
                   placeholderText="dd/mm/yyyy"
+                  showMonthDropdown
+                  showYearDropdown
+                  dropdownMode="select"
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
                 />
               </div>
@@ -244,6 +250,30 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 </a>
               )}
             </div>
+
+            {card.attachment && (
+              <div>
+                <h4 className="text-sm font-medium text-textSecondary mb-2">Lampiran Berkas</h4>
+                <div className="flex items-center gap-3 bg-bgSecondary border border-borderBase p-3 rounded-xl">
+                  <div className="p-2 bg-blue-100 text-blue-600 rounded-lg dark:bg-blue-500/20 dark:text-blue-400">
+                    <FileText size={20} />
+                  </div>
+                  <div className="flex-1 overflow-hidden">
+                    <p className="text-sm font-medium text-textPrimary truncate" title={card.attachment}>
+                      {card.attachment.split('/').pop()}
+                    </p>
+                    <a 
+                      href={`${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8000'}/storage/${card.attachment}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-xs text-indigo-500 hover:text-indigo-400 hover:underline"
+                    >
+                      Buka Lampiran
+                    </a>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -453,6 +483,9 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 dateFormat="dd/MM/yyyy"
                 locale={dateFnsIdLocale}
                 placeholderText="dd/mm/yyyy"
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
               />
             </div>

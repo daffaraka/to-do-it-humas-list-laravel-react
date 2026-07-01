@@ -20,18 +20,37 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const [description, setDescription] = useState('');
   const [requestDate, setRequestDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [attachment, setAttachment] = useState<File | null>(null);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     
-    addCard(title.trim(), columnId, {
-      description,
-      requestDate: requestDate ? requestDate.toISOString() : null,
-      dueDate: dueDate ? dueDate.toISOString() : null
-    });
-    
-    onClose();
+    try {
+      const activeBoardId = useKanban.getState().activeBoardId;
+      const targetDepartmentId = useKanban.getState().activeDepartment === 'all' 
+        ? useKanban.getState().departments[0]?.id 
+        : useKanban.getState().activeDepartment;
+
+      const formData = new FormData();
+      formData.append('title', title.trim());
+      formData.append('columnId', columnId);
+      if (activeBoardId) formData.append('boardId', activeBoardId);
+      if (targetDepartmentId) formData.append('departmentId', targetDepartmentId);
+      if (description) formData.append('description', description);
+      if (requestDate) formData.append('requestDate', requestDate.toISOString());
+      if (dueDate) formData.append('dueDate', dueDate.toISOString());
+      if (attachment) formData.append('attachment', attachment);
+
+      const { data } = await import('../lib/api').then(m => m.default).post('/tasks', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      useKanban.setState(state => ({ cards: [...state.cards, data] }));
+      
+      onClose();
+    } catch (err) {
+      console.error('Failed to add card with attachment', err);
+    }
   };
 
   return createPortal(
@@ -97,6 +116,9 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
                 dateFormat="dd/MM/yyyy"
                 locale={id}
                 placeholderText="dd/mm/yyyy"
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
               />
             </div>
@@ -113,12 +135,27 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
                 dateFormat="dd/MM/yyyy"
                 locale={id}
                 placeholderText="dd/mm/yyyy"
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
               />
             </div>
           </div>
 
-
+          {/* Attachment */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
+              <FileText size={14} className="text-blue-400" />
+              Lampiran (Opsional)
+            </label>
+            <input
+              type="file"
+              onChange={(e) => setAttachment(e.target.files ? e.target.files[0] : null)}
+              className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+              accept=".jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf"
+            />
+          </div>
 
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-borderBase shrink-0">
             <button

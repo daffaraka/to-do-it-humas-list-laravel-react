@@ -53,7 +53,7 @@ export const useKanban = create<KanbanState>()(
       filterLabel: null,
       activeDepartment: 'all',
       viewMode: 'kanban',
-      isDarkMode: true,
+      isDarkMode: false,
       isLoading: false,
       error: null,
 
@@ -85,7 +85,7 @@ export const useKanban = create<KanbanState>()(
 
       createBoard: async (title, description, kpiId) => {
         try {
-          const response = await api.post('/boards', { title, description, kpiId });
+          const response = await api.post('/boards', { title, description, kpiId, kpi_id: kpiId });
           set((state) => ({ boards: [response.data, ...state.boards] }));
         } catch (err: any) {
           console.error('Failed to create board', err);
