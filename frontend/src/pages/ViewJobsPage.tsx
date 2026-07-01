@@ -122,9 +122,17 @@ export default function ViewJobsPage() {
                     <div>
                       <h2 className="text-lg font-bold text-textPrimary group-hover:text-indigo-600 transition-colors">{picName}</h2>
                       {(roleName || departmentName) && (
-                        <div className="flex flex-col text-[13px] text-textSecondary mt-0.5 mb-2 gap-0.5">
-                          {roleName && <span className="font-semibold">{roleName}</span>}
-                          {departmentName && <span>{departmentName}</span>}
+                        <div className="flex flex-wrap items-center gap-2 mt-1.5 mb-3">
+                          {departmentName && (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border border-purple-500/20">
+                              {departmentName}
+                            </span>
+                          )}
+                          {roleName && (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300 border border-indigo-500/20">
+                              {roleName}
+                            </span>
+                          )}
                         </div>
                       )}
                       <div className="flex flex-wrap items-center gap-2">
