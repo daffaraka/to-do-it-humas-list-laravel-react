@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -8,7 +9,12 @@ class Role extends Model
 {
     use HasUuids;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'id', 'name'
+    ];
 
-    public function users() { return $this->hasMany(User::class); }
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }

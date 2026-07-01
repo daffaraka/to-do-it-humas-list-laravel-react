@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -10,7 +11,9 @@ class User extends Authenticatable
 {
     use HasApiTokens, HasUuids, Notifiable;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'id', 'name', 'email', 'email_verified_at', 'password', 'department_id', 'role_id', 'remember_token'
+    ];
 
     protected $hidden = [
         'password',
@@ -25,11 +28,32 @@ class User extends Authenticatable
         ];
     }
 
-    public function department() { return $this->belongsTo(Department::class); }
-    public function role() { return $this->belongsTo(Role::class); }
-    public function tasks() { return $this->hasMany(Task::class, 'pic_id'); }
-    public function boards() { return $this->hasMany(Board::class); }
-    public function kpis() { return $this->hasMany(Kpi::class); }
-    public function comments() { return $this->hasMany(Comment::class); }
-    public function notifications() { return $this->hasMany(Notification::class); }
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+    public function tasks()
+    {
+        return $this->hasMany(Task::class, 'pic_id');
+    }
+    public function boards()
+    {
+        return $this->hasMany(Board::class);
+    }
+    public function kpis()
+    {
+        return $this->hasMany(Kpi::class);
+    }
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
 }

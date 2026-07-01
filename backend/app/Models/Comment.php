@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -8,8 +9,16 @@ class Comment extends Model
 {
     use HasUuids;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'id', 'task_id', 'user_id', 'text'
+    ];
 
-    public function task() { return $this->belongsTo(Task::class); }
-    public function user() { return $this->belongsTo(User::class); }
+    public function task()
+    {
+        return $this->belongsTo(Task::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

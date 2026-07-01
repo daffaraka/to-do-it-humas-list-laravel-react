@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -8,7 +9,12 @@ class TaskLabel extends Model
 {
     use HasUuids;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'id', 'task_id', 'label_id'
+    ];
 
-    public function task() { return $this->belongsTo(Task::class); }
+    public function task()
+    {
+        return $this->belongsTo(Task::class);
+    }
 }
