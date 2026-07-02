@@ -10,7 +10,9 @@ class TaskLabel extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'task_id', 'label_id'
+        'id',
+        'task_id',
+        'label_id'
     ];
 
     public function task()

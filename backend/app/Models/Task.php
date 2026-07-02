@@ -10,7 +10,22 @@ class Task extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'title', 'description', 'document_link', 'pic_id', 'board_id', 'request_date', 'due_date', 'priority', 'column_id', 'department_id', 'position', 'attachment', 'new_date', 'proses_date', 'end_date'
+        'id',
+        'title',
+        'description',
+        'document_link',
+        'pic_id',
+        'board_id',
+        'request_date',
+        'due_date',
+        'priority',
+        'column_id',
+        'department_id',
+        'position',
+        'attachment',
+        'new_date',
+        'proses_date',
+        'end_date'
     ];
 
     protected $casts = [

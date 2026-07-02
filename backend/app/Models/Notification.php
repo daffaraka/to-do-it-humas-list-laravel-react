@@ -10,7 +10,12 @@ class Notification extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'user_id', 'title', 'message', 'read', 'link'
+        'id',
+        'user_id',
+        'title',
+        'message',
+        'read',
+        'link'
     ];
 
     protected $casts = [

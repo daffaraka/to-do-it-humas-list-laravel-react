@@ -10,7 +10,12 @@ class Board extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'title', 'description', 'user_id', 'department_id', 'kpi_id'
+        'id',
+        'title',
+        'description',
+        'user_id',
+        'department_id',
+        'kpi_id'
     ];
 
     public function user()

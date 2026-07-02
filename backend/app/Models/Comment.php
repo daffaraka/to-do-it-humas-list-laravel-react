@@ -10,7 +10,10 @@ class Comment extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'task_id', 'user_id', 'text'
+        'id',
+        'task_id',
+        'user_id',
+        'text'
     ];
 
     public function task()
