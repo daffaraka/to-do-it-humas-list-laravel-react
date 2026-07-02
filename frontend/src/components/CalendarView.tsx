@@ -21,7 +21,7 @@ import { CardModal } from "./CardModal";
 import type { Card } from "../types";
 
 export function CalendarView() {
-  const { cards, activeDepartment, departments } = useKanban();
+  const { cards, activeDepartment, departments, boards } = useKanban();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
@@ -61,17 +61,12 @@ export function CalendarView() {
     return name.slice(0, 2).toUpperCase();
   };
 
-  // Helper to get color classes based on department name
-  const getDeptColor = (deptName?: string) => {
-    const name = deptName?.toLowerCase() || "";
-    if (name === "it") {
+  // Helper to get color classes based on KPI status
+  const getCardColor = (card: Card) => {
+    const board = card.board || boards.find(b => b.id === card.boardId);
+    const isKpi = board?.kpiId || board?.kpi_id;
+    if (isKpi) {
       return "bg-blue-500 border-blue-600 text-white dark:bg-blue-600 dark:border-blue-500 hover:bg-blue-600 dark:hover:bg-blue-500";
-    }
-    if (name === "humas") {
-      return "bg-purple-500 border-purple-600 text-white dark:bg-purple-600 dark:border-purple-500 hover:bg-purple-600 dark:hover:bg-purple-500";
-    }
-    if (name === "jaringan") {
-      return "bg-emerald-500 border-emerald-600 text-white dark:bg-emerald-600 dark:border-emerald-500 hover:bg-emerald-600 dark:hover:bg-emerald-500";
     }
     return "bg-gray-500 border-gray-600 text-white dark:bg-gray-600 dark:border-gray-500 hover:bg-gray-600 dark:hover:bg-gray-500";
   };
@@ -169,6 +164,12 @@ export function CalendarView() {
                   ? (card.pic as any)
                   : null;
 
+              const board = card.board || boards.find(b => b.id === card.boardId);
+              const isKpi = board?.kpiId || board?.kpi_id;
+              const badgeClasses = isKpi 
+                ? "bg-white text-gray-800" 
+                : "bg-black/80 dark:bg-black/60 text-white";
+
               return (
                 <div
                   key={card.id}
@@ -177,11 +178,11 @@ export function CalendarView() {
                     text-xs p-1.5 rounded-md mb-1 cursor-pointer 
                     border transition-all duration-200 
                     hover:shadow-sm hover:scale-[1.02] flex flex-row items-start gap-1.5 h-auto min-h-[30px]
-                    ${getDeptColor(card.department?.name)}
+                    ${getCardColor(card)}
                   `}
                 >
                   <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 mt-0.5 ${card.pic ? "bg-blue-500 dark:bg-blue-400" : "bg-black/10 dark:bg-black/20"}`}
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm shrink-0 mt-0.5 ${badgeClasses}`}
                     title={
                       typeof card.pic === "object" && card.pic
                         ? (card.pic as any).name
@@ -193,7 +194,7 @@ export function CalendarView() {
                   <div className="font-medium flex-1 break-words whitespace-normal leading-tight flex flex-col">
                     <span>{card.title}</span>
                     {card.pic && (
-                      <span className="text-[9px] opacity-75 truncate mt-0.5 font-normal">
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-sm truncate mt-1 font-medium w-fit shadow-sm ${badgeClasses}`}>
                         Oleh:{" "}
                         {typeof card.pic === "object" && card.pic !== null
                           ? (card.pic as any).name
