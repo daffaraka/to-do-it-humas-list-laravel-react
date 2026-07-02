@@ -14,9 +14,12 @@ import {
   LayoutGrid,
   X,
   Briefcase,
+  Filter,
+  ChevronDown,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
+import { differenceInDays, startOfDay } from "date-fns";
 import { id as dateFnsIdLocale } from "date-fns/locale";
 
 import { useAuthStore } from "../store/authStore";
@@ -24,6 +27,20 @@ import { useAuthStore } from "../store/authStore";
 interface KpiDashboardProps {
   viewType?: "all" | "me";
 }
+
+const getDaysRemaining = (dateString: string) => {
+  const target = startOfDay(new Date(dateString));
+  const now = startOfDay(new Date());
+  const diff = differenceInDays(target, now);
+  
+  if (diff < 0) {
+    return { text: `Terlewat ${Math.abs(diff)} hari`, isOverdue: true };
+  } else if (diff === 0) {
+    return { text: `Batas waktu hari ini`, isOverdue: false };
+  } else {
+    return { text: `Sisa waktu ${diff} hari`, isOverdue: false };
+  }
+};
 
 export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   viewType = "me",
@@ -57,13 +74,17 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const [boardTargetDate, setBoardTargetDate] = useState("");
   const [isKpiDropdownOpen, setIsKpiDropdownOpen] = useState(false);
   const { createBoard, deleteBoard, updateBoard } = useKanban();
+  const { departments, fetchDepartments } = useKanban();
   const [mounted, setMounted] = useState(false);
+  const [filterDepartment, setFilterDepartment] = useState<string>("all");
+  const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     fetchKpis();
-    fetchBoards(); // for safety
-  }, [fetchKpis, fetchBoards]);
+    fetchBoards();
+    fetchDepartments();
+  }, [fetchKpis, fetchBoards, fetchDepartments]);
 
   if (!mounted) return null;
 
@@ -159,18 +180,83 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
     return Math.round((doneTasks / totalTasks) * 100);
   };
 
-  const displayKpis =
-    viewType === "me" ? kpis.filter((k) => k.userId === user?.id) : kpis;
+  // const displayKpis =
+  //   viewType === "me" ? kpis.filter((k) => k.userId === user?.id) : kpis;
+  const displayKpis = kpis;
   const independentBoards = boards.filter(
     (board) => !board.kpiId && !board.kpi_id,
+    // && (viewType === "me" ? board.userId === user?.id : true),
   );
 
   if (isLoading && kpis.length === 0) return <KpiSkeleton />;
 
   return (
     <div className="flex-1 overflow-auto p-4 sm:p-6 bg-bgPrimary">
+      {/* Department Filter */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="relative">
+          <button
+            onClick={() => setIsDeptDropdownOpen(!isDeptDropdownOpen)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-all shadow-sm ${
+              filterDepartment !== 'all'
+                ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-300 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400'
+                : 'bg-white dark:bg-bgSecondary border-gray-200 dark:border-borderBase text-textSecondary hover:text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlassHover'
+            }`}
+          >
+            <Filter size={16} />
+            <span>
+              {filterDepartment === 'all'
+                ? 'Semua Departemen'
+                : departments.find(d => d.id === filterDepartment)?.name || 'Departemen'}
+            </span>
+            <ChevronDown size={14} className={`transition-transform ${isDeptDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isDeptDropdownOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setIsDeptDropdownOpen(false)} />
+              <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-bgSecondary border border-gray-200 dark:border-borderBase rounded-xl shadow-xl z-50 py-1 max-h-72 overflow-y-auto custom-scrollbar">
+                <button
+                  onClick={() => { setFilterDepartment('all'); setIsDeptDropdownOpen(false); }}
+                  className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                    filterDepartment === 'all'
+                      ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium'
+                      : 'text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlass'
+                  }`}
+                >
+                  Semua Departemen
+                </button>
+                {departments.map((dept) => (
+                  <button
+                    key={dept.id}
+                    onClick={() => { setFilterDepartment(dept.id); setIsDeptDropdownOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-t border-gray-100 dark:border-white/[0.05] ${
+                      filterDepartment === dept.id
+                        ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium'
+                        : 'text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlass'
+                    }`}
+                  >
+                    {dept.name}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        {filterDepartment !== 'all' && (
+          <button
+            onClick={() => setFilterDepartment('all')}
+            className="text-xs text-textSecondary hover:text-red-500 transition-colors"
+          >
+            ✕ Reset
+          </button>
+        )}
+      </div>
+
       <div className="space-y-8">
-        {displayKpis.map((kpi) => {
+        {displayKpis
+          .filter((kpi) => filterDepartment === 'all' || kpi.departmentId === filterDepartment)
+          .map((kpi) => {
           const progress = calculateProgress(kpi.boards || []);
           const canViewDetails = isAdmin || kpi.userId === user?.id;
 
@@ -194,11 +280,20 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                       <Briefcase size={14} className="text-indigo-400" />{" "}
                       {kpi.department?.name || "Semua Departemen"}
                     </span>
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5 flex-wrap">
                       <Calendar size={14} className="text-indigo-400" />{" "}
-                      {kpi.targetDate
-                        ? new Date(kpi.targetDate).toLocaleDateString("id-ID")
-                        : "-"}
+                      {kpi.targetDate ? (
+                        <>
+                          {new Date(kpi.targetDate).toLocaleDateString("id-ID")}
+                          {(() => { const r = getDaysRemaining(kpi.targetDate); return (
+                            <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-md ${r.isOverdue ? 'text-red-600 dark:text-red-400 bg-red-500/10' : 'text-amber-600 dark:text-amber-500 bg-amber-500/10'}`}>
+                              ({r.text})
+                            </span>
+                          ); })()}
+                        </>
+                      ) : (
+                        "-"
+                      )}
                     </span>
                   </div>
                 </div>
@@ -348,6 +443,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                                   <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400 border border-gray-200 dark:border-white/10">
                                     <Target size={10} />
                                     {new Date(board.targetDate).toLocaleDateString("id-ID")}
+                                    {(() => { const r = getDaysRemaining(board.targetDate); return (
+                                      <span className={`ml-0.5 ${r.isOverdue ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-500'}`}>
+                                        ({r.text})
+                                      </span>
+                                    ); })()}
                                   </span>
                                 )}
                               </div>
