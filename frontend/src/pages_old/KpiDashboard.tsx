@@ -53,6 +53,9 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const [editingBoardId, setEditingBoardId] = useState<string | null>(null);
   const [boardTitle, setBoardTitle] = useState("");
   const [boardDesc, setBoardDesc] = useState("");
+  const [boardStartDate, setBoardStartDate] = useState("");
+  const [boardTargetDate, setBoardTargetDate] = useState("");
+  const [isKpiDropdownOpen, setIsKpiDropdownOpen] = useState(false);
   const { createBoard, deleteBoard, updateBoard } = useKanban();
   const [mounted, setMounted] = useState(false);
 
@@ -117,18 +120,24 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         title: boardTitle,
         description: boardDesc,
         kpiId: boardType === "kpi" ? targetKpiIdForBoard || undefined : null,
+        startDate: boardStartDate || null,
+        targetDate: boardTargetDate || null,
       });
     } else {
       await createBoard(
         boardTitle,
         boardDesc,
         boardType === "kpi" ? targetKpiIdForBoard || undefined : undefined,
+        boardStartDate || undefined,
+        boardTargetDate || undefined,
       );
     }
 
     setIsBoardModalOpen(false);
     setBoardTitle("");
     setBoardDesc("");
+    setBoardStartDate("");
+    setBoardTargetDate("");
     setEditingBoardId(null);
     fetchKpis(); // Refresh to see the new board in the KPI
     fetchBoards();
@@ -215,7 +224,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
 
               {/* Boards List */}
               <div>
-                {!canViewDetails ? (
+                {/* {!canViewDetails ? (
                   <div
                     onClick={() => alert("Anda tidak berada di KPI ini")}
                     className="cursor-pointer bg-bgSecondary/50 border border-border/30 rounded-xl p-6 text-center text-textSecondary hover:bg-bgSecondary transition-colors"
@@ -227,124 +236,138 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                       </span>
                     </div>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-                    {/* Create Board Card */}
-                    <div
-                      onClick={() => {
-                        setTargetKpiIdForBoard(kpi.id);
-                        setBoardType("kpi");
-                        setEditingBoardId(null);
-                        setBoardTitle("");
-                        setBoardDesc("");
-                        setIsBoardModalOpen(true);
-                      }}
-                      className="bg-bgSecondary rounded-xl p-4 sm:p-5 border border-border/50 shadow-sm hover:border-indigo-500/30 hover:bg-indigo-500/5 hover:shadow-md transition-all cursor-pointer group flex flex-col items-center justify-center min-h-[140px] sm:min-h-[160px]"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-2 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
-                        <Plus size={20} />
-                      </div>
-                      <span className="text-sm font-medium text-textSecondary group-hover:text-indigo-500 transition-colors text-center">
-                        Tambah Board Project
-                      </span>
+                ) : ( */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+                  {/* Create Board Card */}
+                  <div
+                    onClick={() => {
+                      setTargetKpiIdForBoard(kpi.id);
+                      setBoardType("kpi");
+                      setEditingBoardId(null);
+                      setBoardTitle("");
+                      setBoardDesc("");
+                      setBoardStartDate("");
+                      setBoardTargetDate("");
+                      setIsBoardModalOpen(true);
+                    }}
+                    className="bg-bgSecondary rounded-xl p-4 sm:p-5 border border-border/50 shadow-sm hover:border-indigo-500/30 hover:bg-indigo-500/5 hover:shadow-md transition-all cursor-pointer group flex flex-col items-center justify-center min-h-[140px] sm:min-h-[160px]"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-2 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
+                      <Plus size={20} />
                     </div>
+                    <span className="text-sm font-medium text-textSecondary group-hover:text-indigo-500 transition-colors text-center">
+                      Tambah Board Project
+                    </span>
+                  </div>
 
-                    {kpi.boards &&
-                      kpi.boards.map((board) => {
-                        const tasks = board.tasks || [];
-                        const todoTasks = tasks.filter(
-                          (t: any) => t.columnId === "new",
-                        ).length;
-                        const progressTasks = tasks.filter(
-                          (t: any) => t.columnId === "progress",
-                        ).length;
-                        const doneTasks = tasks.filter(
-                          (t: any) => t.columnId === "done",
-                        ).length;
+                  {kpi.boards &&
+                    kpi.boards.map((board) => {
+                      const tasks = board.tasks || [];
+                      const todoTasks = tasks.filter(
+                        (t: any) => t.columnId === "new",
+                      ).length;
+                      const progressTasks = tasks.filter(
+                        (t: any) => t.columnId === "progress",
+                      ).length;
+                      const doneTasks = tasks.filter(
+                        (t: any) => t.columnId === "done",
+                      ).length;
 
-                        return (
-                          <div
-                            key={board.id}
-                            onClick={() => navigate(`/board/${board.id}`)}
-                            className="bg-bgSecondary rounded-xl p-4 sm:p-5 border border-border/30 shadow-sm hover:shadow-[0_4px_12px_-4px_rgba(6,81,237,0.15)] transition-all cursor-pointer group flex flex-col min-h-[140px] sm:min-h-[160px] transform hover:-translate-y-1 relative"
-                          >
-                            {(isAdmin ||
-                              board.userId === user?.id ||
-                              kpi.userId === user?.id) && (
-                              <div className="absolute top-2 right-2 flex gap-0.5 opacity-40 group-hover:opacity-100 transition-all z-10">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingBoardId(board.id);
-                                    setBoardTitle(board.title);
-                                    setBoardDesc(board.description || "");
-                                    setTargetKpiIdForBoard(
-                                      board.kpiId || board.kpi_id || null,
-                                    );
-                                    setBoardType("kpi");
-                                    setIsBoardModalOpen(true);
-                                  }}
-                                  className="p-1 text-amber-500 hover:text-amber-600 hover:bg-amber-500/10 hover:ring-2 hover:ring-amber-500/50 rounded-md transition-all"
-                                  title="Edit Board"
-                                >
-                                  <Edit size={14} />
-                                </button>
-                                <button
-                                  onClick={(e) =>
-                                    handleDeleteBoard(e, board.id)
-                                  }
-                                  className="p-1 text-red-500 hover:text-red-600 hover:bg-red-500/10 hover:ring-2 hover:ring-red-500/50 rounded-md transition-all"
-                                  title="Hapus Board"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            )}
-                            <div className="mb-3 flex-1 mt-4 sm:mt-0">
-                              <h5 className="font-semibold text-sm sm:text-base text-textPrimary group-hover:text-indigo-500 transition-all mb-1 line-clamp-2 leading-tight pr-12">
-                                {board.title}
-                              </h5>
-                              {board.description && (
-                                <p className="text-[11px] text-textSecondary line-clamp-1 mt-1">
-                                  {board.description}
-                                </p>
-                              )}
-                              <p className="text-[10px] text-indigo-400 mt-2 font-medium">
-                                Oleh: {board.user?.name || "Sistem"}
-                              </p>
+                      return (
+                        <div
+                          key={board.id}
+                          onClick={() => navigate(`/board/${board.id}`)}
+                          className="bg-bgSecondary rounded-xl p-4 sm:p-5 border border-border/30 shadow-sm hover:shadow-[0_4px_12px_-4px_rgba(6,81,237,0.15)] transition-all cursor-pointer group flex flex-col min-h-[140px] sm:min-h-[160px] transform hover:-translate-y-1 relative"
+                        >
+                          {(isAdmin ||
+                            board.userId === user?.id ||
+                            kpi.userId === user?.id) && (
+                            <div className="absolute top-2 right-2 flex gap-0.5 opacity-40 group-hover:opacity-100 transition-all z-10">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingBoardId(board.id);
+                                  setBoardTitle(board.title);
+                                  setBoardDesc(board.description || "");
+                                  setBoardStartDate(
+                                    board.startDate
+                                      ? new Date(board.startDate)
+                                          .toISOString()
+                                          .split("T")[0]
+                                      : "",
+                                  );
+                                  setBoardTargetDate(
+                                    board.targetDate
+                                      ? new Date(board.targetDate)
+                                          .toISOString()
+                                          .split("T")[0]
+                                      : "",
+                                  );
+                                  setTargetKpiIdForBoard(
+                                    board.kpiId || board.kpi_id || null,
+                                  );
+                                  setBoardType("kpi");
+                                  setIsBoardModalOpen(true);
+                                }}
+                                className="p-1 text-amber-500 hover:text-amber-600 hover:bg-amber-500/10 hover:ring-2 hover:ring-amber-500/50 rounded-md transition-all"
+                                title="Edit Board"
+                              >
+                                <Edit size={14} />
+                              </button>
+                              <button
+                                onClick={(e) => handleDeleteBoard(e, board.id)}
+                                className="p-1 text-red-500 hover:text-red-600 hover:bg-red-500/10 hover:ring-2 hover:ring-red-500/50 rounded-md transition-all"
+                                title="Hapus Board"
+                              >
+                                <Trash2 size={14} />
+                              </button>
                             </div>
+                          )}
+                          <div className="mb-3 flex-1 mt-4 sm:mt-0">
+                            <h5 className="font-semibold text-sm sm:text-base text-textPrimary group-hover:text-indigo-500 transition-all mb-1 line-clamp-2 leading-tight pr-12">
+                              {board.title}
+                            </h5>
+                            {board.description && (
+                              <p className="text-[11px] text-textSecondary line-clamp-1 mt-1">
+                                {board.description}
+                              </p>
+                            )}
+                            <p className="text-[10px] text-indigo-400 mt-2 font-medium">
+                              Oleh: {board.user?.name || "Sistem"}
+                            </p>
+                          </div>
 
-                            <div className="grid grid-cols-3 gap-1.5 text-center mt-auto">
-                              <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
-                                <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">
-                                  TODO
-                                </div>
-                                <div className="font-bold text-textPrimary text-sm">
-                                  {todoTasks}
-                                </div>
+                          <div className="grid grid-cols-3 gap-1.5 text-center mt-auto">
+                            <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
+                              <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">
+                                TODO
                               </div>
-                              <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
-                                <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">
-                                  PROG
-                                </div>
-                                <div className="font-bold text-amber-500 text-sm">
-                                  {progressTasks}
-                                </div>
+                              <div className="font-bold text-textPrimary text-sm">
+                                {todoTasks}
                               </div>
-                              <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
-                                <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">
-                                  DONE
-                                </div>
-                                <div className="font-bold text-emerald-500 text-sm">
-                                  {doneTasks}
-                                </div>
+                            </div>
+                            <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
+                              <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">
+                                PROG
+                              </div>
+                              <div className="font-bold text-amber-500 text-sm">
+                                {progressTasks}
+                              </div>
+                            </div>
+                            <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
+                              <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">
+                                DONE
+                              </div>
+                              <div className="font-bold text-emerald-500 text-sm">
+                                {doneTasks}
                               </div>
                             </div>
                           </div>
-                        );
-                      })}
-                  </div>
-                )}
+                        </div>
+                      );
+                    })}
+                </div>
+                {/* )} */}
               </div>
             </div>
           );
@@ -374,6 +397,8 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                 setEditingBoardId(null);
                 setBoardTitle("");
                 setBoardDesc("");
+                setBoardStartDate("");
+                setBoardTargetDate("");
                 setIsBoardModalOpen(true);
               }}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm shadow-indigo-500/20 flex items-center gap-2 w-full sm:w-auto justify-center"
@@ -410,6 +435,20 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                           setEditingBoardId(board.id);
                           setBoardTitle(board.title);
                           setBoardDesc(board.description || "");
+                          setBoardStartDate(
+                            board.startDate
+                              ? new Date(board.startDate)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : "",
+                          );
+                          setBoardTargetDate(
+                            board.targetDate
+                              ? new Date(board.targetDate)
+                                  .toISOString()
+                                  .split("T")[0]
+                              : "",
+                          );
                           setTargetKpiIdForBoard(null);
                           setBoardType("non-kpi");
                           setIsBoardModalOpen(true);
@@ -604,6 +643,8 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                   setIsBoardModalOpen(false);
                   setBoardTitle("");
                   setBoardDesc("");
+                  setBoardStartDate("");
+                  setBoardTargetDate("");
                   setEditingBoardId(null);
                 }}
                 className="p-2 bg-black/[0.05] dark:bg-white/[0.05] rounded-full text-textSecondary hover:text-textPrimary hover:bg-black/[0.1] dark:hover:bg-white/[0.1] transition-all"
@@ -642,36 +683,57 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                       : "text-textSecondary hover:text-textPrimary hover:bg-gray-200/50 dark:hover:bg-bgGlassHover"
                   }`}
                 >
-                  Terkait KPI
+                  Terikat Main Project
                 </button>
               </div>
 
               {boardType === "kpi" && (
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-semibold text-textSecondary mb-2">
-                    Pilih KPI <span className="text-red-400">*</span>
+                    Pilih Main Project <span className="text-red-400">*</span>
                   </label>
-                  <select
-                    value={targetKpiIdForBoard || ""}
-                    onChange={(e) => setTargetKpiIdForBoard(e.target.value)}
-                    required={boardType === "kpi"}
-                    className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all"
-                  >
-                    <option value="" disabled>
-                      -- Pilih KPI --
-                    </option>
-                    {kpis.map((kpi) => (
-                      <option key={kpi.id} value={kpi.id}>
-                        {kpi.title}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsKpiDropdownOpen(!isKpiDropdownOpen)}
+                      className="w-full text-left bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all flex justify-between items-center"
+                    >
+                      <span className="truncate pr-4">
+                        {targetKpiIdForBoard
+                          ? kpis.find(k => k.id === targetKpiIdForBoard)?.title || "-- Pilih Main Project --"
+                          : "-- Pilih Main Project --"}
+                      </span>
+                      <svg className={`w-4 h-4 text-textSecondary transition-transform ${isKpiDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    {isKpiDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-2 bg-white dark:bg-bgSecondary border border-gray-200 dark:border-borderBase rounded-xl shadow-lg max-h-60 overflow-y-auto custom-scrollbar py-1">
+                        {kpis.map((kpi) => (
+                          <div
+                            key={kpi.id}
+                            onClick={() => {
+                              setTargetKpiIdForBoard(kpi.id);
+                              setIsKpiDropdownOpen(false);
+                            }}
+                            className={`px-4 py-2.5 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-bgGlass break-words whitespace-normal border-b border-gray-100 last:border-0 dark:border-white/[0.05] ${targetKpiIdForBoard === kpi.id ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-textPrimary'}`}
+                          >
+                            {kpi.title}
+                          </div>
+                        ))}
+                        {kpis.length === 0 && (
+                          <div className="px-4 py-3 text-sm text-textSecondary text-center">
+                            Tidak ada Main Project
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
               <div>
                 <label className="block text-sm font-semibold text-textSecondary mb-2">
-                  Judul Board <span className="text-red-400">*</span>
+                  Judul Board Project <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -694,6 +756,53 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all min-h-[120px] placeholder-textSecondary/50 resize-none"
                   placeholder="Tambahkan detail proyek..."
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-textSecondary mb-2">
+                    Mulai <span className="text-red-400">*</span>
+                  </label>
+                  <DatePicker
+                    selected={boardStartDate ? new Date(boardStartDate) : null}
+                    onChange={(date: any) =>
+                      setBoardStartDate(
+                        date ? date.toISOString().split("T")[0] : "",
+                      )
+                    }
+                    dateFormat="dd/MM/yyyy"
+                    locale={dateFnsIdLocale}
+                    placeholderText="dd/mm/yyyy"
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    required
+                    className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-textSecondary mb-2">
+                    Target <span className="text-red-400">*</span>
+                  </label>
+                  <DatePicker
+                    selected={
+                      boardTargetDate ? new Date(boardTargetDate) : null
+                    }
+                    onChange={(date: any) =>
+                      setBoardTargetDate(
+                        date ? date.toISOString().split("T")[0] : "",
+                      )
+                    }
+                    dateFormat="dd/MM/yyyy"
+                    locale={dateFnsIdLocale}
+                    placeholderText="dd/mm/yyyy"
+                    showMonthDropdown
+                    showYearDropdown
+                    dropdownMode="select"
+                    required
+                    className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 pt-6 border-t border-black/[0.03] dark:border-white/[0.03]">

@@ -23,7 +23,7 @@ interface KanbanState {
 
   fetchDepartments: () => Promise<void>;
   fetchBoards: () => Promise<void>;
-  createBoard: (title: string, description?: string, kpiId?: string) => Promise<void>;
+  createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string) => Promise<void>;
   updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
   deleteBoard: (id: string) => Promise<void>;
   setActiveBoardId: (boardId: string | null) => void;
@@ -85,9 +85,16 @@ export const useKanban = create<KanbanState>()(
         }
       },
 
-      createBoard: async (title, description, kpiId) => {
+      createBoard: async (title, description, kpiId, startDate, targetDate) => {
         try {
-          const response = await api.post('/boards', { title, description, kpiId, kpi_id: kpiId });
+          const response = await api.post('/boards', { 
+            title, 
+            description, 
+            kpiId, 
+            kpi_id: kpiId,
+            startDate,
+            targetDate
+          });
           set((state) => ({ boards: [response.data, ...state.boards] }));
         } catch (err: any) {
           console.error('Failed to create board', err);

@@ -15,7 +15,14 @@ class Board extends Model
         'description',
         'user_id',
         'department_id',
-        'kpi_id'
+        'kpi_id',
+        'start_date',
+        'target_date'
+    ];
+
+    protected $casts = [
+        'start_date' => 'date',
+        'target_date' => 'date',
     ];
 
     public function user()
