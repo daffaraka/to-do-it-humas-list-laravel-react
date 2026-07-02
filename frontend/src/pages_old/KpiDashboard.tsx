@@ -335,6 +335,23 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                             <p className="text-[10px] text-indigo-400 mt-2 font-medium">
                               Oleh: {board.user?.name || "Sistem"}
                             </p>
+                            
+                            {(board.startDate || board.targetDate) && (
+                              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                {board.startDate && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400 border border-gray-200 dark:border-white/10">
+                                    <Calendar size={10} />
+                                    {new Date(board.startDate).toLocaleDateString("id-ID")}
+                                  </span>
+                                )}
+                                {board.targetDate && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400 border border-gray-200 dark:border-white/10">
+                                    <Target size={10} />
+                                    {new Date(board.targetDate).toLocaleDateString("id-ID")}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           <div className="grid grid-cols-3 gap-1.5 text-center mt-auto">
@@ -479,6 +496,23 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                     <p className="text-[10px] text-indigo-400 mt-2 font-medium">
                       Oleh: {board.user?.name || "Sistem"}
                     </p>
+                    
+                    {(board.startDate || board.targetDate) && (
+                      <div className="flex flex-wrap gap-1.5 mt-2.5">
+                        {board.startDate && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400 border border-gray-200 dark:border-white/10">
+                            <Calendar size={10} />
+                            {new Date(board.startDate).toLocaleDateString("id-ID")}
+                          </span>
+                        )}
+                        {board.targetDate && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-400 border border-gray-200 dark:border-white/10">
+                            <Target size={10} />
+                            {new Date(board.targetDate).toLocaleDateString("id-ID")}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-3 gap-1.5 text-center mt-auto">

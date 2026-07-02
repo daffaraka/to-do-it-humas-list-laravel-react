@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from 'react';
-import type { FormEvent } from 'react';
-import { createPortal } from 'react-dom';
-import DatePicker from 'react-datepicker';
-import { id } from 'date-fns/locale';
-import { X, Type, FileText, User, Calendar, Briefcase } from 'lucide-react';
-import type { ColumnId } from '../types';
-import { useKanban } from '../store/kanbanStore';
-import api from '../lib/api';
+import { useState } from "react";
+import type { FormEvent } from "react";
+import { createPortal } from "react-dom";
+import DatePicker from "react-datepicker";
+import { id } from "date-fns/locale";
+import { X, Type, FileText, User, Calendar, Briefcase } from "lucide-react";
+import type { ColumnId } from "../types";
+import { useKanban } from "../store/kanbanStore";
+import api from "../lib/api";
 
 interface CreateTaskModalProps {
   columnId: ColumnId;
@@ -17,8 +17,8 @@ interface CreateTaskModalProps {
 
 export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const { addCard } = useKanban();
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [requestDate, setRequestDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
@@ -26,37 +26,40 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    
+
     try {
       const activeBoardId = useKanban.getState().activeBoardId;
-      const targetDepartmentId = useKanban.getState().activeDepartment === 'all' 
-        ? useKanban.getState().departments[0]?.id 
-        : useKanban.getState().activeDepartment;
+      const targetDepartmentId =
+        useKanban.getState().activeDepartment === "all"
+          ? useKanban.getState().departments[0]?.id
+          : useKanban.getState().activeDepartment;
 
       const formData = new FormData();
-      formData.append('title', title.trim());
-      formData.append('columnId', columnId);
-      if (activeBoardId) formData.append('boardId', activeBoardId);
-      if (targetDepartmentId) formData.append('departmentId', targetDepartmentId);
-      if (description) formData.append('description', description);
-      if (requestDate) formData.append('requestDate', requestDate.toISOString());
-      if (dueDate) formData.append('dueDate', dueDate.toISOString());
-      if (attachment) formData.append('attachment', attachment);
+      formData.append("title", title.trim());
+      formData.append("columnId", columnId);
+      if (activeBoardId) formData.append("boardId", activeBoardId);
+      if (targetDepartmentId)
+        formData.append("departmentId", targetDepartmentId);
+      if (description) formData.append("description", description);
+      if (requestDate)
+        formData.append("requestDate", requestDate.toISOString());
+      if (dueDate) formData.append("dueDate", dueDate.toISOString());
+      if (attachment) formData.append("attachment", attachment);
 
-      const { data } = await api.post('/tasks', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      const { data } = await api.post("/tasks", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      useKanban.setState(state => ({ cards: [...state.cards, data] }));
-      
+      useKanban.setState((state) => ({ cards: [...state.cards, data] }));
+
       onClose();
     } catch (err) {
-      console.error('Failed to add card with attachment', err);
+      console.error("Failed to add card with attachment", err);
     }
   };
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div 
+      <div
         className="bg-bgPrimary w-full max-w-lg max-h-[95vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-black/[0.05] dark:border-white/[0.05] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
@@ -72,7 +75,10 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto custom-scrollbar">
+        <form
+          onSubmit={handleSubmit}
+          className="p-4 sm:p-6 space-y-4 sm:space-y-5 overflow-y-auto custom-scrollbar"
+        >
           {/* Title */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
@@ -109,7 +115,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
                 <Calendar size={14} className="text-indigo-400" />
-                Target Tanggal
+                Tanggal Mulai
               </label>
               <DatePicker
                 selected={requestDate}
@@ -123,12 +129,12 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
               />
             </div>
-            
+
             {/* Due Date (Tanggal Selesai) */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
                 <Calendar size={14} className="text-emerald-400" />
-                Tanggal Selesai
+                Target Tanggal
               </label>
               <DatePicker
                 selected={dueDate}
@@ -152,7 +158,9 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
             </label>
             <input
               type="file"
-              onChange={(e) => setAttachment(e.target.files ? e.target.files[0] : null)}
+              onChange={(e) =>
+                setAttachment(e.target.files ? e.target.files[0] : null)
+              }
               className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               accept=".jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf"
             />
@@ -177,6 +185,6 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
         </form>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
