@@ -75,13 +75,13 @@ export function Header() {
           >
             Dashboard Project
           </Link>
-          <Link
+          {/* <Link
             to="/jobs"
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/jobs" || pathname.startsWith("/board/") || pathname === "/" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
             title="Pekerjaan Saya"
           >
             Pekerjaan Saya
-          </Link>
+          </Link> */}
           <Link
             to="/view-jobs"
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/view-jobs" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}

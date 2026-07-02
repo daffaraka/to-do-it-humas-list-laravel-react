@@ -33,7 +33,7 @@ interface KanbanState {
   addCard: (title: string, columnId: ColumnId, extraData?: Partial<Card>) => Promise<void>;
   updateCard: (id: string, updates: Partial<Card>) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
-  moveCard: (cardId: string, toColumnId: ColumnId) => Promise<void>;
+  moveCard: (cardId: string, toColumnId: ColumnId, saveToDb?: boolean) => Promise<void>;
   reorderCards: (activeId: string, overId: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   setFilterLabel: (labelId: string | null) => void;
@@ -211,7 +211,7 @@ export const useKanban = create<KanbanState>()(
         }
       },
 
-      moveCard: async (cardId, toColumnId) => {
+      moveCard: async (cardId, toColumnId, saveToDb = true) => {
         const previousCards = get().cards;
         const card = previousCards.find((c) => c.id === cardId);
         if (!card || card.columnId === toColumnId) return;
@@ -237,11 +237,13 @@ export const useKanban = create<KanbanState>()(
           }),
         }));
 
-        try {
-          await api.patch(`/tasks/${cardId}`, { columnId: toColumnId, position: newPosition });
-        } catch (err: any) {
-          console.error('Failed to move card', err);
-          set({ cards: previousCards });
+        if (saveToDb) {
+          try {
+            await api.patch(`/tasks/${cardId}`, { columnId: toColumnId, position: newPosition });
+          } catch (err: any) {
+            console.error('Failed to move card', err);
+            set({ cards: previousCards });
+          }
         }
       },
 
@@ -266,8 +268,13 @@ export const useKanban = create<KanbanState>()(
         reordered.splice(overIdx, 0, moved);
 
         const updatedPositions = new Map<string, number>();
+        const changedCards: string[] = [];
+        
         reordered.forEach((card, idx) => {
           updatedPositions.set(card.id, idx);
+          if (card.position !== idx) {
+            changedCards.push(card.id);
+          }
         });
 
         set((state) => ({
@@ -280,7 +287,14 @@ export const useKanban = create<KanbanState>()(
         }));
 
         try {
-          await api.patch(`/tasks/${activeId}`, { position: updatedPositions.get(activeId) });
+          // Update all cards that changed position to prevent overlapping positions in DB
+          if (changedCards.length > 0) {
+            await Promise.all(
+              changedCards.map((id) => 
+                api.patch(`/tasks/${id}`, { position: updatedPositions.get(id) })
+              )
+            );
+          }
         } catch (err: any) {
           console.error('Failed to reorder cards', err);
           set({ cards: previousCards });
