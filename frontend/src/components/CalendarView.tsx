@@ -181,7 +181,7 @@ export function CalendarView() {
                   `}
                 >
                   <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 mt-0.5 ${card.pic ? "bg-black/20 dark:bg-black/40" : "bg-black/10 dark:bg-black/20"}`}
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 mt-0.5 ${card.pic ? "bg-blue-500 dark:bg-blue-400" : "bg-black/10 dark:bg-black/20"}`}
                     title={
                       typeof card.pic === "object" && card.pic
                         ? (card.pic as any).name
