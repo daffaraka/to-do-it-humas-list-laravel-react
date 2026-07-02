@@ -26,16 +26,19 @@ export function CalendarView() {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
   // Fallback to 'all' if the activeDepartment UUID from localStorage is stale
-  const effectiveActiveDepartment = activeDepartment === 'all' || departments.some(d => d.id === activeDepartment) 
-    ? activeDepartment 
-    : 'all';
+  const effectiveActiveDepartment =
+    activeDepartment === "all" ||
+    departments.some((d) => d.id === activeDepartment)
+      ? activeDepartment
+      : "all";
 
   // Helper to parse dates safely (supporting space separated dates from SQLite/Laravel)
   const parseDateSafe = (dateStr?: string | null) => {
     if (!dateStr) return new Date(NaN);
-    const normalized = dateStr.includes(' ') && !dateStr.includes('T')
-      ? dateStr.replace(' ', 'T')
-      : dateStr;
+    const normalized =
+      dateStr.includes(" ") && !dateStr.includes("T")
+        ? dateStr.replace(" ", "T")
+        : dateStr;
     return new Date(normalized);
   };
 
@@ -47,9 +50,9 @@ export function CalendarView() {
     } else if (typeof pic === "string") {
       name = pic;
     }
-    
+
     if (!name) return "??";
-    
+
     name = name.trim();
     const words = name.split(/\s+/);
     if (words.length >= 2) {
@@ -60,17 +63,17 @@ export function CalendarView() {
 
   // Helper to get color classes based on department name
   const getDeptColor = (deptName?: string) => {
-    const name = deptName?.toLowerCase() || '';
-    if (name === 'it') {
-      return 'bg-blue-500 border-blue-600 text-white dark:bg-blue-600 dark:border-blue-500 hover:bg-blue-600 dark:hover:bg-blue-500';
+    const name = deptName?.toLowerCase() || "";
+    if (name === "it") {
+      return "bg-blue-500 border-blue-600 text-white dark:bg-blue-600 dark:border-blue-500 hover:bg-blue-600 dark:hover:bg-blue-500";
     }
-    if (name === 'humas') {
-      return 'bg-purple-500 border-purple-600 text-white dark:bg-purple-600 dark:border-purple-500 hover:bg-purple-600 dark:hover:bg-purple-500';
+    if (name === "humas") {
+      return "bg-purple-500 border-purple-600 text-white dark:bg-purple-600 dark:border-purple-500 hover:bg-purple-600 dark:hover:bg-purple-500";
     }
-    if (name === 'jaringan') {
-      return 'bg-emerald-500 border-emerald-600 text-white dark:bg-emerald-600 dark:border-emerald-500 hover:bg-emerald-600 dark:hover:bg-emerald-500';
+    if (name === "jaringan") {
+      return "bg-emerald-500 border-emerald-600 text-white dark:bg-emerald-600 dark:border-emerald-500 hover:bg-emerald-600 dark:hover:bg-emerald-500";
     }
-    return 'bg-gray-500 border-gray-600 text-white dark:bg-gray-600 dark:border-gray-500 hover:bg-gray-600 dark:hover:bg-gray-500';
+    return "bg-gray-500 border-gray-600 text-white dark:bg-gray-600 dark:border-gray-500 hover:bg-gray-600 dark:hover:bg-gray-500";
   };
 
   // Filter cards by active department and date availability
@@ -79,7 +82,10 @@ export function CalendarView() {
       const hasDate = card.requestDate || card.dueDate || card.createdAt;
       if (!hasDate) return false;
 
-      if (effectiveActiveDepartment !== 'all' && card.departmentId !== effectiveActiveDepartment) {
+      if (
+        effectiveActiveDepartment !== "all" &&
+        card.departmentId !== effectiveActiveDepartment
+      ) {
         return false;
       }
       return true;
@@ -174,17 +180,24 @@ export function CalendarView() {
                     ${getDeptColor(card.department?.name)}
                   `}
                 >
-                  <div 
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 mt-0.5 ${card.pic ? 'bg-black/20 dark:bg-black/40' : 'bg-black/10 dark:bg-black/20'}`}
-                    title={typeof card.pic === 'object' && card.pic ? (card.pic as any).name : 'Semua Orang / Belum di-assign'}
+                  <div
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 mt-0.5 ${card.pic ? "bg-black/20 dark:bg-black/40" : "bg-black/10 dark:bg-black/20"}`}
+                    title={
+                      typeof card.pic === "object" && card.pic
+                        ? (card.pic as any).name
+                        : "Semua Orang / Belum di-assign"
+                    }
                   >
                     {getPicInitials(card.pic)}
                   </div>
                   <div className="font-medium flex-1 break-words whitespace-normal leading-tight flex flex-col">
                     <span>{card.title}</span>
-                    {card.board && (
+                    {card.pic && (
                       <span className="text-[9px] opacity-75 truncate mt-0.5 font-normal">
-                        Board: {card.board.title}
+                        Oleh:{" "}
+                        {typeof card.pic === "object" && card.pic !== null
+                          ? (card.pic as any).name
+                          : card.pic}
                       </span>
                     )}
                   </div>
