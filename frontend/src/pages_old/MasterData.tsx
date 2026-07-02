@@ -128,6 +128,7 @@ export function MasterData() {
                     {activeTab === 'users' && <th className="px-6 py-4 font-medium">Department</th>}
                     {activeTab === 'users' && <th className="px-6 py-4 font-medium">Role</th>}
                     {activeTab === 'kpis' && <th className="px-6 py-4 font-medium">Deskripsi</th>}
+                    {activeTab === 'kpis' && <th className="px-6 py-4 font-medium">Departemen</th>}
                     {activeTab === 'kpis' && <th className="px-6 py-4 font-medium">Target Date</th>}
                     <th className="px-6 py-4 font-medium text-right">Aksi</th>
                   </tr>
@@ -140,6 +141,7 @@ export function MasterData() {
                       {activeTab === 'users' && <td className="px-6 py-4">{item.department?.name}</td>}
                       {activeTab === 'users' && <td className="px-6 py-4">{item.role?.name}</td>}
                       {activeTab === 'kpis' && <td className="px-6 py-4 max-w-[300px] truncate">{item.description}</td>}
+                      {activeTab === 'kpis' && <td className="px-6 py-4">{item.department?.name || '-'}</td>}
                       {activeTab === 'kpis' && <td className="px-6 py-4">{item.targetDate ? new Date(item.targetDate).toLocaleDateString('id-ID') : '-'}</td>}
                       <td className="px-6 py-4 text-right space-x-2">
                         <button onClick={() => handleEdit(item)} className="px-3 py-1.5 bg-white dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-medium border border-indigo-200 dark:border-indigo-500/30 rounded-lg shadow-sm hover:bg-indigo-50 dark:hover:bg-indigo-500/20 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">Edit</button>

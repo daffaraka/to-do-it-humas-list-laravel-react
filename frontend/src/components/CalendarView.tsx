@@ -174,11 +174,19 @@ export function CalendarView() {
                     ${getDeptColor(card.department?.name)}
                   `}
                 >
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 mt-0.5 ${card.pic ? 'bg-black/20 dark:bg-black/40' : 'bg-black/10 dark:bg-black/20'}`}>
+                  <div 
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 mt-0.5 ${card.pic ? 'bg-black/20 dark:bg-black/40' : 'bg-black/10 dark:bg-black/20'}`}
+                    title={typeof card.pic === 'object' && card.pic ? (card.pic as any).name : 'Semua Orang / Belum di-assign'}
+                  >
                     {getPicInitials(card.pic)}
                   </div>
-                  <div className="font-medium flex-1 break-words whitespace-normal leading-tight">
-                    {card.title}
+                  <div className="font-medium flex-1 break-words whitespace-normal leading-tight flex flex-col">
+                    <span>{card.title}</span>
+                    {card.board && (
+                      <span className="text-[9px] opacity-75 truncate mt-0.5 font-normal">
+                        Board: {card.board.title}
+                      </span>
+                    )}
                   </div>
                 </div>
               );

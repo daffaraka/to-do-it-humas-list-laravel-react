@@ -16,9 +16,9 @@ class Task extends Model
     protected $casts = [
         'request_date' => 'date',
         'due_date' => 'date',
-        'new_date' => 'date',
-        'proses_date' => 'date',
-        'end_date' => 'date',
+        'new_date' => 'datetime',
+        'proses_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     public function pic()

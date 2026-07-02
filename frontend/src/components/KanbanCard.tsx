@@ -145,20 +145,21 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
           </span>
         </div>
 
-        <div className="flex gap-2">
-          {card.columnId === 'new' && card.new_date && (
-            <div className="text-[10px] text-textSecondary bg-bgSecondary border border-borderBase px-1.5 py-0.5 rounded">
-              Masuk: {new Date(card.new_date).toLocaleDateString('id-ID')}
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="text-[10px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-500/10 border border-slate-200 dark:border-slate-500/20 px-1.5 py-0.5 rounded flex items-center gap-1" title="Waktu Masuk">
+            <span className="font-semibold">Masuk:</span>
+            <span>{new Date((card as any).newDate || card.new_date || card.createdAt || Date.now()).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+          {((card as any).prosesDate || card.proses_date) && (
+            <div className="text-[10px] text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 px-1.5 py-0.5 rounded flex items-center gap-1" title="Waktu Proses">
+              <span className="font-semibold">Proses:</span>
+              <span>{new Date((card as any).prosesDate || card.proses_date).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           )}
-          {card.columnId === 'progress' && card.proses_date && (
-            <div className="text-[10px] text-textSecondary bg-bgSecondary border border-borderBase px-1.5 py-0.5 rounded">
-              Mulai: {new Date(card.proses_date).toLocaleDateString('id-ID')}
-            </div>
-          )}
-          {card.columnId === 'done' && card.end_date && (
-            <div className="text-[10px] text-textSecondary bg-bgSecondary border border-borderBase px-1.5 py-0.5 rounded">
-              Selesai: {new Date(card.end_date).toLocaleDateString('id-ID')}
+          {((card as any).endDate || card.end_date) && (
+            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-1.5 py-0.5 rounded flex items-center gap-1" title="Waktu Selesai">
+              <span className="font-semibold">Selesai:</span>
+              <span>{new Date((card as any).endDate || card.end_date).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
             </div>
           )}
         </div>

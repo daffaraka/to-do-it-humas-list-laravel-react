@@ -40,7 +40,7 @@ class TaskController extends Controller
             'description' => $data['description'],
             'board_id' => $data['boardId'],
             'department_id' => $data['departmentId'],
-            'pic_id' => $data['picId'] ?? null,
+            'pic_id' => $data['picId'] ?? $request->user()->id,
             'priority' => $data['priority'] ?? 'low',
             'request_date' => $data['requestDate'] ?? null,
             'due_date' => $data['dueDate'] ?? null,
@@ -60,20 +60,24 @@ class TaskController extends Controller
         $updateData = [];
         if(isset($data['title'])) $updateData['title'] = $data['title'];
         if(isset($data['description'])) $updateData['description'] = $data['description'];
-        if(isset($data['boardId'])) $updateData['board_id'] = $data['boardId'];
+        
+        $boardId = $data['board_id'] ?? $data['boardId'] ?? null;
+        if($boardId) $updateData['board_id'] = $boardId;
+        
         if(isset($data['position'])) $updateData['position'] = $data['position'];
         
         if($request->hasFile('attachment')) {
             $updateData['attachment'] = $request->file('attachment')->store('attachments', 'public');
         }
 
-        if(isset($data['columnId']) && $data['columnId'] !== $task->column_id) {
-            $updateData['column_id'] = $data['columnId'];
-            if ($data['columnId'] === 'new') {
+        $columnId = $data['column_id'] ?? $data['columnId'] ?? null;
+        if($columnId && $columnId !== $task->column_id) {
+            $updateData['column_id'] = $columnId;
+            if ($columnId === 'new') {
                 $updateData['new_date'] = now();
-            } elseif ($data['columnId'] === 'progress') {
+            } elseif ($columnId === 'progress') {
                 $updateData['proses_date'] = now();
-            } elseif ($data['columnId'] === 'done') {
+            } elseif ($columnId === 'done') {
                 $updateData['end_date'] = now();
             }
         }

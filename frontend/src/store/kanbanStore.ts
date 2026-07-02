@@ -24,6 +24,8 @@ interface KanbanState {
   fetchDepartments: () => Promise<void>;
   fetchBoards: () => Promise<void>;
   createBoard: (title: string, description?: string, kpiId?: string) => Promise<void>;
+  updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
+  deleteBoard: (id: string) => Promise<void>;
   setActiveBoardId: (boardId: string | null) => void;
   fetchCards: (boardId: string) => Promise<void>;
   fetchAllCards: () => Promise<void>;
@@ -89,6 +91,28 @@ export const useKanban = create<KanbanState>()(
           set((state) => ({ boards: [response.data, ...state.boards] }));
         } catch (err: any) {
           console.error('Failed to create board', err);
+        }
+      },
+
+      deleteBoard: async (id) => {
+        try {
+          await api.delete(`/boards/${id}`);
+          set((state) => ({ boards: state.boards.filter(b => b.id !== id) }));
+        } catch (err) {
+          console.error('Failed to delete board', err);
+          throw err;
+        }
+      },
+
+      updateBoard: async (id, updates) => {
+        try {
+          const response = await api.patch(`/boards/${id}`, updates);
+          set((state) => ({
+            boards: state.boards.map(b => b.id === id ? { ...b, ...response.data } : b)
+          }));
+        } catch (err) {
+          console.error('Failed to update board', err);
+          throw err;
         }
       },
 
@@ -189,11 +213,21 @@ export const useKanban = create<KanbanState>()(
         const newPosition = targetCards.length;
 
         set((state) => ({
-          cards: state.cards.map((c) =>
-            c.id === cardId
-              ? { ...c, columnId: toColumnId, position: newPosition, updatedAt: new Date().toISOString() }
-              : c
-          ),
+          cards: state.cards.map((c) => {
+            if (c.id === cardId) {
+              const now = new Date().toISOString();
+              return { 
+                ...c, 
+                columnId: toColumnId, 
+                position: newPosition, 
+                updatedAt: now,
+                ...(toColumnId === 'new' && { new_date: now }),
+                ...(toColumnId === 'progress' && { proses_date: now }),
+                ...(toColumnId === 'done' && { end_date: now }),
+              };
+            }
+            return c;
+          }),
         }));
 
         try {

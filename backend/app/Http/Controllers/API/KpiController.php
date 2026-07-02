@@ -9,7 +9,7 @@ use Carbon\Carbon;
 class KpiController extends Controller
 {
     public function index() {
-        return response()->json(Kpi::with(['boards.tasks', 'boards.user'])->get());
+        return response()->json(Kpi::with(['boards.tasks', 'boards.user', 'department'])->get());
     }
 
     public function store(Request $request) {

@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useKanban } from '@/store/kanbanStore';
 import { Calendar, CheckSquare, Search, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function ViewJobsPage() {
+  const navigate = useNavigate();
   const { cards, fetchAllCards, isLoading } = useKanban();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedPics, setExpandedPics] = useState<Record<string, boolean>>({});
@@ -175,7 +177,14 @@ export default function ViewJobsPage() {
                       const statusText = card.columnId === 'new' ? 'To Do' : (card.columnId === 'progress' ? 'Progress' : 'Done');
 
                       return (
-                        <div key={card.id} className="bg-bgGlass border border-borderBase p-4 rounded-xl hover:border-indigo-500/30 transition-colors shadow-sm">
+                        <div 
+                          key={card.id} 
+                          onClick={() => {
+                            const boardId = card.board_id || card.boardId || card.board?.id;
+                            if (boardId) navigate(`/board/${boardId}`);
+                          }}
+                          className="bg-bgGlass border border-borderBase p-4 rounded-xl hover:border-indigo-500/50 transition-colors shadow-sm cursor-pointer hover:shadow-md"
+                        >
                           <div className="flex justify-between items-start gap-3 mb-2">
                             <h3 className="text-sm font-semibold text-textPrimary leading-snug line-clamp-2">
                               {card.title}
