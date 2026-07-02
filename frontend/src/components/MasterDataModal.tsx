@@ -178,12 +178,11 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                 </label>
                 <div className="relative">
                   <select
-                    required
                     value={departmentId}
                     onChange={(e) => setDepartmentId(e.target.value)}
                     className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 pr-10 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all appearance-none"
                   >
-                    <option value="" disabled>Pilih Departemen</option>
+                    <option value="">Pilih Departemen</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id} className="bg-bgSecondary text-textPrimary">{d.name}</option>
                     ))}

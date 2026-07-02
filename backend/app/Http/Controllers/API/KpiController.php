@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
@@ -8,43 +9,48 @@ use Carbon\Carbon;
 
 class KpiController extends Controller
 {
-    public function index() {
+    public function index()
+    {
         return response()->json(Kpi::with(['boards.tasks', 'boards.user', 'department'])->get());
     }
 
-    public function store(Request $request) {
-        
+    public function store(Request $request)
+    {
+
         $user = $request->user();
 
-        $date = Carbon::parse($request->targetDate)->toFormattedDateString();
+        $date = $request->target_date ? Carbon::parse($request->target_date)->toFormattedDateString() : null;
         $kpi = Kpi::create([
             'title' => $request->title,
             'description' => $request->description,
             'target_date' => $date,
-            'department_id' => $request->departmentId ?? $user->department_id,
+            'department_id' => $request->filled('department_id') ? $request->department_id : $user->department_id,
             'user_id' => $user->id,
         ]);
         return response()->json($kpi, 201);
     }
 
-    public function show($id) {
+    public function show($id)
+    {
         return response()->json(Kpi::with(['boards.tasks', 'boards.user'])->findOrFail($id));
     }
 
-    public function update(Request $request, $id) {
+    public function update(Request $request, $id)
+    {
         $model = Kpi::findOrFail($id);
-        
+
         $data = [];
         if ($request->has('title')) $data['title'] = $request->title;
         if ($request->has('description')) $data['description'] = $request->description;
-        if ($request->has('targetDate')) $data['target_date'] = $request->targetDate;
-        if ($request->has('departmentId')) $data['department_id'] = $request->departmentId;
-        
+        if ($request->has('target_date')) $data['target_date'] = $request->target_date;
+        if ($request->has('department_id')) $data['department_id'] = $request->department_id;
+
         $model->update($data);
         return response()->json($model);
     }
 
-    public function destroy($id) {
+    public function destroy($id)
+    {
         try {
             Kpi::destroy($id);
             return response()->json(['message' => 'Deleted']);
