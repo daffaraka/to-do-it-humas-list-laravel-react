@@ -17,10 +17,26 @@ import type {
 import { COLUMNS, AVAILABLE_LABELS } from '../types';
 import type { Card, ColumnId } from '../types';
 import { useKanban } from '../store/kanbanStore';
+import { useAuthStore } from '../store/authStore';
 import { KanbanColumn } from './KanbanColumn';
 import { CardDragOverlay } from './KanbanCard';
-import { Tag, ArrowLeft, Search } from 'lucide-react';
+import { Tag, ArrowLeft, Search, Calendar, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { differenceInDays, startOfDay } from 'date-fns';
+
+const getDaysRemaining = (dateString: string) => {
+  const target = startOfDay(new Date(dateString));
+  const now = startOfDay(new Date());
+  const diff = differenceInDays(target, now);
+  
+  if (diff < 0) {
+    return { text: `Terlewat ${Math.abs(diff)} hari`, isOverdue: true };
+  } else if (diff === 0) {
+    return { text: `Batas waktu hari ini`, isOverdue: false };
+  } else {
+    return { text: `Sisa waktu ${diff} hari`, isOverdue: false };
+  }
+};
 
 export function KanbanBoard() {
   const { 
@@ -33,6 +49,8 @@ export function KanbanBoard() {
   const [isLabelOpen, setIsLabelOpen] = useState(false);
   const navigate = useNavigate();
   const activeBoard = boards.find(b => b.id === activeBoardId);
+  
+  const user = useAuthStore((state) => state.user);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -52,6 +70,15 @@ export function KanbanBoard() {
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
+    const card = active.data.current?.card as Card;
+    const isOwner = card && (typeof card.pic === 'object' 
+      ? (card.pic as any)?.id === user?.id 
+      : (card as any)?.pic_id === user?.id);
+    
+    if (!isOwner) {
+      return;
+    }
+
     if (!over) return;
 
     const activeId = active.id as string;
@@ -63,14 +90,23 @@ export function KanbanBoard() {
     const isOverColumn = over.data.current?.type === 'Column';
 
     if (isActiveCard && isOverColumn) {
-      moveCard(activeId, overId as ColumnId);
+      moveCard(activeId, overId as ColumnId, false);
     }
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveCard(null);
     const { active, over } = event;
-    
+    const card = active.data.current?.card as Card;
+
+    const isOwner = card && (typeof card.pic === 'object' 
+      ? (card.pic as any)?.id === user?.id 
+      : (card as any)?.pic_id === user?.id);
+      
+    if (!isOwner) {
+      return;
+    }
+
     if (!over) return;
 
     const activeId = active.id as string;
@@ -113,8 +149,17 @@ export function KanbanBoard() {
           </button>
           {activeBoard && (
             <div className="border-l-2 border-borderBase pl-4">
-              <h2 className="text-lg font-bold text-textPrimary">
+              <h2 className="text-lg font-bold text-textPrimary flex items-center gap-2">
                 {activeBoard.title}
+                {activeBoard.targetDate && (() => {
+                  const r = getDaysRemaining(activeBoard.targetDate);
+                  return (
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-lg border flex items-center gap-1 ${r.isOverdue ? 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/20' : 'text-amber-600 dark:text-amber-500 bg-amber-500/10 border-amber-500/20'}`}>
+                      <Target size={12} />
+                      ({r.text})
+                    </span>
+                  );
+                })()}
               </h2>
             </div>
           )}
