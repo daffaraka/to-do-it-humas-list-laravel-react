@@ -176,11 +176,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20 shrink-0">
                       <Target size={20} />
                     </div>
-                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-textPrimary">
+                    <h2 className="text-lg sm:text-xl md:text-xl font-bold text-textPrimary">
                       Main Project - {kpi.title}
                     </h2>
                   </div>
-                  <div className="flex items-center gap-4 mt-2 ml-13 text-sm text-textSecondary pl-12">
+                  <div className="flex items-center gap-4 mt-2 text-sm text-textSecondary pl-12">
                     <span className="flex items-center gap-1.5">
                       <Briefcase size={14} className="text-indigo-400" />{" "}
                       {kpi.department?.name || "Semua Departemen"}
