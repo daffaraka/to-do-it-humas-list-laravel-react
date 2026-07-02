@@ -16,6 +16,7 @@ import {
   Briefcase,
   Filter,
   ChevronDown,
+  Search,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
@@ -78,6 +79,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const [mounted, setMounted] = useState(false);
   const [filterDepartment, setFilterDepartment] = useState<string>("all");
   const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
+  const [searchKpi, setSearchKpi] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -251,11 +253,40 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
             ✕ Reset
           </button>
         )}
+
+        {/* Search */}
+        <div className="relative flex-1 max-w-sm ml-auto">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary" size={16} />
+          <input
+            type="text"
+            placeholder="Cari project, board..."
+            value={searchKpi}
+            onChange={(e) => setSearchKpi(e.target.value)}
+            className="w-full bg-white dark:bg-bgSecondary border border-gray-200 dark:border-borderBase rounded-xl py-2.5 pl-10 pr-4 text-sm text-textPrimary placeholder-textSecondary/60 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400 transition-all shadow-sm"
+          />
+          {searchKpi && (
+            <button
+              onClick={() => setSearchKpi('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-textSecondary hover:text-textPrimary transition-colors"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-8">
         {displayKpis
           .filter((kpi) => filterDepartment === 'all' || kpi.departmentId === filterDepartment)
+          .filter((kpi) => {
+            if (!searchKpi.trim()) return true;
+            const q = searchKpi.toLowerCase();
+            if (kpi.title.toLowerCase().includes(q)) return true;
+            if (kpi.description?.toLowerCase().includes(q)) return true;
+            if (kpi.department?.name?.toLowerCase().includes(q)) return true;
+            if (kpi.boards?.some(b => b.title.toLowerCase().includes(q))) return true;
+            return false;
+          })
           .map((kpi) => {
           const progress = calculateProgress(kpi.boards || []);
           const canViewDetails = isAdmin || kpi.userId === user?.id;
@@ -526,7 +557,16 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-            {independentBoards.map((board) => {
+            {independentBoards
+              .filter((board) => {
+                if (!searchKpi.trim()) return true;
+                const q = searchKpi.toLowerCase();
+                if (board.title.toLowerCase().includes(q)) return true;
+                if (board.description?.toLowerCase().includes(q)) return true;
+                if (board.user?.name?.toLowerCase().includes(q)) return true;
+                return false;
+              })
+              .map((board) => {
               const tasks = board.tasks || [];
               const todoTasks = tasks.filter(
                 (t: any) => t.columnId === "new",
