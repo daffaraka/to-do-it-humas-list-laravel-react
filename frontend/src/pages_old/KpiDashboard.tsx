@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
-import { differenceInDays, startOfDay } from "date-fns";
+import { differenceInDays, startOfDay, format } from "date-fns";
 import { id as dateFnsIdLocale } from "date-fns/locale";
 
 import { useAuthStore } from "../store/authStore";
@@ -771,7 +771,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                   onChange={(date: any) =>
                     setFormData({
                       ...formData,
-                      targetDate: date ? date.toISOString().split("T")[0] : "",
+                      targetDate: date ? format(date, "yyyy-MM-dd") : "",
                     })
                   }
                   dateFormat="dd/MM/yyyy"
@@ -941,7 +941,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                     selected={boardStartDate ? new Date(boardStartDate) : null}
                     onChange={(date: any) =>
                       setBoardStartDate(
-                        date ? date.toISOString().split("T")[0] : "",
+                        date ? format(date, "yyyy-MM-dd") : "",
                       )
                     }
                     dateFormat="dd/MM/yyyy"
@@ -964,7 +964,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                     }
                     onChange={(date: any) =>
                       setBoardTargetDate(
-                        date ? date.toISOString().split("T")[0] : "",
+                        date ? format(date, "yyyy-MM-dd") : "",
                       )
                     }
                     dateFormat="dd/MM/yyyy"

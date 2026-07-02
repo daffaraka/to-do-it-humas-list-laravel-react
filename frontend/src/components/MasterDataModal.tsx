@@ -5,6 +5,7 @@ import type { FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import DatePicker from 'react-datepicker';
 import { id as dateFnsIdLocale } from 'date-fns/locale';
+import { format } from 'date-fns';
 import { X, User, Briefcase, Lock, Mail, Tag } from 'lucide-react';
 import api from '../lib/api';
 import { useKanban } from '../store/kanbanStore';
@@ -83,7 +84,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           if (password) payload.password = password;
           await api.patch(`/users/${initialData.id}`, payload);
         } else if (type === 'kpis') {
-          await api.put(`/kpis/${initialData.id}`, { title, description, targetDate: targetDate ? targetDate.toISOString() : null, departmentId });
+          await api.put(`/kpis/${initialData.id}`, { title, description, targetDate: targetDate ? format(targetDate, "yyyy-MM-dd") : null, departmentId });
         } else {
           await api.patch(`/${type}/${initialData.id}`, { name });
         }
@@ -93,7 +94,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           if (!email || !password || !departmentId || !roleId) return;
           await api.post('/users', { name, email, password, departmentId, roleId });
         } else if (type === 'kpis') {
-          await api.post('/kpis', { title, description, targetDate: targetDate ? targetDate.toISOString() : null, departmentId });
+          await api.post('/kpis', { title, description, targetDate: targetDate ? format(targetDate, "yyyy-MM-dd") : null, departmentId });
         } else {
           await api.post(`/${type}`, { name });
         }

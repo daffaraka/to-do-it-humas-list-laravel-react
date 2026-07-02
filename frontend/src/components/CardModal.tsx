@@ -5,6 +5,7 @@ import type { KeyboardEvent, MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import DatePicker from "react-datepicker";
 import { id as dateFnsIdLocale } from "date-fns/locale";
+import { format } from "date-fns";
 import {
   X,
   Tag,
@@ -228,7 +229,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       }
                       onChange={(date: any) =>
                         updateCard(card.id, {
-                          requestDate: date ? date.toISOString() : null,
+                          requestDate: date ? format(date, "yyyy-MM-dd") : null,
                         })
                       }
                       dateFormat="dd/MM/yyyy"
@@ -249,7 +250,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       selected={card.dueDate ? new Date(card.dueDate) : null}
                       onChange={(date: any) =>
                         updateCard(card.id, {
-                          dueDate: date ? date.toISOString() : null,
+                          dueDate: date ? format(date, "yyyy-MM-dd") : null,
                         })
                       }
                       dateFormat="dd/MM/yyyy"
@@ -569,7 +570,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 selected={card.dueDate ? new Date(card.dueDate) : null}
                 onChange={(date: any) =>
                   updateCard(card.id, {
-                    dueDate: date ? date.toISOString() : null,
+                    dueDate: date ? format(date, "yyyy-MM-dd") : null,
                   })
                 }
                 dateFormat="dd/MM/yyyy"

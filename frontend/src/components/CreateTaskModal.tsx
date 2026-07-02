@@ -5,6 +5,7 @@ import type { FormEvent } from "react";
 import { createPortal } from "react-dom";
 import DatePicker from "react-datepicker";
 import { id } from "date-fns/locale";
+import { format } from "date-fns";
 import { X, Type, FileText, User, Calendar, Briefcase } from "lucide-react";
 import type { ColumnId } from "../types";
 import { useKanban } from "../store/kanbanStore";
@@ -42,8 +43,8 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
         formData.append("departmentId", targetDepartmentId);
       if (description) formData.append("description", description);
       if (requestDate)
-        formData.append("requestDate", requestDate.toISOString());
-      if (dueDate) formData.append("dueDate", dueDate.toISOString());
+        formData.append("requestDate", format(requestDate, "yyyy-MM-dd"));
+      if (dueDate) formData.append("dueDate", format(dueDate, "yyyy-MM-dd"));
       if (attachment) formData.append("attachment", attachment);
 
       const { data } = await api.post("/tasks", formData, {
