@@ -15,7 +15,7 @@ import {
   getDay,
 } from "date-fns";
 import { id } from "date-fns/locale";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer } from "lucide-react";
 import { useKanban } from "../store/kanbanStore";
 import { CardModal } from "./CardModal";
 import type { Card } from "../types";
@@ -104,11 +104,11 @@ export function CalendarView() {
   const daysOfWeek = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
   const renderDaysHeader = () => {
     return (
-      <div className="grid grid-cols-7 border-b border-borderBase">
+      <div className="grid grid-cols-7 border-b border-borderBase print:border-black print:border-b-2">
         {daysOfWeek.map((dayName, idx) => (
           <div
             key={idx}
-            className="py-2 text-center text-xs font-semibold text-textSecondary uppercase tracking-wider"
+            className="py-2 text-center text-xs font-semibold text-textSecondary uppercase tracking-wider print:text-black print:font-bold print:border-r print:border-black last:print:border-r-0"
           >
             {dayName}
           </div>
@@ -134,14 +134,16 @@ export function CalendarView() {
       days.push(
         <div
           key={day.toISOString()}
-          className={`flex-1 min-h-[60px] border-r border-b border-borderBase p-2 flex flex-col transition-colors ${
+          className={`flex-1 min-h-[80px] border-r border-b border-borderBase print:border-black p-2 flex flex-col transition-colors ${
             !isSameMonth(day, monthStart)
-              ? "bg-bgGlass text-textSecondary opacity-50"
+              ? day < monthStart
+                ? "bg-yellow-100 dark:bg-yellow-900/30 text-textSecondary opacity-80"
+                : "bg-green-100 dark:bg-green-900/30 text-textSecondary opacity-80"
               : isSameDay(day, new Date())
-                ? "bg-indigo-500/10 text-indigo-500 dark:text-indigo-300"
+                ? "bg-indigo-500/10 text-indigo-500 dark:text-indigo-300 print:bg-transparent print:text-black"
                 : getDay(day) === 0
-                  ? "bg-yellow-500/10 dark:bg-yellow-500/5 text-textPrimary hover:bg-yellow-500/20"
-                  : "bg-transparent text-textPrimary hover:bg-bgGlass"
+                  ? "bg-red-200 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-300 print:bg-transparent"
+                  : "bg-transparent text-textPrimary hover:bg-bgGlass print:bg-transparent"
           }`}
         >
           <div className="flex justify-end mb-1">
@@ -177,12 +179,14 @@ export function CalendarView() {
                   className={`
                     text-xs p-1.5 rounded-md mb-1 cursor-pointer 
                     border transition-all duration-200 
-                    hover:shadow-sm hover:scale-[1.02] flex flex-row items-start gap-1.5 h-auto min-h-[30px]
+                    hover:shadow-sm hover:scale-[1.02] flex flex-row items-start gap-1.5 min-h-[30px]
+                    print:border-none print:bg-transparent print:text-black print:shadow-none print:px-0 print:py-1
                     ${getCardColor(card)}
                   `}
+                  style={{ pageBreakInside: 'avoid' }}
                 >
                   <div
-                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm shrink-0 mt-0.5 ${badgeClasses}`}
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm shrink-0 mt-0.5 print:border print:border-gray-400 print:text-black print:bg-transparent print:shadow-none ${badgeClasses}`}
                     title={
                       typeof card.pic === "object" && card.pic
                         ? (card.pic as any).name
@@ -191,10 +195,10 @@ export function CalendarView() {
                   >
                     {getPicInitials(card.pic)}
                   </div>
-                  <div className="font-medium flex-1 break-words whitespace-normal leading-tight flex flex-col">
-                    <span>{card.title}</span>
+                  <div className="font-medium flex-1 break-words whitespace-normal leading-tight flex flex-col h-full print:text-black">
+                    <span className="whitespace-normal break-words">{card.title}</span>
                     {card.pic && (
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-sm truncate mt-1 font-medium w-fit shadow-sm ${badgeClasses}`}>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-sm mt-1 font-medium w-fit shadow-sm whitespace-normal break-words print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${badgeClasses}`}>
                         Oleh:{" "}
                         {typeof card.pic === "object" && card.pic !== null
                           ? (card.pic as any).name
@@ -211,7 +215,7 @@ export function CalendarView() {
       day = addDays(day, 1);
     }
     rows.push(
-      <div className="grid grid-cols-7 min-h-[80px]" key={day.toISOString()}>
+      <div className="grid grid-cols-7 min-h-[80px] print:break-inside-avoid" key={day.toISOString()}>
         {days}
       </div>,
     );
@@ -219,45 +223,71 @@ export function CalendarView() {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-bgPrimary p-6 overflow-hidden transition-colors duration-300">
-      <div className="w-full flex flex-col h-full bg-bgSecondary border border-borderBase rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/50">
-        {/* Calendar Header */}
-        <div className="p-4 border-b border-borderBase flex items-center justify-between bg-bgGlass">
-          <h2 className="text-xl font-bold text-textPrimary tracking-tight">
-            {format(currentDate, dateFormat, { locale: id })}
-          </h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrevMonth}
-              className="p-2 rounded-xl hover:bg-bgGlass text-textSecondary hover:text-textPrimary transition-colors"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={() => setCurrentDate(new Date())}
-              className="px-4 py-2 text-sm font-medium text-textSecondary hover:text-textPrimary bg-bgGlass hover:bg-bgGlass/80 rounded-xl transition-colors border border-borderBase"
-            >
-              Hari Ini
-            </button>
-            <button
-              onClick={handleNextMonth}
-              className="p-2 rounded-xl hover:bg-bgGlass text-textSecondary hover:text-textPrimary transition-colors"
-            >
-              <ChevronRight size={20} />
-            </button>
+    <>
+      <style>{`
+        @media print {
+          @page {
+            size: landscape;
+            margin: 10mm;
+          }
+          html, body, #root {
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+          }
+          /* Hide sidebar or other absolute elements in print */
+          nav, aside, header {
+            display: none !important;
+          }
+        }
+      `}</style>
+      <div className="flex-1 flex flex-col h-full bg-bgPrimary p-6 overflow-hidden transition-colors duration-300 print:h-auto print:overflow-visible print:p-0 print:bg-white">
+        <div className="w-full flex flex-col h-full bg-bgSecondary border border-borderBase rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/50 print:h-auto print:overflow-visible print:shadow-none print:border-2 print:border-black print:rounded-none">
+          {/* Calendar Header */}
+          <div className="p-4 border-b border-borderBase flex items-center justify-between bg-bgGlass print:bg-transparent print:border-b-2 print:border-black">
+            <h2 className="text-xl font-bold text-textPrimary tracking-tight print:text-black">
+              {format(currentDate, dateFormat, { locale: id })}
+            </h2>
+            <div className="flex items-center gap-2 print:hidden">
+              <button
+                onClick={() => window.print()}
+                className="p-2 rounded-xl hover:bg-bgGlass text-textSecondary hover:text-indigo-500 transition-colors mr-2"
+                title="Cetak Kalender"
+              >
+                <Printer size={20} />
+              </button>
+              <button
+                onClick={handlePrevMonth}
+                className="p-2 rounded-xl hover:bg-bgGlass text-textSecondary hover:text-textPrimary transition-colors"
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <button
+                onClick={() => setCurrentDate(new Date())}
+                className="px-4 py-2 text-sm font-medium text-textSecondary hover:text-textPrimary bg-bgGlass hover:bg-bgGlass/80 rounded-xl transition-colors border border-borderBase"
+              >
+                Hari Ini
+              </button>
+              <button
+                onClick={handleNextMonth}
+                className="p-2 rounded-xl hover:bg-bgGlass text-textSecondary hover:text-textPrimary transition-colors"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar print:overflow-visible">
+            {renderDaysHeader()}
+            <div className="flex flex-col">{rows}</div>
           </div>
         </div>
 
-        {/* Calendar Grid */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {renderDaysHeader()}
-          <div className="flex flex-col">{rows}</div>
-        </div>
+        {selectedCard && (
+          <CardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+        )}
       </div>
-
-      {selectedCard && (
-        <CardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
-      )}
-    </div>
+    </>
   );
 }
