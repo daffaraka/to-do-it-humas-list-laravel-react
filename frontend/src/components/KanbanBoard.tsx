@@ -40,7 +40,7 @@ const getDaysRemaining = (dateString: string) => {
 
 export function KanbanBoard() {
   const { 
-    getFilteredCards, moveCard, reorderCards, 
+    getFilteredCards, moveCard, reorderCards, cards,
     filterLabel, setFilterLabel,
     searchQuery, setSearchQuery,
     activeBoardId, setActiveBoardId, boards
@@ -71,9 +71,17 @@ export function KanbanBoard() {
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     const card = active.data.current?.card as Card;
-    const isOwner = card && (typeof card.pic === 'object' 
-      ? (card.pic as any)?.id === user?.id 
-      : (card as any)?.pic_id === user?.id);
+    let cardPicId = null;
+    if (card) {
+      if (card.pic && typeof card.pic === 'object') {
+        cardPicId = (card.pic as any).id;
+      } else if (typeof card.pic === 'string') {
+        cardPicId = card.pic;
+      } else {
+        cardPicId = (card as any).picId || (card as any).pic_id;
+      }
+    }
+    const isOwner = card && (!cardPicId || cardPicId === user?.id);
     
     if (!isOwner) {
       return;
@@ -88,9 +96,21 @@ export function KanbanBoard() {
 
     const isActiveCard = active.data.current?.type === 'Card';
     const isOverColumn = over.data.current?.type === 'Column';
+    const isOverCard = over.data.current?.type === 'Card';
+
+    if (!isActiveCard) return;
 
     if (isActiveCard && isOverColumn) {
       moveCard(activeId, overId as ColumnId, false);
+      return;
+    }
+
+    if (isActiveCard && isOverCard) {
+      const activeCard = active.data.current?.card as Card;
+      const overCard = over.data.current?.card as Card;
+      if (activeCard.columnId !== overCard.columnId) {
+        moveCard(activeId, overCard.columnId as ColumnId, false);
+      }
     }
   };
 
@@ -99,9 +119,17 @@ export function KanbanBoard() {
     const { active, over } = event;
     const card = active.data.current?.card as Card;
 
-    const isOwner = card && (typeof card.pic === 'object' 
-      ? (card.pic as any)?.id === user?.id 
-      : (card as any)?.pic_id === user?.id);
+    let cardPicId = null;
+    if (card) {
+      if (card.pic && typeof card.pic === 'object') {
+        cardPicId = (card.pic as any).id;
+      } else if (typeof card.pic === 'string') {
+        cardPicId = card.pic;
+      } else {
+        cardPicId = (card as any).picId || (card as any).pic_id;
+      }
+    }
+    const isOwner = card && (!cardPicId || cardPicId === user?.id);
       
     if (!isOwner) {
       return;
@@ -115,15 +143,15 @@ export function KanbanBoard() {
     if (activeId === overId) return;
 
     // Same column reorder
-    const activeCard = active.data.current?.card as Card;
-    const overCard = over.data.current?.card as Card;
+    const freshActiveCard = cards.find(c => c.id === activeId);
+    const freshOverCard = over.data.current?.type === 'Card' ? cards.find(c => c.id === overId) : null;
 
-    if (activeCard && overCard && activeCard.columnId === overCard.columnId) {
+    if (freshActiveCard && freshOverCard && freshActiveCard.columnId === freshOverCard.columnId) {
       reorderCards(activeId, overId);
-    } else if (activeCard && overCard && activeCard.columnId !== overCard.columnId) {
+    } else if (freshActiveCard && freshOverCard && freshActiveCard.columnId !== freshOverCard.columnId) {
        // Moving to a new column is handled during dragOver, but if dropped directly on a card in another column
-       moveCard(activeId, overCard.columnId);
-    } else if (activeCard && !overCard) {
+       moveCard(activeId, freshOverCard.columnId);
+    } else if (freshActiveCard && !freshOverCard) {
        // Dropped onto empty column
        moveCard(activeId, overId as ColumnId);
     }

@@ -42,10 +42,17 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
   const { deleteCard } = useKanban();
   const user = useAuthStore((state) => state.user);
   
-  const isOwner = typeof card.pic === 'object' 
-    ? (card.pic as any)?.id === user?.id 
-    : (card as any)?.pic_id === user?.id;
-
+  let cardPicId = null;
+  if (card) {
+    if (card.pic && typeof card.pic === 'object') {
+      cardPicId = (card.pic as any).id;
+    } else if (typeof card.pic === 'string') {
+      cardPicId = card.pic;
+    } else {
+      cardPicId = (card as any).picId || (card as any).pic_id;
+    }
+  }
+  const isOwner = !cardPicId || cardPicId === user?.id;
   const {
     setNodeRef,
     attributes,
@@ -286,11 +293,16 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
           if (e.defaultPrevented) return;
           setIsModalOpen(true);
         }}
-        onPointerDown={!isOwner ? (e) => {
-          pointerDownPos.current = { x: e.clientX, y: e.clientY };
-        } : undefined}
-        onPointerMove={!isOwner ? (e) => {
-          if (pointerDownPos.current) {
+        onPointerDown={(e) => {
+          if (!isOwner) {
+            pointerDownPos.current = { x: e.clientX, y: e.clientY };
+          }
+          if (listeners?.onPointerDown) {
+            listeners.onPointerDown(e as any);
+          }
+        }}
+        onPointerMove={(e) => {
+          if (!isOwner && pointerDownPos.current) {
             const dx = e.clientX - pointerDownPos.current.x;
             const dy = e.clientY - pointerDownPos.current.y;
             if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
@@ -299,13 +311,27 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
               setTimeout(() => setShowAlert(false), 3000);
             }
           }
-        } : undefined}
-        onPointerUp={!isOwner ? () => {
-          pointerDownPos.current = null;
-        } : undefined}
-        onPointerCancel={!isOwner ? () => {
-          pointerDownPos.current = null;
-        } : undefined}
+          // dnd-kit pointerSensor doesn't typically attach onPointerMove to the node directly, but just in case:
+          if (listeners?.onPointerMove) {
+            (listeners as any).onPointerMove(e);
+          }
+        }}
+        onPointerUp={(e) => {
+          if (!isOwner) {
+            pointerDownPos.current = null;
+          }
+          if (listeners?.onPointerUp) {
+            (listeners as any).onPointerUp(e);
+          }
+        }}
+        onPointerCancel={(e) => {
+          if (!isOwner) {
+            pointerDownPos.current = null;
+          }
+          if (listeners?.onPointerCancel) {
+            (listeners as any).onPointerCancel(e);
+          }
+        }}
         className={isOwner ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}
       >
         {CardContent}

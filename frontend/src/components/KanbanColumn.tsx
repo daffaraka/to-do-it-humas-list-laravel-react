@@ -17,6 +17,10 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
   const [isCreating, setIsCreating] = useState(false);
   const { setNodeRef } = useDroppable({
     id: column.id,
+    data: {
+      type: 'Column',
+      column,
+    },
   });
 
   const getColumnColors = (id: string) => {

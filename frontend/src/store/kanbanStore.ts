@@ -214,9 +214,11 @@ export const useKanban = create<KanbanState>()(
       moveCard: async (cardId, toColumnId, saveToDb = true) => {
         const previousCards = get().cards;
         const card = previousCards.find((c) => c.id === cardId);
-        if (!card || card.columnId === toColumnId) return;
+        if (!card) return;
+        
+        if (card.columnId === toColumnId && !saveToDb) return;
 
-        const targetCards = previousCards.filter((c) => c.columnId === toColumnId && c.departmentId === card.departmentId);
+        const targetCards = previousCards.filter((c) => c.columnId === toColumnId && c.departmentId === card.departmentId && c.id !== cardId);
         const newPosition = targetCards.length;
 
         set((state) => ({
@@ -291,7 +293,7 @@ export const useKanban = create<KanbanState>()(
           if (changedCards.length > 0) {
             await Promise.all(
               changedCards.map((id) => 
-                api.patch(`/tasks/${id}`, { position: updatedPositions.get(id) })
+                api.patch(`/tasks/${id}`, { position: updatedPositions.get(id), columnId: columnId })
               )
             );
           }
