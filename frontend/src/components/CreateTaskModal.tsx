@@ -23,10 +23,27 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const [requestDate, setRequestDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    
+    // Validasi Front-end
+    const newErrors: Record<string, string> = {};
+    if (!title.trim()) newErrors.title = "Nama tugas wajib diisi";
+    if (!description.trim()) newErrors.description = "Deskripsi wajib diisi";
+    if (!requestDate) newErrors.requestDate = "Tanggal mulai wajib diisi";
+    if (!dueDate) newErrors.dueDate = "Target tanggal wajib diisi";
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setErrors({});
 
     try {
       const activeBoardId = useKanban.getState().activeBoardId;
@@ -53,8 +70,17 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
       useKanban.setState((state) => ({ cards: [...state.cards, data] }));
 
       onClose();
-    } catch (err) {
-      console.error("Failed to add card with attachment", err);
+    } catch (err: any) {
+      console.error("Failed to add card", err);
+      if (err.response?.data?.errors) {
+        const apiErrors: Record<string, string> = {};
+        Object.keys(err.response.data.errors).forEach(key => {
+          apiErrors[key] = err.response.data.errors[key][0];
+        });
+        setErrors(apiErrors);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -89,26 +115,33 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
             <input
               type="text"
               autoFocus
-              required
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (errors.title) setErrors({...errors, title: ''});
+              }}
               placeholder="Contoh: Perbaikan jaringan lantai 2"
-              className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
+              className={`w-full bg-white border dark:bg-bgSecondary rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 transition-all placeholder-textSecondary ${errors.title ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 dark:border-borderBase focus:border-gray-400 focus:ring-gray-200'}`}
             />
+            {errors.title && <p className="text-red-500 text-xs mt-1 animate-in slide-in-from-top-1">{errors.title}</p>}
           </div>
 
           {/* Description */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
               <FileText size={14} className="text-indigo-400" />
-              Deskripsi Singkat
+              Deskripsi Singkat <span className="text-red-400">*</span>
             </label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (errors.description) setErrors({...errors, description: ''});
+              }}
               placeholder="Tambahkan detail..."
-              className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary min-h-[80px] focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 resize-none transition-all placeholder-textSecondary"
+              className={`w-full bg-white border dark:bg-bgSecondary rounded-xl px-4 py-3 text-sm text-textPrimary min-h-[80px] focus:outline-none focus:ring-2 resize-none transition-all placeholder-textSecondary ${errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 dark:border-borderBase focus:border-gray-400 focus:ring-gray-200'}`}
             />
+            {errors.description && <p className="text-red-500 text-xs mt-1 animate-in slide-in-from-top-1">{errors.description}</p>}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -116,38 +149,46 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
                 <Calendar size={14} className="text-indigo-400" />
-                Tanggal Mulai
+                Tanggal Mulai <span className="text-red-400">*</span>
               </label>
               <DatePicker
                 selected={requestDate}
-                onChange={(date: any) => setRequestDate(date)}
+                onChange={(date: any) => {
+                  setRequestDate(date);
+                  if (errors.requestDate) setErrors({...errors, requestDate: ''});
+                }}
                 dateFormat="dd/MM/yyyy"
                 locale={id}
                 placeholderText="dd/mm/yyyy"
                 showMonthDropdown
                 showYearDropdown
                 dropdownMode="select"
-                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
+                className={`w-full bg-white border dark:bg-bgSecondary rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 transition-all placeholder-textSecondary ${errors.requestDate ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 dark:border-borderBase focus:border-gray-400 focus:ring-gray-200'}`}
               />
+              {errors.requestDate && <p className="text-red-500 text-xs mt-1 animate-in slide-in-from-top-1">{errors.requestDate}</p>}
             </div>
 
             {/* Due Date (Tanggal Selesai) */}
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
                 <Calendar size={14} className="text-emerald-400" />
-                Target Tanggal
+                Target Tanggal <span className="text-red-400">*</span>
               </label>
               <DatePicker
                 selected={dueDate}
-                onChange={(date: any) => setDueDate(date)}
+                onChange={(date: any) => {
+                  setDueDate(date);
+                  if (errors.dueDate) setErrors({...errors, dueDate: ''});
+                }}
                 dateFormat="dd/MM/yyyy"
                 locale={id}
                 placeholderText="dd/mm/yyyy"
                 showMonthDropdown
                 showYearDropdown
                 dropdownMode="select"
-                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
+                className={`w-full bg-white border dark:bg-bgSecondary rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 transition-all placeholder-textSecondary ${errors.dueDate ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 dark:border-borderBase focus:border-gray-400 focus:ring-gray-200'}`}
               />
+              {errors.dueDate && <p className="text-red-500 text-xs mt-1 animate-in slide-in-from-top-1">{errors.dueDate}</p>}
             </div>
           </div>
 
@@ -171,16 +212,27 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 text-sm font-medium text-textSecondary bg-white border border-gray-200 hover:bg-gray-50 hover:text-textPrimary rounded-xl transition-all"
+              disabled={isSubmitting}
+              className="px-5 py-2.5 text-sm font-medium text-textSecondary bg-white border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-bgGlass hover:text-textPrimary rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Batal
             </button>
             <button
               type="submit"
-              disabled={!title.trim()}
-              className="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-sm transition-all"
+              disabled={isSubmitting}
+              className="px-7 py-2.5 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed shadow-md transition-all flex items-center justify-center min-w-[140px] cursor-pointer rounded-xl"
             >
-              Buat Tugas
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Menyimpan...
+                </>
+              ) : (
+                "Buat Tugas"
+              )}
             </button>
           </div>
         </form>
