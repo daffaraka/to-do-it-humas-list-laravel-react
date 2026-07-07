@@ -10,7 +10,10 @@ class Checklist extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'task_id', 'text', 'completed'
+        'id',
+        'task_id',
+        'text',
+        'completed'
     ];
 
     protected $casts = [

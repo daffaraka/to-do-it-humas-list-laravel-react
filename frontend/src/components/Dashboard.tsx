@@ -18,6 +18,8 @@ export function Dashboard() {
   const [newDesc, setNewDesc] = useState('');
   const [newKpiId, setNewKpiId] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setMounted(true);
@@ -29,13 +31,38 @@ export function Dashboard() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
     
-    await createBoard(newTitle, newDesc, newKpiId || undefined);
-    setNewTitle('');
-    setNewDesc('');
-    setNewKpiId('');
-    setIsCreating(false);
+    // Validasi Front-end
+    const newErrors: Record<string, string> = {};
+    if (!newTitle.trim()) newErrors.title = "Judul pekerjaan wajib diisi";
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      await createBoard(newTitle.trim(), newDesc.trim(), newKpiId || undefined);
+      setNewTitle('');
+      setNewDesc('');
+      setNewKpiId('');
+      setIsCreating(false);
+    } catch (err: any) {
+      console.error("Failed to create board", err);
+      if (err.response?.data?.errors) {
+        const apiErrors: Record<string, string> = {};
+        Object.keys(err.response.data.errors).forEach(key => {
+          apiErrors[key] = err.response.data.errors[key][0];
+        });
+        setErrors(apiErrors);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading && boards.length === 0) {
@@ -64,24 +91,32 @@ export function Dashboard() {
             <h2 className="text-lg font-semibold text-textPrimary mb-4">Buat Main Job Baru</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-textSecondary mb-1">Judul Pekerjaan</label>
+                <label className="block text-sm font-medium text-textSecondary mb-1">Judul Pekerjaan <span className="text-red-400">*</span></label>
                 <input
                   type="text"
                   value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-bgPrimary border border-borderBase rounded-lg px-4 py-2 text-textPrimary focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  onChange={(e) => {
+                    setNewTitle(e.target.value);
+                    if (errors.title) setErrors({...errors, title: ''});
+                  }}
+                  className={`w-full bg-bgPrimary border rounded-lg px-4 py-2 text-textPrimary focus:outline-none focus:ring-1 transition-all ${errors.title ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-borderBase focus:border-indigo-500 focus:ring-indigo-500'}`}
                   placeholder="Contoh: Pembuatan Aplikasi Jaringan"
                   autoFocus
                 />
+                {errors.title && <p className="text-red-500 text-xs mt-1 animate-in slide-in-from-top-1">{errors.title}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-textSecondary mb-1">Deskripsi (Opsional)</label>
                 <textarea
                   value={newDesc}
-                  onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-bgPrimary border border-borderBase rounded-lg px-4 py-2 text-textPrimary focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
+                  onChange={(e) => {
+                    setNewDesc(e.target.value);
+                    if (errors.description) setErrors({...errors, description: ''});
+                  }}
+                  className={`w-full bg-bgPrimary border rounded-lg px-4 py-2 text-textPrimary focus:outline-none focus:ring-1 min-h-[80px] transition-all ${errors.description ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-borderBase focus:border-indigo-500 focus:ring-indigo-500'}`}
                   placeholder="Tambahkan detail..."
                 />
+                {errors.description && <p className="text-red-500 text-xs mt-1 animate-in slide-in-from-top-1">{errors.description}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-textSecondary mb-1">Pilih KPI Induk (Opsional)</label>
@@ -99,17 +134,28 @@ export function Dashboard() {
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
+                  disabled={isSubmitting}
                   onClick={() => setIsCreating(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-textSecondary hover:bg-bgGlass transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-textSecondary bg-transparent border-2 border-gray-300 hover:border-gray-400 hover:bg-bgGlass transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  disabled={!newTitle.trim()}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-indigo-500 text-white hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={isSubmitting}
+                  className="px-6 py-2 rounded-lg text-sm font-medium bg-indigo-500 text-white hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed shadow-md transition-all flex items-center justify-center min-w-[120px] cursor-pointer"
                 >
-                  Simpan
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Menyimpan...
+                    </>
+                  ) : (
+                    "Simpan"
+                  )}
                 </button>
               </div>
             </div>

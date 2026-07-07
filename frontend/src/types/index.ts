@@ -38,6 +38,8 @@ export interface Board {
   kpiId?: string | null;
   kpi_id?: string | null;
   kpi?: Kpi;
+  startDate?: string | null;
+  targetDate?: string | null;
   createdAt: string;
   updatedAt: string;
   tasks?: Card[];
@@ -52,6 +54,7 @@ export interface Card {
   pic: string;
   columnId: ColumnId;
   boardId: string;
+  board?: Board;
   departmentId: string;
   department?: Department;
   position: number;

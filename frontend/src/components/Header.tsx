@@ -53,7 +53,10 @@ export function Header() {
   }, [fetchNotifications]);
 
   return (
-    <header id="main-header" className="bg-bgSecondary/80 backdrop-blur-md border-b border-borderBase sticky top-0 z-20 flex flex-col transition-colors duration-300">
+    <header
+      id="main-header"
+      className="bg-bgSecondary/80 backdrop-blur-md border-b border-borderBase sticky top-0 z-20 flex flex-col transition-colors duration-300"
+    >
       {/* Main Nav */}
       <div className="px-6 py-4 flex items-center justify-between gap-4">
         {/* Logo */}
@@ -68,17 +71,17 @@ export function Header() {
           <Link
             to="/kpi"
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/kpi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-            title="Dashboard KPI"
+            title="Dashboard Project"
           >
-            Dashboard KPI
+            Dashboard Project
           </Link>
-          <Link
+          {/* <Link
             to="/jobs"
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/jobs" || pathname.startsWith("/board/") || pathname === "/" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
             title="Pekerjaan Saya"
           >
             Pekerjaan Saya
-          </Link>
+          </Link> */}
           <Link
             to="/view-jobs"
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/view-jobs" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
@@ -107,7 +110,6 @@ export function Header() {
 
         {/* Profile (Right) */}
         <div className="flex items-center min-w-[200px] justify-end gap-4 ml-auto">
-
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
@@ -205,7 +207,6 @@ export function Header() {
           </div>
         </div>
       </div>
-
     </header>
   );
 }

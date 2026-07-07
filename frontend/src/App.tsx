@@ -13,7 +13,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<ClientLayout />}>
-          <Route path="/" element={<Navigate to="/jobs" replace />} />
+          <Route path="/" element={<Navigate to="/kpi" replace />} />
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/kpi" element={<KpiPage />} />
           <Route path="/view-jobs" element={<ViewJobsPage />} />

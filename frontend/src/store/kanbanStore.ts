@@ -23,7 +23,9 @@ interface KanbanState {
 
   fetchDepartments: () => Promise<void>;
   fetchBoards: () => Promise<void>;
-  createBoard: (title: string, description?: string, kpiId?: string) => Promise<void>;
+  createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string) => Promise<void>;
+  updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
+  deleteBoard: (id: string) => Promise<void>;
   setActiveBoardId: (boardId: string | null) => void;
   fetchCards: (boardId: string) => Promise<void>;
   fetchAllCards: () => Promise<void>;
@@ -31,7 +33,7 @@ interface KanbanState {
   addCard: (title: string, columnId: ColumnId, extraData?: Partial<Card>) => Promise<void>;
   updateCard: (id: string, updates: Partial<Card>) => Promise<void>;
   deleteCard: (id: string) => Promise<void>;
-  moveCard: (cardId: string, toColumnId: ColumnId) => Promise<void>;
+  moveCard: (cardId: string, toColumnId: ColumnId, saveToDb?: boolean) => Promise<void>;
   reorderCards: (activeId: string, overId: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   setFilterLabel: (labelId: string | null) => void;
@@ -83,12 +85,41 @@ export const useKanban = create<KanbanState>()(
         }
       },
 
-      createBoard: async (title, description, kpiId) => {
+      createBoard: async (title, description, kpiId, startDate, targetDate) => {
         try {
-          const response = await api.post('/boards', { title, description, kpiId, kpi_id: kpiId });
+          const response = await api.post('/boards', { 
+            title, 
+            description, 
+            kpiId, 
+            kpi_id: kpiId,
+            startDate,
+            targetDate
+          });
           set((state) => ({ boards: [response.data, ...state.boards] }));
         } catch (err: any) {
           console.error('Failed to create board', err);
+        }
+      },
+
+      deleteBoard: async (id) => {
+        try {
+          await api.delete(`/boards/${id}`);
+          set((state) => ({ boards: state.boards.filter(b => b.id !== id) }));
+        } catch (err) {
+          console.error('Failed to delete board', err);
+          throw err;
+        }
+      },
+
+      updateBoard: async (id, updates) => {
+        try {
+          const response = await api.patch(`/boards/${id}`, updates);
+          set((state) => ({
+            boards: state.boards.map(b => b.id === id ? { ...b, ...response.data } : b)
+          }));
+        } catch (err) {
+          console.error('Failed to update board', err);
+          throw err;
         }
       },
 
@@ -180,27 +211,41 @@ export const useKanban = create<KanbanState>()(
         }
       },
 
-      moveCard: async (cardId, toColumnId) => {
+      moveCard: async (cardId, toColumnId, saveToDb = true) => {
         const previousCards = get().cards;
         const card = previousCards.find((c) => c.id === cardId);
-        if (!card || card.columnId === toColumnId) return;
+        if (!card) return;
+        
+        if (card.columnId === toColumnId && !saveToDb) return;
 
-        const targetCards = previousCards.filter((c) => c.columnId === toColumnId && c.departmentId === card.departmentId);
+        const targetCards = previousCards.filter((c) => c.columnId === toColumnId && c.departmentId === card.departmentId && c.id !== cardId);
         const newPosition = targetCards.length;
 
         set((state) => ({
-          cards: state.cards.map((c) =>
-            c.id === cardId
-              ? { ...c, columnId: toColumnId, position: newPosition, updatedAt: new Date().toISOString() }
-              : c
-          ),
+          cards: state.cards.map((c) => {
+            if (c.id === cardId) {
+              const now = new Date().toISOString();
+              return { 
+                ...c, 
+                columnId: toColumnId, 
+                position: newPosition, 
+                updatedAt: now,
+                ...(toColumnId === 'new' && { new_date: now }),
+                ...(toColumnId === 'progress' && { proses_date: now }),
+                ...(toColumnId === 'done' && { end_date: now }),
+              };
+            }
+            return c;
+          }),
         }));
 
-        try {
-          await api.patch(`/tasks/${cardId}`, { columnId: toColumnId, position: newPosition });
-        } catch (err: any) {
-          console.error('Failed to move card', err);
-          set({ cards: previousCards });
+        if (saveToDb) {
+          try {
+            await api.patch(`/tasks/${cardId}`, { columnId: toColumnId, position: newPosition });
+          } catch (err: any) {
+            console.error('Failed to move card', err);
+            set({ cards: previousCards });
+          }
         }
       },
 
@@ -225,8 +270,13 @@ export const useKanban = create<KanbanState>()(
         reordered.splice(overIdx, 0, moved);
 
         const updatedPositions = new Map<string, number>();
+        const changedCards: string[] = [];
+        
         reordered.forEach((card, idx) => {
           updatedPositions.set(card.id, idx);
+          if (card.position !== idx) {
+            changedCards.push(card.id);
+          }
         });
 
         set((state) => ({
@@ -239,7 +289,14 @@ export const useKanban = create<KanbanState>()(
         }));
 
         try {
-          await api.patch(`/tasks/${activeId}`, { position: updatedPositions.get(activeId) });
+          // Update all cards that changed position to prevent overlapping positions in DB
+          if (changedCards.length > 0) {
+            await Promise.all(
+              changedCards.map((id) => 
+                api.patch(`/tasks/${id}`, { position: updatedPositions.get(id), columnId: columnId })
+              )
+            );
+          }
         } catch (err: any) {
           console.error('Failed to reorder cards', err);
           set({ cards: previousCards });

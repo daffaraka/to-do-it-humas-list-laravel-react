@@ -10,7 +10,12 @@ class Kpi extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'title', 'description', 'department_id', 'user_id', 'target_date'
+        'id',
+        'title',
+        'description',
+        'department_id',
+        'user_id',
+        'target_date'
     ];
 
     protected $casts = [

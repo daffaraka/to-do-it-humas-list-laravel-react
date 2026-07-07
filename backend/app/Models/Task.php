@@ -10,15 +10,30 @@ class Task extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'title', 'description', 'document_link', 'pic_id', 'board_id', 'request_date', 'due_date', 'priority', 'column_id', 'department_id', 'position', 'attachment', 'new_date', 'proses_date', 'end_date'
+        'id',
+        'title',
+        'description',
+        'document_link',
+        'pic_id',
+        'board_id',
+        'request_date',
+        'due_date',
+        'priority',
+        'column_id',
+        'department_id',
+        'position',
+        'attachment',
+        'new_date',
+        'proses_date',
+        'end_date'
     ];
 
     protected $casts = [
         'request_date' => 'date',
         'due_date' => 'date',
-        'new_date' => 'date',
-        'proses_date' => 'date',
-        'end_date' => 'date',
+        'new_date' => 'datetime',
+        'proses_date' => 'datetime',
+        'end_date' => 'datetime',
     ];
 
     public function pic()

@@ -10,7 +10,8 @@ class Department extends Model
     use HasUuids;
 
     protected $fillable = [
-        'id', 'name'
+        'id',
+        'name'
     ];
 
     public function users()

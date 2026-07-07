@@ -17,6 +17,10 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
   const [isCreating, setIsCreating] = useState(false);
   const { setNodeRef } = useDroppable({
     id: column.id,
+    data: {
+      type: 'Column',
+      column,
+    },
   });
 
   const getColumnColors = (id: string) => {
@@ -52,7 +56,7 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
         <div className={`p-4 border-b flex items-center justify-between transition-colors duration-300 ${getHeaderColors(column.id)}`}>
           <div className="flex items-center gap-2">
             <h2 className="font-semibold text-textPrimary">{column.title}</h2>
-            <span className="bg-bgGlassHover text-textSecondary text-xs px-2 py-0.5 rounded-full font-medium">
+            <span className="bg-black text-white dark:bg-white dark:text-black text-xs px-2 py-0.5 rounded-full font-medium shadow-sm">
               {cards.length}
             </span>
           </div>
