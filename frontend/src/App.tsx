@@ -6,6 +6,7 @@ import ViewJobsPage from '@/pages/ViewJobsPage';
 import CalendarPage from '@/pages/CalendarPage';
 import MasterDataPage from '@/pages/MasterDataPage';
 import BoardPage from '@/pages/BoardPage';
+import NotFoundPage from '@/pages/NotFoundPage';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/master" element={<MasterDataPage />} />
           <Route path="/board/:id" element={<BoardPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
