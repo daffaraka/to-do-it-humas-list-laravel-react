@@ -5,6 +5,7 @@ import KpiPage from '@/pages/KpiPage';
 import ViewJobsPage from '@/pages/ViewJobsPage';
 import CalendarPage from '@/pages/CalendarPage';
 import MasterDataPage from '@/pages/MasterDataPage';
+import MeetingsPage from '@/pages/MeetingsPage';
 import BoardPage from '@/pages/BoardPage';
 import NotFoundPage from '@/pages/NotFoundPage';
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/kpi" element={<KpiPage />} />
           <Route path="/view-jobs" element={<ViewJobsPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/meetings" element={<MeetingsPage />} />
           <Route path="/master" element={<MasterDataPage />} />
           <Route path="/board/:id" element={<BoardPage />} />
           <Route path="*" element={<NotFoundPage />} />

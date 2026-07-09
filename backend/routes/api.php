@@ -13,6 +13,8 @@ use App\Http\Controllers\API\CommentController;
 use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\KpiController;
 use App\Http\Controllers\API\UserController;
+use App\Http\Controllers\API\MeetingController;
+
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
@@ -29,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('comments', CommentController::class);
     Route::apiResource('notifications', NotificationController::class);
     Route::apiResource('kpis', KpiController::class);
+    Route::apiResource('meetings', MeetingController::class);
 
     // Custom Routes for Frontend compatibility
     Route::apiResource('users', UserController::class);

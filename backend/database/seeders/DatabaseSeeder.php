@@ -78,5 +78,27 @@ class DatabaseSeeder extends Seeder
             ['id' => '019f20b0-989f-7015-89b3-97c6209f9d52', 'title' => 'Design Hari Raya', 'description' => 'Test', 'document_link' => null, 'pic_id' => null, 'board_id' => '019f20a6-bb0c-7030-95ff-861580dc6253', 'request_date' => '2026-07-01', 'due_date' => '2026-07-02', 'priority' => 'low', 'column_id' => 'new', 'department_id' => '019f1cad-0447-7281-ac27-d11e720e840c', 'position' => 1, 'created_at' => '2026-07-01 19:37:52', 'updated_at' => '2026-07-01 19:37:52', 'attachment' => null, 'new_date' => '2026-07-01 19:37:52', 'proses_date' => null, 'end_date' => null],
             ['id' => '019f20b1-0f38-73b6-b70a-a399264bb5f6', 'title' => 'Upload Design Hari Raya', 'description' => 'Upload Design', 'document_link' => null, 'pic_id' => null, 'board_id' => '019f20a6-bb0c-7030-95ff-861580dc6253', 'request_date' => '2026-07-03', 'due_date' => '2026-07-04', 'priority' => 'low', 'column_id' => 'new', 'department_id' => '019f1cad-0447-7281-ac27-d11e720e840c', 'position' => 2, 'created_at' => '2026-07-01 19:38:22', 'updated_at' => '2026-07-01 19:38:22', 'attachment' => null, 'new_date' => '2026-07-01 19:38:22', 'proses_date' => null, 'end_date' => null],
         ]);
+
+        // Insert Meetings
+        DB::table('meetings')->insert([
+            [
+                'meeting_name' => 'Meeting Kordinasi IT',
+                'meeting_description' => 'Membahas progress aplikasi To Do List dan kendala server.',
+                'meeting_notes' => 'Siapkan laporan progress masing-masing tim.',
+                'meeting_document' => null,
+                'meeting_date_start' => now()->addDays(2)->format('Y-m-d H:i:s'),
+                'created_at' => now(),
+                'updated_at' => now()
+            ],
+            [
+                'meeting_name' => 'Rapat Strategi Branding',
+                'meeting_description' => 'Diskusi tentang penguatan branding sekolah Avicenna.',
+                'meeting_notes' => null,
+                'meeting_document' => null,
+                'meeting_date_start' => now()->addDays(5)->format('Y-m-d H:i:s'),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]
+        ]);
     }
 }

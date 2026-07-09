@@ -97,6 +97,13 @@ export function Header() {
           >
             Kalender
           </Link>
+          <Link
+            to="/meetings"
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/meetings" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            title="Meeting"
+          >
+            Meeting
+          </Link>
           {isAdmin && (
             <Link
               to="/master"
