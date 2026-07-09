@@ -403,7 +403,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                         <div
                           key={board.id}
                           onClick={() => navigate(`/board/${board.id}`)}
-                          className="bg-bgSecondary rounded-xl p-4 sm:p-5 border border-border/30 shadow-sm hover:shadow-[0_4px_12px_-4px_rgba(6,81,237,0.15)] transition-all cursor-pointer group flex flex-col min-h-[140px] sm:min-h-[160px] transform hover:-translate-y-1 relative"
+                          className={`rounded-xl p-4 sm:p-5 border shadow-sm hover:shadow-[0_4px_12px_-4px_rgba(6,81,237,0.15)] transition-all cursor-pointer group flex flex-col min-h-[140px] sm:min-h-[160px] transform hover:-translate-y-1 relative ${
+                            board.userId === user?.id
+                              ? "bg-blue-200 dark:bg-blue-900/60 border-blue-400 dark:border-blue-600"
+                              : "bg-bgSecondary border-border/30"
+                          }`}
                         >
                           {(isAdmin ||
                             board.userId === user?.id ||
@@ -582,7 +586,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                 <div
                   key={board.id}
                   onClick={() => navigate(`/board/${board.id}`)}
-                  className="bg-bgSecondary rounded-xl p-4 sm:p-5 border border-border/30 shadow-sm hover:shadow-[0_4px_12px_-4px_rgba(6,81,237,0.15)] transition-all cursor-pointer group flex flex-col min-h-[140px] sm:min-h-[160px] transform hover:-translate-y-1 relative"
+                  className={`rounded-xl p-4 sm:p-5 border shadow-sm hover:shadow-[0_4px_12px_-4px_rgba(6,81,237,0.15)] transition-all cursor-pointer group flex flex-col min-h-[140px] sm:min-h-[160px] transform hover:-translate-y-1 relative ${
+                    board.userId === user?.id
+                      ? "bg-blue-200 dark:bg-blue-900/60 border-blue-400 dark:border-blue-600"
+                      : "bg-bgSecondary border-border/30"
+                  }`}
                 >
                   {(isAdmin || board.userId === user?.id) && (
                     <div className="absolute top-2 right-2 flex gap-0.5 opacity-40 group-hover:opacity-100 transition-all z-10">

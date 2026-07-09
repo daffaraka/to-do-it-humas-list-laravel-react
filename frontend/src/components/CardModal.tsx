@@ -238,7 +238,8 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       showMonthDropdown
                       showYearDropdown
                       dropdownMode="select"
-                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                      onKeyDown={(e) => e.preventDefault()}
+                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
                     />
                   </div>
 
@@ -259,7 +260,8 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       showMonthDropdown
                       showYearDropdown
                       dropdownMode="select"
-                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                      onKeyDown={(e) => e.preventDefault()}
+                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
                     />
                   </div>
                 </div>
@@ -382,13 +384,18 @@ export function CardModal({ card, onClose }: CardModalProps) {
                   </div>
 
                   <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
-                    <input
-                      type="text"
+                    <textarea
                       value={newChecklistText}
                       onChange={(e) => setNewChecklistText(e.target.value)}
-                      onKeyDown={handleAddChecklist}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleAddChecklist(e as any);
+                        }
+                      }}
                       placeholder="Tambah item baru..."
-                      className="flex-1 bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
+                      rows={1}
+                      className="flex-1 bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 resize-y"
                     />
                     <button
                       onClick={handleAddChecklist}
@@ -579,7 +586,8 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 showMonthDropdown
                 showYearDropdown
                 dropdownMode="select"
-                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                onKeyDown={(e) => e.preventDefault()}
+                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
               />
             </div>
           </div>

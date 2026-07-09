@@ -304,6 +304,26 @@ Safina Ameera Ramadhani OSN biologi', 'document_link' => null, 'pic_id' => '019f
             ['id' => '019f40c7-aa31-7224-aeb8-0ba79187287b', 'title' => 'Desain Prestasi IUP UGM Intake 3 - SMA AVC JGK', 'description' => 'Desain Prestasi IUP UGM Intake 3 - SMA AVC JGK', 'document_link' => null, 'pic_id' => '019f1ce0-c7c5-7131-af55-1aa803d08863', 'board_id' => '019f269d-fb1c-72b2-8e06-8d71899f33af', 'request_date' => '2026-07-03', 'due_date' => '2026-07-06', 'priority' => 'low', 'column_id' => 'done', 'department_id' => '019f1cad-0447-7281-ac27-d11e720e840c', 'position' => '19', 'created_at' => '2026-07-08 01:10:54', 'updated_at' => '2026-07-08 01:11:01', 'attachment' => null, 'new_date' => '2026-07-08 01:10:54', 'proses_date' => null, 'end_date' => '2026-07-08 01:11:01'],
         ]);
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        // Insert Meetings
+        DB::table('meetings')->insert([
+            [
+                'meeting_name' => 'Meeting Kordinasi IT',
+                'meeting_description' => 'Membahas progress aplikasi To Do List dan kendala server.',
+                'meeting_notes' => 'Siapkan laporan progress masing-masing tim.',
+                'meeting_document' => null,
+                'meeting_date_start' => now()->addDays(2)->format('Y-m-d H:i:s'),
+                'created_at' => now(),
+                'updated_at' => now()
+            ],
+            [
+                'meeting_name' => 'Rapat Strategi Branding',
+                'meeting_description' => 'Diskusi tentang penguatan branding sekolah Avicenna.',
+                'meeting_notes' => null,
+                'meeting_document' => null,
+                'meeting_date_start' => now()->addDays(5)->format('Y-m-d H:i:s'),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]
+        ]);
     }
 }

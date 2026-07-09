@@ -219,7 +219,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                   showMonthDropdown
                   showYearDropdown
                   dropdownMode="select"
-                  className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                  onKeyDown={(e) => e.preventDefault()}
+                  className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
                 />
               </div>
 

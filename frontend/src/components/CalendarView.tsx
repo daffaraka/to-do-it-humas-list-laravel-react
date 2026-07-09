@@ -15,7 +15,7 @@ import {
   getDay,
 } from "date-fns";
 import { id } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Printer } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer, Search } from "lucide-react";
 import { useKanban } from "../store/kanbanStore";
 import { CardModal } from "./CardModal";
 import type { Card } from "../types";
@@ -24,6 +24,19 @@ export function CalendarView() {
   const { cards, activeDepartment, departments, boards } = useKanban();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+
+  const [filterDepartment, setFilterDepartment] = useState<string>("all");
+  const [filterPic, setFilterPic] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const uniquePics = useMemo(() => {
+    const pics = new Set<string>();
+    cards.forEach(c => {
+      const name = typeof c.pic === 'object' && c.pic ? c.pic.name : c.pic;
+      if (name) pics.add(name as string);
+    });
+    return Array.from(pics).sort();
+  }, [cards]);
 
   // Fallback to 'all' if the activeDepartment UUID from localStorage is stale
   const effectiveActiveDepartment =
@@ -71,21 +84,34 @@ export function CalendarView() {
     return "bg-gray-500 border-gray-600 text-white dark:bg-gray-600 dark:border-gray-500 hover:bg-gray-600 dark:hover:bg-gray-500";
   };
 
-  // Filter cards by active department and date availability
-  const departmentCards = useMemo(() => {
+  // Filter cards by active department, filters, and date availability
+  const filteredCards = useMemo(() => {
     return cards.filter((card) => {
       const hasDate = card.requestDate || card.dueDate || card.createdAt;
       if (!hasDate) return false;
 
-      if (
-        effectiveActiveDepartment !== "all" &&
-        card.departmentId !== effectiveActiveDepartment
-      ) {
+      const deptIdToUse = filterDepartment !== "all" ? filterDepartment : effectiveActiveDepartment;
+      if (deptIdToUse !== "all" && card.departmentId !== deptIdToUse) {
         return false;
       }
+
+      const picName = typeof card.pic === 'object' && card.pic ? card.pic.name : card.pic;
+      if (filterPic !== "all" && picName !== filterPic) {
+        return false;
+      }
+
+      if (searchQuery.trim() !== "") {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = card.title?.toLowerCase().includes(query);
+        const matchesDesc = card.description?.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesDesc) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [cards, effectiveActiveDepartment]);
+  }, [cards, effectiveActiveDepartment, filterDepartment, filterPic, searchQuery]);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -125,7 +151,7 @@ export function CalendarView() {
       const cloneDay = day;
 
       // Find cards for this specific day
-      const dayCards = departmentCards.filter((c) => {
+      const dayCards = filteredCards.filter((c) => {
         const dateStr = c.requestDate || c.dueDate || c.createdAt;
         if (!dateStr) return false;
         return isSameDay(parseDateSafe(dateStr), cloneDay);
@@ -137,8 +163,8 @@ export function CalendarView() {
           className={`flex-1 min-h-[80px] border-r border-b border-borderBase print:border-black p-2 flex flex-col transition-colors ${
             !isSameMonth(day, monthStart)
               ? day < monthStart
-                ? "bg-yellow-100 dark:bg-yellow-900/30 text-textSecondary opacity-80"
-                : "bg-green-100 dark:bg-green-900/30 text-textSecondary opacity-80"
+                ? "bg-yellow-100 dark:bg-yellow-800 text-textSecondary opacity-80"
+                : "bg-green-100 dark:bg-green-800 text-textSecondary opacity-80"
               : isSameDay(day, new Date())
                 ? "bg-indigo-500/10 text-indigo-500 dark:text-indigo-300 print:bg-transparent print:text-black"
                 : getDay(day) === 0
@@ -242,13 +268,52 @@ export function CalendarView() {
         }
       `}</style>
       <div className="flex-1 flex flex-col h-full bg-bgPrimary p-6 overflow-hidden transition-colors duration-300 print:h-auto print:overflow-visible print:p-0 print:bg-white">
-        <div className="w-full flex flex-col h-full bg-bgSecondary border border-borderBase rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/50 print:h-auto print:overflow-visible print:shadow-none print:border-2 print:border-black print:rounded-none">
+        
+        {/* Filter Bar */}
+        <div className="mb-4 bg-gray-100 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-lg p-3 flex flex-col sm:flex-row items-center gap-3 print:hidden shrink-0">
+          <div className="relative flex-1 w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary" size={16} />
+            <input
+              type="text"
+              placeholder="Cari nama tugas atau deskripsi..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md py-2 pl-9 pr-4 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            />
+          </div>
+          <select
+            value={filterDepartment}
+            onChange={(e) => setFilterDepartment(e.target.value)}
+            className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
+          >
+            <option value="all">Semua Departemen</option>
+            {departments.map((dept) => (
+              <option key={dept.id} value={dept.id}>
+                {dept.name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filterPic}
+            onChange={(e) => setFilterPic(e.target.value)}
+            className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
+          >
+            <option value="all">Semua PIC</option>
+            {uniquePics.map((pic) => (
+              <option key={pic} value={pic}>
+                {pic}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="w-full flex flex-col flex-1 min-h-0 bg-bgSecondary border border-borderBase rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/50 print:h-auto print:overflow-visible print:shadow-none print:border-2 print:border-black print:rounded-none">
           {/* Calendar Header */}
           <div className="p-4 border-b border-borderBase flex items-center justify-between bg-bgGlass print:bg-transparent print:border-b-2 print:border-black">
-            <h2 className="text-xl font-bold text-textPrimary tracking-tight print:text-black">
-              {format(currentDate, dateFormat, { locale: id })}
-            </h2>
-            <div className="flex items-center gap-2 print:hidden">
+              <h2 className="text-xl font-bold text-textPrimary tracking-tight print:text-black">
+                {format(currentDate, dateFormat, { locale: id })}
+              </h2>
+              <div className="flex items-center gap-2 print:hidden">
               <button
                 onClick={() => window.print()}
                 className="p-2 rounded-xl hover:bg-bgGlass text-textSecondary hover:text-indigo-500 transition-colors mr-2"
