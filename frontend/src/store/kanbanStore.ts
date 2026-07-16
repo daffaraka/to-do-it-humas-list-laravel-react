@@ -9,7 +9,7 @@ export type ViewMode = 'kanban' | 'calendar';
 
 let fetchDepartmentsPromise: Promise<void> | null = null;
 let fetchBoardsPromise: Promise<void> | null = null;
-let fetchCardsPromises: Record<string, Promise<void>> = {};
+let fetchCardsPromises: Record<string, Promise<void> | undefined> = {};
 let fetchAllCardsPromise: Promise<void> | null = null;
 let fetchMyJobsPromise: Promise<void> | null = null;
 
@@ -158,8 +158,9 @@ export const useKanban = create<KanbanState>()(
       },
 
       fetchCards: async (boardId: string) => {
-        if (fetchCardsPromises[boardId]) {
-          await fetchCardsPromises[boardId];
+        const existingPromise = fetchCardsPromises[boardId];
+        if (existingPromise) {
+          await existingPromise;
           return;
         }
 
