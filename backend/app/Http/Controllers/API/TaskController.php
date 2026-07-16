@@ -71,6 +71,17 @@ class TaskController extends Controller
 
         if (isset($data['position'])) $updateData['position'] = $data['position'];
 
+        if (array_key_exists('request_date', $data)) $updateData['request_date'] = $data['request_date'];
+        if (array_key_exists('requestDate', $data)) $updateData['request_date'] = $data['requestDate'];
+
+        if (array_key_exists('due_date', $data)) $updateData['due_date'] = $data['due_date'];
+        if (array_key_exists('dueDate', $data)) $updateData['due_date'] = $data['dueDate'];
+
+        if (array_key_exists('priority', $data)) $updateData['priority'] = $data['priority'];
+
+        if (array_key_exists('document_link', $data)) $updateData['document_link'] = $data['document_link'];
+        if (array_key_exists('documentLink', $data)) $updateData['document_link'] = $data['documentLink'];
+
         if ($request->hasFile('attachment')) {
             $updateData['attachment'] = $request->file('attachment')->store('attachments', 'public');
         }

@@ -42,8 +42,12 @@ class KpiController extends Controller
         $data = [];
         if ($request->has('title')) $data['title'] = $request->title;
         if ($request->has('description')) $data['description'] = $request->description;
+        
         if ($request->has('target_date')) $data['target_date'] = $request->target_date;
+        if ($request->has('targetDate')) $data['target_date'] = $request->targetDate;
+        
         if ($request->has('department_id')) $data['department_id'] = $request->department_id;
+        if ($request->has('departmentId')) $data['department_id'] = $request->departmentId;
 
         $model->update($data);
         return response()->json($model);

@@ -7,6 +7,12 @@ import api from '../lib/api';
 
 export type ViewMode = 'kanban' | 'calendar';
 
+let fetchDepartmentsPromise: Promise<void> | null = null;
+let fetchBoardsPromise: Promise<void> | null = null;
+let fetchCardsPromises: Record<string, Promise<void>> = {};
+let fetchAllCardsPromise: Promise<void> | null = null;
+let fetchMyJobsPromise: Promise<void> | null = null;
+
 interface KanbanState {
   departments: Department[];
   boards: Board[];
@@ -60,29 +66,50 @@ export const useKanban = create<KanbanState>()(
       error: null,
 
       fetchDepartments: async () => {
-        try {
-          const response = await api.get('/departments');
-          const departments = response.data;
-          
-          const currentActive = get().activeDepartment;
-          if (currentActive !== 'all' && !departments.some((d: any) => d.id === currentActive)) {
-            set({ departments, activeDepartment: 'all' });
-          } else {
-            set({ departments });
-          }
-        } catch (err) {
-          console.error('Failed to fetch departments', err);
+        if (fetchDepartmentsPromise) {
+          await fetchDepartmentsPromise;
+          return;
         }
+
+        fetchDepartmentsPromise = api.get('/departments')
+          .then((response) => {
+            const departments = response.data;
+            const currentActive = get().activeDepartment;
+            if (currentActive !== 'all' && !departments.some((d: any) => d.id === currentActive)) {
+              set({ departments, activeDepartment: 'all' });
+            } else {
+              set({ departments });
+            }
+          })
+          .catch((err) => {
+            console.error('Failed to fetch departments', err);
+          })
+          .finally(() => {
+            fetchDepartmentsPromise = null;
+          });
+
+        await fetchDepartmentsPromise;
       },
 
       fetchBoards: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await api.get('/boards');
-          set({ boards: response.data, isLoading: false });
-        } catch (err: any) {
-          set({ error: err.message, isLoading: false });
+        if (fetchBoardsPromise) {
+          await fetchBoardsPromise;
+          return;
         }
+
+        set({ isLoading: true, error: null });
+        fetchBoardsPromise = api.get('/boards')
+          .then((response) => {
+            set({ boards: response.data, isLoading: false });
+          })
+          .catch((err: any) => {
+            set({ error: err.message, isLoading: false });
+          })
+          .finally(() => {
+            fetchBoardsPromise = null;
+          });
+
+        await fetchBoardsPromise;
       },
 
       createBoard: async (title, description, kpiId, startDate, targetDate) => {
@@ -131,33 +158,66 @@ export const useKanban = create<KanbanState>()(
       },
 
       fetchCards: async (boardId: string) => {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await api.get(`/tasks?boardId=${boardId}`);
-          set({ cards: response.data, isLoading: false });
-        } catch (err: any) {
-          set({ error: err.message, isLoading: false });
+        if (fetchCardsPromises[boardId]) {
+          await fetchCardsPromises[boardId];
+          return;
         }
+
+        set({ isLoading: true, error: null });
+        fetchCardsPromises[boardId] = api.get(`/tasks?boardId=${boardId}`)
+          .then((response) => {
+            set({ cards: response.data, isLoading: false });
+          })
+          .catch((err: any) => {
+            set({ error: err.message, isLoading: false });
+          })
+          .finally(() => {
+            delete fetchCardsPromises[boardId];
+          });
+          
+        await fetchCardsPromises[boardId];
       },
 
       fetchAllCards: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await api.get(`/tasks`);
-          set({ cards: response.data, isLoading: false });
-        } catch (err: any) {
-          set({ error: err.message, isLoading: false });
+        if (fetchAllCardsPromise) {
+          await fetchAllCardsPromise;
+          return;
         }
+
+        set({ isLoading: true, error: null });
+        fetchAllCardsPromise = api.get(`/tasks`)
+          .then((response) => {
+            set({ cards: response.data, isLoading: false });
+          })
+          .catch((err: any) => {
+            set({ error: err.message, isLoading: false });
+          })
+          .finally(() => {
+            fetchAllCardsPromise = null;
+          });
+          
+        await fetchAllCardsPromise;
       },
 
       fetchMyJobs: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await api.get('/tasks/my-jobs');
-          set({ myJobs: response.data, isLoading: false });
-        } catch (err: any) {
-          set({ error: err.message, isLoading: false });
+        if (fetchMyJobsPromise) {
+          await fetchMyJobsPromise;
+          return;
         }
+
+        set({ isLoading: true, error: null });
+        fetchMyJobsPromise = api.get('/tasks/my-jobs')
+          .then((response) => {
+            set({ myJobs: response.data, isLoading: false });
+          })
+          .catch((err: any) => {
+            set({ error: err.message, isLoading: false });
+          })
+          .finally(() => {
+            fetchMyJobsPromise = null;
+          });
+          
+        await fetchMyJobsPromise;
       },
 
       addCard: async (title, columnId, extraData) => {

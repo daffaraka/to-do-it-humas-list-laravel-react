@@ -41,8 +41,12 @@ class BoardController extends Controller
         if ($request->has('description')) $data['description'] = $request->description;
         if ($request->has('kpi_id')) $data['kpi_id'] = $request->kpi_id;
         if ($request->has('kpiId')) $data['kpi_id'] = $request->kpiId; // Support both just in case
+        
         if ($request->has('start_date')) $data['start_date'] = $request->start_date;
+        if ($request->has('startDate')) $data['start_date'] = $request->startDate;
+        
         if ($request->has('target_date')) $data['target_date'] = $request->target_date;
+        if ($request->has('targetDate')) $data['target_date'] = $request->targetDate;
         
         $model->update($data);
         return response()->json($model);
