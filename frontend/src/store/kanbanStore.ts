@@ -29,7 +29,7 @@ interface KanbanState {
 
   fetchDepartments: () => Promise<void>;
   fetchBoards: () => Promise<void>;
-  createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string) => Promise<void>;
+  createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string, departmentId?: string) => Promise<void>;
   updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
   deleteBoard: (id: string) => Promise<void>;
   setActiveBoardId: (boardId: string | null) => void;
@@ -112,13 +112,15 @@ export const useKanban = create<KanbanState>()(
         await fetchBoardsPromise;
       },
 
-      createBoard: async (title, description, kpiId, startDate, targetDate) => {
+      createBoard: async (title, description, kpiId, startDate, targetDate, departmentId) => {
         try {
           const response = await api.post('/boards', { 
             title, 
             description, 
             kpiId, 
             kpi_id: kpiId,
+            departmentId,
+            department_id: departmentId,
             startDate,
             targetDate
           });

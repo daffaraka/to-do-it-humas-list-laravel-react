@@ -17,12 +17,19 @@ class BoardController extends Controller
         $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date)->toFormattedDateString() : null;
         $targetDate = $request->target_date ? \Carbon\Carbon::parse($request->target_date)->toFormattedDateString() : null;
 
+        $kpiId = $request->kpi_id ?? $request->kpiId;
+        $departmentId = $user->department_id;
+
+        if (!$kpiId && ($request->has('department_id') || $request->has('departmentId'))) {
+            $departmentId = $request->department_id ?? $request->departmentId;
+        }
+
         $board = Board::create([
             'title' => $request->title,
             'description' => $request->description,
-            'kpi_id' => $request->kpi_id ?? $request->kpiId,
+            'kpi_id' => $kpiId,
             'user_id' => $user->id,
-            'department_id' => $user->department_id,
+            'department_id' => $departmentId,
             'start_date' => $startDate,
             'target_date' => $targetDate,
         ]);

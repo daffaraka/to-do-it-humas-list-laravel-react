@@ -11,12 +11,13 @@ import { DashboardSkeleton } from './Skeleton';
 
 export function Dashboard() {
   const navigate = useNavigate();
-  const { boards, fetchBoards, setActiveBoardId, createBoard, isLoading } = useKanban();
+  const { boards, fetchBoards, setActiveBoardId, createBoard, isLoading, departments, fetchDepartments } = useKanban();
   const { kpis, fetchKpis } = useKpiStore();
   const [isCreating, setIsCreating] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDesc, setNewDesc] = useState('');
   const [newKpiId, setNewKpiId] = useState('');
+  const [newDepartmentId, setNewDepartmentId] = useState('');
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -25,7 +26,8 @@ export function Dashboard() {
     setMounted(true);
     fetchBoards();
     fetchKpis();
-  }, [fetchBoards, fetchKpis]);
+    fetchDepartments();
+  }, [fetchBoards, fetchKpis, fetchDepartments]);
 
   if (!mounted) return null;
 
@@ -46,10 +48,11 @@ export function Dashboard() {
     setErrors({});
 
     try {
-      await createBoard(newTitle.trim(), newDesc.trim(), newKpiId || undefined);
+      await createBoard(newTitle.trim(), newDesc.trim(), newKpiId || undefined, undefined, undefined, newDepartmentId || undefined);
       setNewTitle('');
       setNewDesc('');
       setNewKpiId('');
+      setNewDepartmentId('');
       setIsCreating(false);
     } catch (err: any) {
       console.error("Failed to create board", err);
@@ -131,6 +134,21 @@ export function Dashboard() {
                   ))}
                 </select>
               </div>
+              {!newKpiId && (
+                <div className="animate-in fade-in slide-in-from-top-1">
+                  <label className="block text-sm font-medium text-textSecondary mb-1">Departemen (Opsional)</label>
+                  <select
+                    value={newDepartmentId}
+                    onChange={(e) => setNewDepartmentId(e.target.value)}
+                    className="w-full bg-bgPrimary border border-borderBase rounded-lg px-4 py-2 text-textPrimary focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  >
+                    <option value="">-- Sesuai Departemen Saya --</option>
+                    {departments.map(dept => (
+                      <option key={dept.id} value={dept.id}>{dept.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"

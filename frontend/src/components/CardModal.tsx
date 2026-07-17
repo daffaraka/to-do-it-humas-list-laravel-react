@@ -12,9 +12,10 @@ import {
   Flag,
   CalendarDays,
   CheckSquare,
-  Plus,
   Trash2,
   FileText,
+  Users,
+  History,
 } from "lucide-react";
 import { COLUMNS, AVAILABLE_LABELS } from "../types";
 import type { Card, ColumnId } from "../types";
@@ -35,13 +36,15 @@ export function CardModal({ card, onClose }: CardModalProps) {
   const [description, setDescription] = useState(card.description);
   const [newChecklistText, setNewChecklistText] = useState("");
 
-  const [activeTab, setActiveTab] = useState<"details" | "comments">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "comments" | "histories">("details");
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [mentions, setMentions] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [collaboratorIds, setCollaboratorIds] = useState<string[]>(card.collaborators?.map(c => c.id) || []);
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
+  const [histories, setHistories] = useState<any[]>(card.histories || []);
 
   const currentUser = useAuthStore((state) => state.user);
 
@@ -51,11 +54,19 @@ export function CardModal({ card, onClose }: CardModalProps) {
         .get(`/tasks/${card.id}/comments`)
         .then((res) => setComments(res.data))
         .catch(console.error);
-      api
-        .get("/users")
-        .then((res) => setUsers(res.data))
-        .catch(console.error);
     }
+    if (activeTab === "histories") {
+       // Optional: Refetch task to get latest histories if needed
+       // using the store or API, but we already have card.histories.
+       // Still good to ensure it's up to date.
+       api.get(`/tasks/${card.id}`)
+          .then((res) => setHistories(res.data.histories || []))
+          .catch(console.error);
+    }
+    api
+      .get("/users")
+      .then((res) => setUsers(res.data))
+      .catch(console.error);
   }, [activeTab, card.id]);
 
   const handleCommentSubmit = async () => {
@@ -102,7 +113,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
   const labels = card.labels || [];
 
   const handleSave = () => {
-    updateCard(card.id, { title, description });
+    updateCard(card.id, { title, description, collaborator_ids: collaboratorIds } as any);
   };
 
   const handleAddChecklist = (e: KeyboardEvent | MouseEvent) => {
@@ -196,6 +207,12 @@ export function CardModal({ card, onClose }: CardModalProps) {
             className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === "comments" ? "border-indigo-500 text-indigo-400" : "border-transparent text-textSecondary hover:text-textPrimary"}`}
           >
             Komentar
+          </button>
+          <button
+            onClick={() => setActiveTab("histories")}
+            className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${activeTab === "histories" ? "border-indigo-500 text-indigo-400" : "border-transparent text-textSecondary hover:text-textPrimary"}`}
+          >
+            Riwayat
           </button>
         </div>
 
@@ -407,7 +424,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                   </div>
                 </div>
               </>
-            ) : (
+            ) : activeTab === "comments" ? (
               <div className="flex flex-col h-full space-y-4">
                 <div className="flex-1 overflow-y-auto space-y-4 min-h-[300px]">
                   {comments.length === 0 ? (
@@ -478,7 +495,36 @@ export function CardModal({ card, onClose }: CardModalProps) {
                   </div>
                 </div>
               </div>
-            )}
+            ) : activeTab === "histories" ? (
+              <div className="flex flex-col h-full space-y-4">
+                <div className="flex-1 overflow-y-auto space-y-4 min-h-[300px]">
+                  {histories.length === 0 ? (
+                    <p className="text-textSecondary text-sm text-center py-8">
+                      Belum ada riwayat.
+                    </p>
+                  ) : (
+                    <div className="relative border-l border-gray-200 dark:border-borderBase ml-3 space-y-6 pb-4">
+                      {histories.map((history) => (
+                        <div key={history.id} className="relative pl-6">
+                          <span className="absolute -left-2 top-1.5 w-4 h-4 rounded-full bg-indigo-500 border-4 border-white dark:border-bgSecondary"></span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-textPrimary">
+                              {history.user?.name || "System"}
+                            </span>
+                            <span className="text-sm text-textSecondary mt-0.5">
+                              Tugas diubah menjadi <strong className="text-indigo-400 capitalize">{history.action}</strong>
+                            </span>
+                            <span className="text-xs text-textSecondary mt-1">
+                              {new Date(history.created_at || history.createdAt).toLocaleString("id-ID")}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           {/* Right Column - Sidebar */}
@@ -589,6 +635,39 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 onKeyDown={(e) => e.preventDefault()}
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
               />
+            </div>
+
+            {/* Collaborators */}
+            <div>
+              <div className="flex items-center gap-2 mb-2 mt-4">
+                <Users size={14} className="text-textSecondary" />
+                <h4 className="text-xs font-semibold text-textSecondary uppercase tracking-wider">
+                  Anggota Tim
+                </h4>
+              </div>
+              <div className="bg-bgSecondary border border-borderBase rounded-xl px-3 py-2 max-h-48 overflow-y-auto custom-scrollbar">
+                {users.length === 0 ? (
+                  <p className="text-xs text-textSecondary p-1">Memuat pengguna...</p>
+                ) : (
+                  users.map(user => (
+                    <label key={user.id} className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-bgGlass rounded px-2">
+                      <input
+                        type="checkbox"
+                        checked={collaboratorIds.includes(user.id)}
+                        onChange={(e) => {
+                          const newIds = e.target.checked
+                            ? [...collaboratorIds, user.id]
+                            : collaboratorIds.filter(id => id !== user.id);
+                          setCollaboratorIds(newIds);
+                          updateCard(card.id, { collaborator_ids: newIds } as any);
+                        }}
+                        className="rounded text-indigo-500 focus:ring-indigo-500 border-gray-400 dark:border-gray-600 bg-transparent"
+                      />
+                      <span className="text-sm text-textPrimary">{user.name}</span>
+                    </label>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         </div>
