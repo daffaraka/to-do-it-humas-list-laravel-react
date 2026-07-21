@@ -16,6 +16,7 @@ import {
   FileText,
   Users,
   History,
+  Plus,
 } from "lucide-react";
 import { COLUMNS, AVAILABLE_LABELS } from "../types";
 import type { Card, ColumnId } from "../types";
