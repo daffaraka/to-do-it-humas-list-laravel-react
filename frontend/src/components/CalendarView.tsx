@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   format,
   addMonths,
@@ -13,21 +13,37 @@ import {
   isSameDay,
   addDays,
   getDay,
+  differenceInDays,
+  startOfDay,
 } from "date-fns";
 import { id } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Printer, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Printer, Search, Info } from "lucide-react";
 import { useKanban } from "../store/kanbanStore";
+import { useKpiStore } from "../store/kpiStore";
 import { CardModal } from "./CardModal";
 import type { Card } from "../types";
+import { AVAILABLE_LABELS } from "../types";
 
 export function CalendarView() {
   const { cards, activeDepartment, departments, boards } = useKanban();
+  const { kpis, fetchKpis } = useKpiStore();
+
+  useEffect(() => {
+    fetchKpis();
+  }, [fetchKpis]);
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
   const [filterDepartment, setFilterDepartment] = useState<string>("all");
   const [filterPic, setFilterPic] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const [filterLabel, setFilterLabel] = useState<string>("all");
+  const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [filterKpi, setFilterKpi] = useState<string>("all");
+  const [filterStartDate, setFilterStartDate] = useState<string>("");
+  const [filterEndDate, setFilterEndDate] = useState<string>("");
 
   const uniquePics = useMemo(() => {
     const pics = new Set<string>();
@@ -87,6 +103,21 @@ export function CalendarView() {
     return "bg-gray-500 border-gray-600 text-white dark:bg-gray-600 dark:border-gray-500 hover:bg-gray-600 dark:hover:bg-gray-500";
   };
 
+  const getDaysRemaining = (dateString?: string | null) => {
+    if (!dateString) return null;
+    const target = startOfDay(parseDateSafe(dateString));
+    const now = startOfDay(new Date());
+    const diff = differenceInDays(target, now);
+    
+    if (diff < 0) {
+      return { text: `Terlewat ${Math.abs(diff)} hr`, isOverdue: true };
+    } else if (diff === 0) {
+      return { text: `Hari ini`, isOverdue: false, isWarning: true };
+    } else {
+      return { text: `Sisa ${diff} hr`, isOverdue: false, isWarning: diff <= 3 };
+    }
+  };
+
   // Filter cards by active department, filters, and date availability
   const filteredCards = useMemo(() => {
     return cards.filter((card) => {
@@ -118,6 +149,40 @@ export function CalendarView() {
         }
       }
 
+      if (filterLabel !== "all") {
+        if (!card.labels || !card.labels.some((l) => l.id === filterLabel)) {
+          return false;
+        }
+      }
+
+      if (filterPriority !== "all") {
+        if (card.priority !== filterPriority) {
+          return false;
+        }
+      }
+
+      if (filterKpi !== "all") {
+        const board = card.board || boards.find((b) => b.id === card.boardId);
+        const kpiId = board?.kpiId || board?.kpi_id;
+        if (kpiId !== filterKpi) {
+          return false;
+        }
+      }
+
+      const cardDateStr = card.requestDate || card.dueDate || card.createdAt;
+      if (cardDateStr) {
+        const cardDate = parseDateSafe(cardDateStr);
+        if (filterStartDate) {
+          const start = startOfDay(parseDateSafe(filterStartDate));
+          if (cardDate < start) return false;
+        }
+        if (filterEndDate) {
+          const end = startOfDay(parseDateSafe(filterEndDate));
+          end.setHours(23, 59, 59, 999);
+          if (cardDate > end) return false;
+        }
+      }
+
       return true;
     });
   }, [
@@ -126,6 +191,11 @@ export function CalendarView() {
     filterDepartment,
     filterPic,
     searchQuery,
+    filterLabel,
+    filterPriority,
+    filterKpi,
+    filterStartDate,
+    filterEndDate,
   ]);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -241,16 +311,33 @@ export function CalendarView() {
                     <span className="whitespace-normal break-words">
                       {card.title}
                     </span>
-                    {card.pic && (
-                      <span
-                        className={`text-[9px] px-1.5 py-0.5 rounded-sm mt-1 font-medium w-fit shadow-sm whitespace-normal break-words print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${badgeClasses}`}
-                      >
-                        Oleh:{" "}
-                        {typeof card.pic === "object" && card.pic !== null
-                          ? (card.pic as any).name
-                          : card.pic}
-                      </span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-1 mt-1">
+                      {card.pic && (
+                        <span
+                          className={`text-[9px] px-1.5 py-0.5 rounded-sm font-medium w-fit shadow-sm whitespace-normal break-words print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${badgeClasses}`}
+                        >
+                          Oleh:{" "}
+                          {typeof card.pic === "object" && card.pic !== null
+                            ? (card.pic as any).name
+                            : card.pic}
+                        </span>
+                      )}
+                      {(() => {
+                        const targetDate = card.dueDate || card.requestDate || card.createdAt;
+                        const remaining = getDaysRemaining(targetDate);
+                        if (!remaining) return null;
+                        
+                        let remainingClasses = "bg-green-500 text-white";
+                        if (remaining.isOverdue) remainingClasses = "bg-red-500 text-white";
+                        else if (remaining.isWarning) remainingClasses = "bg-yellow-500 text-white";
+                        
+                        return (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-sm font-medium w-fit shadow-sm whitespace-nowrap print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${remainingClasses}`}>
+                            {remaining.text}
+                          </span>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
               );
@@ -292,44 +379,118 @@ export function CalendarView() {
       `}</style>
       <div className="flex-1 flex flex-col h-full bg-bgPrimary p-6 overflow-hidden transition-colors duration-300 print:h-auto print:overflow-visible print:p-0 print:bg-white">
         {/* Filter Bar */}
-        <div className="mb-4 bg-gray-100 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-lg p-3 flex flex-col sm:flex-row items-center gap-3 print:hidden shrink-0">
-          <div className="relative flex-1 w-full">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary"
-              size={16}
-            />
-            <input
-              type="text"
-              placeholder="Cari nama tugas atau deskripsi..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md py-2 pl-9 pr-4 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-            />
+        <div className="mb-4 bg-gray-100 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-lg p-3 flex flex-col gap-3 print:hidden shrink-0">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <div className="relative flex-1 w-full">
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary"
+                size={16}
+              />
+              <input
+                type="text"
+                placeholder="Cari nama tugas atau deskripsi..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md py-2 pl-9 pr-4 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              />
+            </div>
+
+            <select
+              value={filterLabel}
+              onChange={(e) => setFilterLabel(e.target.value)}
+              className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
+            >
+              <option value="all">Semua Label</option>
+              {AVAILABLE_LABELS.map((label) => (
+                <option key={label.id} value={label.id}>
+                  {label.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
+            >
+              <option value="all">Semua Prioritas</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+
+            <select
+              value={filterDepartment}
+              onChange={(e) => setFilterDepartment(e.target.value)}
+              className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
+            >
+              <option value="all">Semua Departemen</option>
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterPic}
+              onChange={(e) => setFilterPic(e.target.value)}
+              className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
+            >
+              <option value="all">Semua PIC</option>
+              {uniquePics.map((pic) => (
+                <option key={pic} value={pic}>
+                  {pic}
+                </option>
+              ))}
+            </select>
           </div>
-          <select
-            value={filterDepartment}
-            onChange={(e) => setFilterDepartment(e.target.value)}
-            className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
-          >
-            <option value="all">Semua Departemen</option>
-            {departments.map((dept) => (
-              <option key={dept.id} value={dept.id}>
-                {dept.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={filterPic}
-            onChange={(e) => setFilterPic(e.target.value)}
-            className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
-          >
-            <option value="all">Semua PIC</option>
-            {uniquePics.map((pic) => (
-              <option key={pic} value={pic}>
-                {pic}
-              </option>
-            ))}
-          </select>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <select
+              value={filterKpi}
+              onChange={(e) => setFilterKpi(e.target.value)}
+              className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px] sm:max-w-xs truncate"
+            >
+              <option value="all">Semua WIG/Project</option>
+              {kpis.map((kpi) => (
+                <option key={kpi.id} value={kpi.id}>
+                  {kpi.title}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <span className="text-sm font-medium text-textSecondary whitespace-nowrap">Tanggal:</span>
+              <input 
+                type="date"
+                value={filterStartDate}
+                onChange={(e) => setFilterStartDate(e.target.value)}
+                className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1.5 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto h-[38px]"
+              />
+              <span className="text-sm font-medium text-textSecondary">-</span>
+              <input 
+                type="date"
+                value={filterEndDate}
+                onChange={(e) => setFilterEndDate(e.target.value)}
+                className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1.5 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto h-[38px]"
+              />
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4 mt-1 border-t border-gray-300 dark:border-zinc-800 pt-3">
+             <div className="flex items-center gap-1.5 text-sm">
+                <Info size={16} className="text-textSecondary" />
+                <span className="font-semibold text-textPrimary mr-2">Legenda:</span>
+                <div className="flex items-center gap-1.5 mr-4">
+                  <span className="w-3 h-3 rounded-full bg-blue-500 border border-blue-600"></span>
+                  <span className="text-textSecondary">Tugas KPI / WIG</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-3 rounded-full bg-gray-500 border border-gray-600"></span>
+                  <span className="text-textSecondary">Tugas Rutin / Non-KPI</span>
+                </div>
+             </div>
+          </div>
         </div>
 
         <div className="w-full flex flex-col flex-1 min-h-0 bg-bgSecondary border border-borderBase rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/50 print:h-auto print:overflow-visible print:shadow-none print:border-2 print:border-black print:rounded-none">
