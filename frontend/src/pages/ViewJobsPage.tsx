@@ -15,6 +15,7 @@ export default function ViewJobsPage() {
   const { cards, fetchAllCards, isLoading } = useKanban();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedPics, setExpandedPics] = useState<Record<string, boolean>>({});
+  const [picMonthFilters, setPicMonthFilters] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
@@ -131,7 +132,16 @@ export default function ViewJobsPage() {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {filteredGroups.map(
             ([picName, group]: [string, any]) => {
-              const picCards = group.cards;
+              const basePicCards = group.cards;
+              const monthFilter = picMonthFilters[picName];
+              const picCards = monthFilter
+                ? basePicCards.filter((c: any) => {
+                    const d = c.requestDate || c.dueDate || c.createdAt;
+                    if (!d) return false;
+                    return d.startsWith(monthFilter);
+                  })
+                : basePicCards;
+
               const nameParts = picName.trim().split(/\s+/);
               const picInitials =
                 nameParts.length >= 2
@@ -218,8 +228,21 @@ export default function ViewJobsPage() {
 
                   {/* Person's Tasks (Expanded View) */}
                   {isExpanded && (
-                    <div className="mt-5 pt-5 border-t border-borderBase flex-1 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
-                      {picCards.map((card: any) => {
+                    <div className="mt-5 pt-5 border-t border-borderBase flex-1 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="flex justify-end mb-2">
+                        <input 
+                          type="month"
+                          value={picMonthFilters[picName] || ""}
+                          onChange={(e) => setPicMonthFilters(prev => ({ ...prev, [picName]: e.target.value }))}
+                          onClick={(e) => {
+                            try { e.currentTarget.showPicker(); } catch (err) {}
+                          }}
+                          className="bg-white dark:bg-bgSecondary border-2 border-gray-400 dark:border-gray-500 rounded-lg px-4 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 cursor-pointer min-w-[160px] shadow-sm hover:border-indigo-400 transition-colors"
+                          title="Filter berdasarkan bulan"
+                        />
+                      </div>
+                      <div className="space-y-3">
+                        {picCards.map((card: any) => {
                         const checklist = card.checklist || [];
                         const completedChecklist = checklist.filter(
                           (item: any) => item.completed,
@@ -253,7 +276,7 @@ export default function ViewJobsPage() {
                                 card.board_id || card.boardId || card.board?.id;
                               if (boardId) navigate(`/board/${boardId}`);
                             }}
-                            className="bg-bgGlass border border-borderBase p-4 rounded-xl hover:border-indigo-500/50 transition-colors shadow-sm cursor-pointer hover:shadow-md"
+                            className="bg-bgGlass border border-gray-300 dark:border-gray-600 p-4 rounded-xl hover:border-indigo-500/50 transition-colors shadow-sm cursor-pointer hover:shadow-md"
                           >
                             <div className="flex justify-between items-start gap-3 mb-2">
                               <h3 className="text-sm font-semibold text-textPrimary leading-snug line-clamp-2">
@@ -317,6 +340,7 @@ export default function ViewJobsPage() {
                           </div>
                         );
                       })}
+                      </div>
                     </div>
                   )}
                 </div>
