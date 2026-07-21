@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
-import { Header } from '@/components/Header';
-import { useKanban } from '@/store/kanbanStore';
-import { useAuthStore } from '@/store/authStore';
-import { Login } from '@/pages_old/Login';
-import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
+import { useEffect, useState, useRef } from "react";
+import { Header } from "@/components/Header";
+import { useKanban } from "@/store/kanbanStore";
+import { useAuthStore } from "@/store/authStore";
+import { Login } from "@/pages_old/Login";
+import { Outlet, useLocation, useNavigationType } from "react-router-dom";
 
 function useScrollRestoration() {
   const location = useLocation();
@@ -13,26 +13,33 @@ function useScrollRestoration() {
   useEffect(() => {
     const handleScroll = (e: Event) => {
       const target = e.target as HTMLElement;
-      if (target?.classList?.contains('overflow-y-auto') || target?.classList?.contains('overflow-auto')) {
+      if (
+        target &&
+        target.classList &&
+        (target.classList.contains("overflow-y-auto") ||
+          target.classList.contains("overflow-auto"))
+      ) {
         if (target.clientHeight > 300) {
           scrollPositions.current[location.pathname] = target.scrollTop;
         }
       }
     };
-    window.addEventListener('scroll', handleScroll, true);
-    return () => window.removeEventListener('scroll', handleScroll, true);
+    window.addEventListener("scroll", handleScroll, true);
+    return () => window.removeEventListener("scroll", handleScroll, true);
   }, [location.pathname]);
 
   useEffect(() => {
     const savedPosition = scrollPositions.current[location.pathname] || 0;
     const restore = () => {
-      const containers = document.querySelectorAll('.overflow-y-auto, .overflow-auto');
-      containers.forEach(container => {
+      const containers = document.querySelectorAll(
+        ".overflow-y-auto, .overflow-auto",
+      );
+      containers.forEach((container) => {
         if (container.clientHeight > 300) {
-          if (navigationType === 'POP') {
-            container.scrollTo({ top: savedPosition, behavior: 'instant' });
+          if (navigationType === "POP") {
+            container.scrollTo({ top: savedPosition, behavior: "instant" });
           } else {
-            container.scrollTo({ top: 0, behavior: 'instant' });
+            container.scrollTo({ top: 0, behavior: "instant" });
           }
         }
       });
@@ -51,14 +58,14 @@ export default function ClientLayout() {
 
   useEffect(() => {
     const titles: Record<string, string> = {
-      '/kpi': 'Dashboard KPI - Portal Humas & Jaringan',
-      '/jobs': 'Pekerjaan Saya - Portal Humas & Jaringan',
-      '/view-jobs': 'Semua Pekerjaan - Portal Humas & Jaringan',
-      '/calendar': 'Kalender - Portal Humas & Jaringan',
-      '/master': 'Master Data - Portal Humas & Jaringan'
+      "/kpi": "Dashboard KPI - Portal Humas & Jaringan",
+      "/jobs": "Pekerjaan Saya - Portal Humas & Jaringan",
+      "/view-jobs": "Semua Pekerjaan - Portal Humas & Jaringan",
+      "/calendar": "Kalender - Portal Humas & Jaringan",
+      "/master": "Master Data - Portal Humas & Jaringan",
     };
 
-    const baseTitle = 'Portal Humas & Jaringan';
+    const baseTitle = "Portal Humas & Jaringan";
     document.title = titles[location.pathname] || baseTitle;
   }, [location.pathname]);
 
@@ -71,20 +78,27 @@ export default function ClientLayout() {
 
   useEffect(() => {
     if (isDarkMode) {
-      document.documentElement.classList.add('dark');
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   }, [isDarkMode]);
 
-  if (!mounted) return <div className="min-h-screen bg-bgPrimary flex items-center justify-center text-textSecondary">Memuat...</div>;
+  if (!mounted)
+    return (
+      <div className="min-h-screen bg-bgPrimary flex items-center justify-center text-textSecondary">
+        Memuat...
+      </div>
+    );
 
   if (!token) {
     return <Login />;
   }
 
   return (
-    <div className={`min-h-screen bg-bgPrimary text-textPrimary flex flex-col font-sans transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
+    <div
+      className={`min-h-screen bg-bgPrimary text-textPrimary flex flex-col font-sans transition-colors duration-300 ${isDarkMode ? "dark" : ""}`}
+    >
       <Header />
       <main className="flex-1 flex flex-col relative overflow-hidden">
         <Outlet />

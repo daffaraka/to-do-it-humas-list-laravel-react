@@ -31,8 +31,11 @@ export function CalendarView() {
 
   const uniquePics = useMemo(() => {
     const pics = new Set<string>();
-    cards.forEach(c => {
-      const name = typeof c.pic === 'object' && c.pic ? (c.pic as any).name : c.pic;
+    cards.forEach((c) => {
+      const name =
+        typeof c.pic === "object" && c.pic !== null
+          ? (c.pic as any).name
+          : c.pic;
       if (name) pics.add(name as string);
     });
     return Array.from(pics).sort();
@@ -76,7 +79,7 @@ export function CalendarView() {
 
   // Helper to get color classes based on KPI status
   const getCardColor = (card: Card) => {
-    const board = card.board || boards.find(b => b.id === card.boardId);
+    const board = card.board || boards.find((b) => b.id === card.boardId);
     const isKpi = board?.kpiId || board?.kpi_id;
     if (isKpi) {
       return "bg-blue-500 border-blue-600 text-white dark:bg-blue-600 dark:border-blue-500 hover:bg-blue-600 dark:hover:bg-blue-500";
@@ -90,12 +93,18 @@ export function CalendarView() {
       const hasDate = card.requestDate || card.dueDate || card.createdAt;
       if (!hasDate) return false;
 
-      const deptIdToUse = filterDepartment !== "all" ? filterDepartment : effectiveActiveDepartment;
+      const deptIdToUse =
+        filterDepartment !== "all"
+          ? filterDepartment
+          : effectiveActiveDepartment;
       if (deptIdToUse !== "all" && card.departmentId !== deptIdToUse) {
         return false;
       }
 
-      const picName = typeof card.pic === 'object' && card.pic ? (card.pic as any).name : card.pic;
+      const picName =
+        typeof card.pic === "object" && card.pic !== null
+          ? (card.pic as any).name
+          : card.pic;
       if (filterPic !== "all" && picName !== filterPic) {
         return false;
       }
@@ -111,7 +120,13 @@ export function CalendarView() {
 
       return true;
     });
-  }, [cards, effectiveActiveDepartment, filterDepartment, filterPic, searchQuery]);
+  }, [
+    cards,
+    effectiveActiveDepartment,
+    filterDepartment,
+    filterPic,
+    searchQuery,
+  ]);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
@@ -192,10 +207,11 @@ export function CalendarView() {
                   ? (card.pic as any)
                   : null;
 
-              const board = card.board || boards.find(b => b.id === card.boardId);
+              const board =
+                card.board || boards.find((b) => b.id === card.boardId);
               const isKpi = board?.kpiId || board?.kpi_id;
-              const badgeClasses = isKpi 
-                ? "bg-white text-gray-800" 
+              const badgeClasses = isKpi
+                ? "bg-white text-gray-800"
                 : "bg-black/80 dark:bg-black/60 text-white";
 
               return (
@@ -209,7 +225,7 @@ export function CalendarView() {
                     print:border-none print:bg-transparent print:text-black print:shadow-none print:px-0 print:py-1
                     ${getCardColor(card)}
                   `}
-                  style={{ pageBreakInside: 'avoid' }}
+                  style={{ pageBreakInside: "avoid" }}
                 >
                   <div
                     className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm shrink-0 mt-0.5 print:border print:border-gray-400 print:text-black print:bg-transparent print:shadow-none ${badgeClasses}`}
@@ -222,9 +238,13 @@ export function CalendarView() {
                     {getPicInitials(card.pic)}
                   </div>
                   <div className="font-medium flex-1 break-words whitespace-normal leading-tight flex flex-col h-full print:text-black">
-                    <span className="whitespace-normal break-words">{card.title}</span>
+                    <span className="whitespace-normal break-words">
+                      {card.title}
+                    </span>
                     {card.pic && (
-                      <span className={`text-[9px] px-1.5 py-0.5 rounded-sm mt-1 font-medium w-fit shadow-sm whitespace-normal break-words print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${badgeClasses}`}>
+                      <span
+                        className={`text-[9px] px-1.5 py-0.5 rounded-sm mt-1 font-medium w-fit shadow-sm whitespace-normal break-words print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${badgeClasses}`}
+                      >
                         Oleh:{" "}
                         {typeof card.pic === "object" && card.pic !== null
                           ? (card.pic as any).name
@@ -241,7 +261,10 @@ export function CalendarView() {
       day = addDays(day, 1);
     }
     rows.push(
-      <div className="grid grid-cols-7 min-h-[80px] print:break-inside-avoid" key={day.toISOString()}>
+      <div
+        className="grid grid-cols-7 min-h-[80px] print:break-inside-avoid"
+        key={day.toISOString()}
+      >
         {days}
       </div>,
     );
@@ -268,11 +291,13 @@ export function CalendarView() {
         }
       `}</style>
       <div className="flex-1 flex flex-col h-full bg-bgPrimary p-6 overflow-hidden transition-colors duration-300 print:h-auto print:overflow-visible print:p-0 print:bg-white">
-        
         {/* Filter Bar */}
         <div className="mb-4 bg-gray-100 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-lg p-3 flex flex-col sm:flex-row items-center gap-3 print:hidden shrink-0">
           <div className="relative flex-1 w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary" size={16} />
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary"
+              size={16}
+            />
             <input
               type="text"
               placeholder="Cari nama tugas atau deskripsi..."
@@ -310,10 +335,10 @@ export function CalendarView() {
         <div className="w-full flex flex-col flex-1 min-h-0 bg-bgSecondary border border-borderBase rounded-2xl overflow-hidden shadow-2xl shadow-black/10 dark:shadow-black/50 print:h-auto print:overflow-visible print:shadow-none print:border-2 print:border-black print:rounded-none">
           {/* Calendar Header */}
           <div className="p-4 border-b border-borderBase flex items-center justify-between bg-bgGlass print:bg-transparent print:border-b-2 print:border-black">
-              <h2 className="text-xl font-bold text-textPrimary tracking-tight print:text-black">
-                {format(currentDate, dateFormat, { locale: id })}
-              </h2>
-              <div className="flex items-center gap-2 print:hidden">
+            <h2 className="text-xl font-bold text-textPrimary tracking-tight print:text-black">
+              {format(currentDate, dateFormat, { locale: id })}
+            </h2>
+            <div className="flex items-center gap-2 print:hidden">
               <button
                 onClick={() => window.print()}
                 className="p-2 rounded-xl hover:bg-bgGlass text-textSecondary hover:text-indigo-500 transition-colors mr-2"
@@ -350,7 +375,10 @@ export function CalendarView() {
         </div>
 
         {selectedCard && (
-          <CardModal card={selectedCard} onClose={() => setSelectedCard(null)} />
+          <CardModal
+            card={selectedCard}
+            onClose={() => setSelectedCard(null)}
+          />
         )}
       </div>
     </>

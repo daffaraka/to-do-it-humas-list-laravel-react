@@ -47,6 +47,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Task::class, 'pic_id');
     }
+    public function collaboratedTasks()
+    {
+        return $this->belongsToMany(Task::class);
+    }
     public function boards()
     {
         return $this->hasMany(Board::class);

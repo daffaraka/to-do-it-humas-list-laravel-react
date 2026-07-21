@@ -11,7 +11,7 @@ class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user']);
+        $query = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user']);
 
         if ($request->boardId) {
             $query->where('board_id', $request->boardId);
@@ -26,7 +26,7 @@ class TaskController extends Controller
             'title' => 'required',
             'description' => 'required',
             'boardId' => 'required',
-            'departmentId' => 'required',
+            'departmentId' => 'nullable',
             'picId' => 'nullable',
             'priority' => 'nullable',
             'requestDate' => 'nullable',
@@ -43,7 +43,7 @@ class TaskController extends Controller
             'title' => $data['title'],
             'description' => $data['description'],
             'board_id' => $data['boardId'],
-            'department_id' => Auth::user()->id,
+            'department_id' => $request->user()->department_id,
             'pic_id' => $data['picId'] ?? $request->user()->id,
             'priority' => $data['priority'] ?? 'low',
             'request_date' => $data['requestDate'] ?? null,
@@ -52,6 +52,15 @@ class TaskController extends Controller
             'attachment' => $attachmentPath,
             'new_date' => now(),
             'column_id' => 'new',
+        ]);
+
+        if (isset($data['collaborator_ids']) && is_array($data['collaborator_ids'])) {
+            $task->collaborators()->sync($data['collaborator_ids']);
+        }
+
+        $task->histories()->create([
+            'user_id' => $request->user()->id,
+            'action' => 'new'
         ]);
 
         return response()->json($task, 201);
@@ -71,11 +80,23 @@ class TaskController extends Controller
 
         if (isset($data['position'])) $updateData['position'] = $data['position'];
 
+        if (array_key_exists('request_date', $data)) $updateData['request_date'] = $data['request_date'];
+        if (array_key_exists('requestDate', $data)) $updateData['request_date'] = $data['requestDate'];
+
+        if (array_key_exists('due_date', $data)) $updateData['due_date'] = $data['due_date'];
+        if (array_key_exists('dueDate', $data)) $updateData['due_date'] = $data['dueDate'];
+
+        if (array_key_exists('priority', $data)) $updateData['priority'] = $data['priority'];
+
+        if (array_key_exists('document_link', $data)) $updateData['document_link'] = $data['document_link'];
+        if (array_key_exists('documentLink', $data)) $updateData['document_link'] = $data['documentLink'];
+
         if ($request->hasFile('attachment')) {
             $updateData['attachment'] = $request->file('attachment')->store('attachments', 'public');
         }
 
         $columnId = $data['column_id'] ?? $data['columnId'] ?? null;
+        $isCompleted = false;
         if ($columnId && $columnId !== $task->column_id) {
             $updateData['column_id'] = $columnId;
             if ($columnId === 'new') {
@@ -84,10 +105,20 @@ class TaskController extends Controller
                 $updateData['proses_date'] = now();
             } elseif ($columnId === 'done') {
                 $updateData['end_date'] = now();
+                $isCompleted = true;
             }
         }
 
+        if (isset($data['collaborator_ids']) && is_array($data['collaborator_ids'])) {
+            $task->collaborators()->sync($data['collaborator_ids']);
+        }
+
         $task->update($updateData);
+
+        $task->histories()->create([
+            'user_id' => $request->user()->id,
+            'action' => $isCompleted ? 'selesai' : 'update'
+        ]);
 
         return response()->json($task->fresh());
     }

@@ -1,8 +1,10 @@
-﻿"use client";
+"use client";
 
 import { create } from 'zustand';
 import api from '../lib/api';
 import type { Notification } from '../types';
+
+let fetchNotificationsPromise: Promise<void> | null = null;
 
 interface NotificationState {
   notifications: Notification[];
@@ -19,16 +21,27 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   isLoading: false,
 
   fetchNotifications: async () => {
-    set({ isLoading: true });
-    try {
-      const response = await api.get('/notifications');
-      const data = response.data as Notification[];
-      const unreadCount = data.filter(n => !n.read).length;
-      set({ notifications: data, unreadCount, isLoading: false });
-    } catch (err) {
-      console.error('Failed to fetch notifications', err);
-      set({ isLoading: false });
+    if (fetchNotificationsPromise) {
+      await fetchNotificationsPromise;
+      return;
     }
+
+    set({ isLoading: true });
+    fetchNotificationsPromise = api.get('/notifications')
+      .then((response) => {
+        const data = response.data as Notification[];
+        const unreadCount = data.filter(n => !n.read).length;
+        set({ notifications: data, unreadCount, isLoading: false });
+      })
+      .catch((err) => {
+        console.error('Failed to fetch notifications', err);
+        set({ isLoading: false });
+      })
+      .finally(() => {
+        fetchNotificationsPromise = null;
+      });
+
+    await fetchNotificationsPromise;
   },
 
   markAsRead: async (id: string) => {

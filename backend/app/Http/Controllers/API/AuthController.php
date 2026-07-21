@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
@@ -8,7 +9,9 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(Request $request) {
+
+    public function register(Request $request)
+    {
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users',
@@ -28,7 +31,8 @@ class AuthController extends Controller
         return response()->json(['message' => 'Registrasi berhasil', 'userId' => $user->id], 201);
     }
 
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
@@ -56,7 +60,8 @@ class AuthController extends Controller
         ]);
     }
 
-    public function getMe(Request $request) {
+    public function getMe(Request $request)
+    {
         $user = User::with(['role', 'department'])->find($request->user()->id);
         return response()->json($user);
     }

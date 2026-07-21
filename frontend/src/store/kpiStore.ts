@@ -4,6 +4,9 @@ import { create } from 'zustand';
 import api from '../lib/api';
 import type { Kpi } from '../types';
 
+let fetchKpisPromise: Promise<void> | null = null;
+
+
 interface KpiState {
   kpis: Kpi[];
   isLoading: boolean;
@@ -21,13 +24,24 @@ export const useKpiStore = create<KpiState>((set) => ({
   error: null,
 
   fetchKpis: async () => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await api.get('/kpis');
-      set({ kpis: response.data, isLoading: false });
-    } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+    if (fetchKpisPromise) {
+      await fetchKpisPromise;
+      return;
     }
+
+    set({ isLoading: true, error: null });
+    fetchKpisPromise = api.get('/kpis')
+      .then((response) => {
+        set({ kpis: response.data, isLoading: false });
+      })
+      .catch((err: any) => {
+        set({ error: err.message, isLoading: false });
+      })
+      .finally(() => {
+        fetchKpisPromise = null;
+      });
+      
+    await fetchKpisPromise;
   },
 
   createKpi: async (data) => {

@@ -6,10 +6,11 @@ import { createPortal } from "react-dom";
 import DatePicker from "react-datepicker";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
-import { X, Type, FileText, User, Calendar, Briefcase } from "lucide-react";
+import { X, Type, FileText, User, Calendar, Briefcase, Users } from "lucide-react";
 import type { ColumnId } from "../types";
 import { useKanban } from "../store/kanbanStore";
 import api from "../lib/api";
+import { useEffect } from "react";
 
 interface CreateTaskModalProps {
   columnId: ColumnId;
@@ -23,8 +24,16 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const [requestDate, setRequestDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
+  const [collaboratorIds, setCollaboratorIds] = useState<string[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    api.get("/users").then((res) => {
+      setUsers(res.data);
+    }).catch(console.error);
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -63,6 +72,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
         formData.append("requestDate", format(requestDate, "yyyy-MM-dd"));
       if (dueDate) formData.append("dueDate", format(dueDate, "yyyy-MM-dd"));
       if (attachment) formData.append("attachment", attachment);
+      collaboratorIds.forEach((id) => formData.append("collaborator_ids[]", id));
 
       const { data } = await api.post("/tasks", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -206,6 +216,33 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
               className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
               accept=".jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf"
             />
+          </div>
+
+          {/* Collaborators */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
+              <Users size={14} className="text-indigo-400" />
+              Anggota Tim (Opsional)
+            </label>
+            <div className="bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-2 max-h-40 overflow-y-auto custom-scrollbar">
+              {users.map(user => (
+                <label key={user.id} className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02] rounded px-2">
+                  <input
+                    type="checkbox"
+                    checked={collaboratorIds.includes(user.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setCollaboratorIds([...collaboratorIds, user.id]);
+                      } else {
+                        setCollaboratorIds(collaboratorIds.filter(id => id !== user.id));
+                      }
+                    }}
+                    className="rounded text-indigo-500 focus:ring-indigo-500 border-gray-300 bg-white"
+                  />
+                  <span className="text-sm text-textPrimary">{user.name}</span>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-borderBase shrink-0">

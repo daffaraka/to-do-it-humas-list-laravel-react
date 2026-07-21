@@ -68,6 +68,18 @@ export interface Card {
   new_date?: string | null;
   proses_date?: string | null;
   end_date?: string | null;
+  collaborators?: { id: string; name: string }[];
+  histories?: TaskUserHistory[];
+}
+
+export interface TaskUserHistory {
+  id: string;
+  task_id: string;
+  user_id: string;
+  user?: { id: string; name: string };
+  action: 'new' | 'update' | 'selesai';
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Column {

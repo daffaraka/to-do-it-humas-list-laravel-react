@@ -52,6 +52,14 @@ class Task extends Model
     {
         return $this->hasMany(Checklist::class);
     }
+    public function collaborators()
+    {
+        return $this->belongsToMany(User::class);
+    }
+    public function histories()
+    {
+        return $this->hasMany(TaskUserHistory::class)->orderBy('created_at', 'desc');
+    }
     public function labels()
     {
         return $this->hasMany(TaskLabel::class);
