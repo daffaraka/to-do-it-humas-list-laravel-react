@@ -32,7 +32,7 @@ export function CalendarView() {
   const uniquePics = useMemo(() => {
     const pics = new Set<string>();
     cards.forEach(c => {
-      const name = typeof c.pic === 'object' && c.pic ? c.pic.name : c.pic;
+      const name = typeof c.pic === 'object' && c.pic ? (c.pic as any).name : c.pic;
       if (name) pics.add(name as string);
     });
     return Array.from(pics).sort();
@@ -95,7 +95,7 @@ export function CalendarView() {
         return false;
       }
 
-      const picName = typeof card.pic === 'object' && card.pic ? card.pic.name : card.pic;
+      const picName = typeof card.pic === 'object' && card.pic ? (card.pic as any).name : card.pic;
       if (filterPic !== "all" && picName !== filterPic) {
         return false;
       }

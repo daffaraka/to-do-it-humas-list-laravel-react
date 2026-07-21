@@ -13,7 +13,7 @@ function useScrollRestoration() {
   useEffect(() => {
     const handleScroll = (e: Event) => {
       const target = e.target as HTMLElement;
-      if (target.classList.contains('overflow-y-auto') || target.classList.contains('overflow-auto')) {
+      if (target?.classList?.contains('overflow-y-auto') || target?.classList?.contains('overflow-auto')) {
         if (target.clientHeight > 300) {
           scrollPositions.current[location.pathname] = target.scrollTop;
         }

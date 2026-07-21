@@ -24,7 +24,7 @@ import { differenceInDays, startOfDay, format } from "date-fns";
 import { id as dateFnsIdLocale } from "date-fns/locale";
 
 import { useAuthStore } from "../store/authStore";
-
+import api from "../lib/api";
 interface KpiDashboardProps {
   viewType?: "all" | "me";
 }
@@ -81,11 +81,44 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
   const [searchKpi, setSearchKpi] = useState("");
 
+  const [filterIndepDepartment, setFilterIndepDepartment] = useState<string>("all");
+  const [isIndepDeptDropdownOpen, setIsIndepDeptDropdownOpen] = useState(false);
+  const [filterIndepPic, setFilterIndepPic] = useState<string>("all");
+  const [isIndepPicDropdownOpen, setIsIndepPicDropdownOpen] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+
+  const independentBoards = boards.filter(
+    (board) => !board.kpiId && !board.kpi_id,
+    // && (viewType === "me" ? board.userId === user?.id : true),
+  );
+
+  const uniqueIndepPics = React.useMemo(() => {
+    const pics = new Set<string>();
+    independentBoards.forEach((board) => {
+      board.tasks?.forEach((t: any) => {
+        if (typeof t.pic === 'object' && t.pic) {
+          pics.add((t.pic as any).name);
+        } else if (typeof t.pic === 'string') {
+          const u = users.find(u => u.id === t.pic);
+          if (u && u.name) pics.add(u.name);
+        } else if (t.pic_id) {
+          const u = users.find(u => u.id === t.pic_id);
+          if (u && u.name) pics.add(u.name);
+        }
+      });
+    });
+    users.forEach((u) => {
+      if (u.name) pics.add(u.name);
+    });
+    return Array.from(pics).sort();
+  }, [independentBoards, users]);
+
   useEffect(() => {
     setMounted(true);
     fetchKpis();
     fetchBoards();
     fetchDepartments();
+    api.get('/users').then((res) => setUsers(res.data)).catch(console.error);
   }, [fetchKpis, fetchBoards, fetchDepartments]);
 
   if (!mounted) return null;
@@ -185,10 +218,6 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   // const displayKpis =
   //   viewType === "me" ? kpis.filter((k) => k.userId === user?.id) : kpis;
   const displayKpis = kpis;
-  const independentBoards = boards.filter(
-    (board) => !board.kpiId && !board.kpi_id,
-    // && (viewType === "me" ? board.userId === user?.id : true),
-  );
 
   if (isLoading && kpis.length === 0) return <KpiSkeleton />;
 
@@ -526,7 +555,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         })}
 
         {/* Section for Independent Boards (Boards without KPI) */}
-        <div className="mb-6 sm:mb-10 bg-bgPrimary rounded-2xl p-4 sm:p-6 shadow-sm border border-black/[0.03] dark:border-white/[0.03] hover:shadow-md transition-shadow">
+        <div className="mb-6 sm:mb-10 bg-bgPrimary rounded-2xl p-4 sm:p-6 shadow-sm border border-black/[0.03] dark:border-white/[0.03] hover:shadow-md transition-shadow min-h-[300px]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white shadow-md shadow-gray-500/20 shrink-0">
@@ -542,27 +571,160 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setTargetKpiIdForBoard("");
-                setBoardType("non-kpi");
-                setEditingBoardId(null);
-                setBoardTitle("");
-                setBoardDesc("");
-                setBoardStartDate("");
-                setBoardTargetDate("");
-                setIsBoardModalOpen(true);
-              }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-sm shadow-indigo-500/20 flex items-center gap-2 w-full sm:w-auto justify-center"
-            >
-              <Plus size={16} />
-              Buat Board Baru
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Department Filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsIndepDeptDropdownOpen(!isIndepDeptDropdownOpen)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all shadow-sm ${
+                    filterIndepDepartment !== 'all'
+                      ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-300 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400'
+                      : 'bg-white dark:bg-bgSecondary border-gray-200 dark:border-borderBase text-textSecondary hover:text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlassHover'
+                  }`}
+                >
+                  <Filter size={14} />
+                  <span>
+                    {filterIndepDepartment === 'all'
+                      ? 'Semua Departemen'
+                      : departments.find(d => d.id === filterIndepDepartment)?.name || 'Departemen'}
+                  </span>
+                  <ChevronDown size={14} className={`transition-transform ${isIndepDeptDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isIndepDeptDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsIndepDeptDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-bgSecondary border border-gray-200 dark:border-borderBase rounded-xl shadow-xl z-50 py-1 max-h-72 overflow-y-auto custom-scrollbar">
+                      <button
+                        onClick={() => { setFilterIndepDepartment('all'); setIsIndepDeptDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-2 text-xs transition-colors ${
+                          filterIndepDepartment === 'all'
+                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium'
+                            : 'text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlass'
+                        }`}
+                      >
+                        Semua Departemen
+                      </button>
+                      {departments.map((dept) => (
+                        <button
+                          key={dept.id}
+                          onClick={() => { setFilterIndepDepartment(dept.id); setIsIndepDeptDropdownOpen(false); }}
+                          className={`w-full text-left px-4 py-2 text-xs transition-colors border-t border-gray-100 dark:border-white/[0.05] ${
+                            filterIndepDepartment === dept.id
+                              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium'
+                              : 'text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlass'
+                          }`}
+                        >
+                          {dept.name}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* PIC Filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsIndepPicDropdownOpen(!isIndepPicDropdownOpen)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium border transition-all shadow-sm ${
+                    filterIndepPic !== 'all'
+                      ? 'bg-indigo-50 dark:bg-indigo-500/10 border-indigo-300 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400'
+                      : 'bg-white dark:bg-bgSecondary border-gray-200 dark:border-borderBase text-textSecondary hover:text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlassHover'
+                  }`}
+                >
+                  <Briefcase size={14} />
+                  <span className="max-w-[100px] truncate">
+                    {filterIndepPic === 'all' ? 'Semua PIC' : filterIndepPic}
+                  </span>
+                  <ChevronDown size={14} className={`transition-transform ${isIndepPicDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isIndepPicDropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setIsIndepPicDropdownOpen(false)} />
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-bgSecondary border border-gray-200 dark:border-borderBase rounded-xl shadow-xl z-50 py-1 max-h-72 overflow-y-auto custom-scrollbar">
+                      <button
+                        onClick={() => { setFilterIndepPic('all'); setIsIndepPicDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-2 text-xs transition-colors ${
+                          filterIndepPic === 'all'
+                            ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium'
+                            : 'text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlass'
+                        }`}
+                      >
+                        Semua PIC
+                      </button>
+                      {uniqueIndepPics.map((pic) => (
+                        <button
+                          key={pic}
+                          onClick={() => { setFilterIndepPic(pic); setIsIndepPicDropdownOpen(false); }}
+                          className={`w-full text-left px-4 py-2 text-xs transition-colors border-t border-gray-100 dark:border-white/[0.05] ${
+                            filterIndepPic === pic
+                              ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium'
+                              : 'text-textPrimary hover:bg-gray-50 dark:hover:bg-bgGlass'
+                          }`}
+                        >
+                          {pic}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={() => {
+                  setTargetKpiIdForBoard("");
+                  setBoardType("non-kpi");
+                  setEditingBoardId(null);
+                  setBoardTitle("");
+                  setBoardDesc("");
+                  setBoardStartDate("");
+                  setBoardTargetDate("");
+                  setIsBoardModalOpen(true);
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-xs font-medium transition-all shadow-sm shadow-indigo-500/20 flex items-center gap-1.5 w-full sm:w-auto justify-center"
+              >
+                <Plus size={14} />
+                Buat Board
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
             {independentBoards
               .filter((board) => {
+                // Apply Department filter
+                if (filterIndepDepartment !== "all") {
+                  const deptId = board.departmentId || (board as any).department_id;
+                  if (deptId !== filterIndepDepartment) {
+                    return false;
+                  }
+                }
+
+                // Apply PIC filter
+                if (filterIndepPic !== "all") {
+                  let isMatch = false;
+                  if (board.user?.name === filterIndepPic) {
+                    isMatch = true;
+                  } else {
+                    isMatch = !!board.tasks?.some((t: any) => {
+                      let picName = null;
+                      if (typeof t.pic === 'object' && t.pic) {
+                        picName = (t.pic as any).name;
+                      } else if (typeof t.pic === 'string') {
+                        const foundUser = users.find(u => u.id === t.pic);
+                        if (foundUser) picName = foundUser.name;
+                      } else if (t.pic_id) {
+                        const foundUser = users.find(u => u.id === t.pic_id);
+                        if (foundUser) picName = foundUser.name;
+                      }
+                      return picName === filterIndepPic;
+                    });
+                  }
+                  if (!isMatch) return false;
+                }
+
                 if (!searchKpi.trim()) return true;
                 const q = searchKpi.toLowerCase();
                 if (board.title.toLowerCase().includes(q)) return true;
