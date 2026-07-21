@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             ['id' => '019f1cad-3ce9-7147-aa96-d1299f7d48cf', 'name' => 'Departemen Branding Strategi', 'created_at' => '2026-06-30 17:55:43', 'updated_at' => '2026-06-30 17:55:43'],
         ]);
 
+
         DB::table('roles')->truncate();
         DB::table('roles')->insert([
             ['id' => '019f1c70-1f62-718e-9094-ef2acec26511', 'name' => 'Admin', 'created_at' => '2026-06-30 16:48:57', 'updated_at' => '2026-06-30 16:48:57'],
