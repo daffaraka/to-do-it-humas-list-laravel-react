@@ -73,6 +73,12 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const [boardDesc, setBoardDesc] = useState("");
   const [boardStartDate, setBoardStartDate] = useState("");
   const [boardTargetDate, setBoardTargetDate] = useState("");
+  const [boardKondisiAktual, setBoardKondisiAktual] = useState("");
+  const [boardTargetAkhirTahun, setBoardTargetAkhirTahun] = useState("");
+  const [boardOutputAkhir, setBoardOutputAkhir] = useState("");
+  const [boardPrioritas, setBoardPrioritas] = useState("");
+  const [kategoriProgramIdForBoard, setKategoriProgramIdForBoard] = useState<string | null>(null);
+  const [kategoriPrograms, setKategoriPrograms] = useState<any[]>([]);
   const [isKpiDropdownOpen, setIsKpiDropdownOpen] = useState(false);
   const { createBoard, deleteBoard, updateBoard } = useKanban();
   const { departments, fetchDepartments } = useKanban();
@@ -119,6 +125,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
     fetchBoards();
     fetchDepartments();
     api.get('/users').then((res) => setUsers(res.data)).catch(console.error);
+    api.get("/kategori-program-kerja").then((res) => setKategoriPrograms(res.data)).catch(console.error);
   }, [fetchKpis, fetchBoards, fetchDepartments]);
 
   if (!mounted) return null;
@@ -178,6 +185,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         kpiId: boardType === "kpi" ? targetKpiIdForBoard || undefined : null,
         startDate: boardStartDate || null,
         targetDate: boardTargetDate || null,
+        kategoriProgramId: kategoriProgramIdForBoard || null,
+        kondisiAktual: boardKondisiAktual || null,
+        targetAkhirTahun: boardTargetAkhirTahun || null,
+        outputAkhir: boardOutputAkhir || null,
+        prioritas: boardPrioritas || null
       });
     } else {
       await createBoard(
@@ -186,6 +198,12 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         boardType === "kpi" ? targetKpiIdForBoard || undefined : undefined,
         boardStartDate || undefined,
         boardTargetDate || undefined,
+        undefined,
+        kategoriProgramIdForBoard || undefined,
+        boardKondisiAktual || undefined,
+        boardTargetAkhirTahun || undefined,
+        boardOutputAkhir || undefined,
+        boardPrioritas || undefined
       );
     }
 
@@ -194,6 +212,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
     setBoardDesc("");
     setBoardStartDate("");
     setBoardTargetDate("");
+    setBoardKondisiAktual("");
+    setBoardTargetAkhirTahun("");
+    setBoardOutputAkhir("");
+    setBoardPrioritas("");
+    setKategoriProgramIdForBoard(null);
     setEditingBoardId(null);
     fetchKpis(); // Refresh to see the new board in the KPI
     fetchBoards();
@@ -462,6 +485,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                                           .split("T")[0]
                                       : "",
                                   );
+                                  setBoardKondisiAktual(board.kondisiAktual || "");
+                                  setBoardTargetAkhirTahun(board.targetAkhirTahun || "");
+                                  setBoardOutputAkhir(board.outputAkhir || "");
+                                  setBoardPrioritas(board.prioritas || "");
+                                  setKategoriProgramIdForBoard(board.kategoriProgramId || board.kategori_program_id || null);
                                   setTargetKpiIdForBoard(
                                     board.kpiId || board.kpi_id || null,
                                   );
@@ -517,8 +545,9 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                               </div>
                             )}
                           </div>
-
+                          
                           <div className="grid grid-cols-3 gap-1.5 text-center mt-auto">
+
                             <div className="bg-bgPrimary rounded-lg p-1.5 shadow-sm border border-black/[0.02] dark:border-white/[0.02]">
                               <div className="text-[10px] text-textSecondary mb-0.5 font-medium tracking-wider">
                                 TODO
@@ -544,11 +573,44 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                               </div>
                             </div>
                           </div>
+
+                          <div className="mt-2 space-y-1">
+                            {board.kondisiAktual && (
+                              <div className="text-[10px] text-textSecondary line-clamp-1">
+                                <span className="font-semibold text-textPrimary">Kondisi Aktual:</span> {board.kondisiAktual}
+                              </div>
+                            )}
+                            {board.targetAkhirTahun && (
+                              <div className="text-[10px] text-textSecondary line-clamp-1">
+                                <span className="font-semibold text-textPrimary">Target:</span> {board.targetAkhirTahun}
+                              </div>
+                            )}
+                            {board.outputAkhir && (
+                              <div className="text-[10px] text-textSecondary line-clamp-1">
+                                <span className="font-semibold text-textPrimary">Output:</span> {board.outputAkhir}
+                              </div>
+                            )}
+                          </div>
+
+                          {board.prioritas && (
+                            <div className="mt-2">
+                              <span
+                                className={`inline-flex items-center px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
+                                  board.prioritas === "high"
+                                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800/50"
+                                    : board.prioritas === "medium"
+                                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50"
+                                    : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800/50"
+                                }`}
+                              >
+                                {board.prioritas === "high" ? "Prioritas Tinggi" : board.prioritas === "medium" ? "Prioritas Sedang" : "Prioritas Rendah"}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                 </div>
-                {/* )} */}
               </div>
             </div>
           );
@@ -776,6 +838,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                                   .split("T")[0]
                               : "",
                           );
+                          setBoardKondisiAktual(board.kondisiAktual || "");
+                          setBoardTargetAkhirTahun(board.targetAkhirTahun || "");
+                          setBoardOutputAkhir(board.outputAkhir || "");
+                          setBoardPrioritas(board.prioritas || "");
+                          setKategoriProgramIdForBoard(board.kategoriProgramId || board.kategori_program_id || null);
                           setTargetKpiIdForBoard(null);
                           setBoardType("non-kpi");
                           setIsBoardModalOpen(true);

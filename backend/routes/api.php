@@ -31,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('comments', CommentController::class);
     Route::apiResource('notifications', NotificationController::class);
     Route::apiResource('kpis', KpiController::class);
+    Route::apiResource('kategori-program-kerja', \App\Http\Controllers\API\KategoriProgramKerjaController::class);
     Route::apiResource('meetings', MeetingController::class);
 
     // Custom Routes for Frontend compatibility

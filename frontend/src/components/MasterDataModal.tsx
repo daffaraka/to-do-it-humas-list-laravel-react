@@ -12,7 +12,7 @@ import { useKanban } from '../store/kanbanStore';
 import { useAuthStore } from '../store/authStore';
 
 interface MasterDataModalProps {
-  type: 'users' | 'departments' | 'roles' | 'kpis';
+  type: 'users' | 'departments' | 'roles' | 'kpis' | 'kategori-program-kerja';
   initialData?: any;
   onClose: () => void;
   onSuccess: () => void;
@@ -111,7 +111,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
     const action = initialData ? 'Edit' : 'Tambah';
     if (type === 'users') return `${action} Pengguna`;
     if (type === 'departments') return `${action} Departemen`;
-    if (type === 'kpis') return `${action} Main Project`;
+    if (type === 'kpis') return `${action} WIG`;
     return `${action} Jabatan (Role)`;
   };
 
@@ -153,13 +153,13 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
             </div>
           )}
 
-          {/* Main Project Specific Fields */}
+          {/* WIG Specific Fields */}
           {type === 'kpis' && (
             <>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
                   <Tag size={14} className="text-indigo-400" />
-                  Judul Main Project <span className="text-red-400">*</span>
+                  Judul WIG <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
@@ -202,7 +202,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Jelaskan tujuan dan ruang lingkup Main Project ini..."
+                  placeholder="Jelaskan tujuan dan ruang lingkup WIG ini..."
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary min-h-[100px]"
                 />
               </div>

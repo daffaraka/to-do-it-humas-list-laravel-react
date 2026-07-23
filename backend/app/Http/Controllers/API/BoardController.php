@@ -8,7 +8,7 @@ use App\Models\Board;
 class BoardController extends Controller
 {
     public function index() {
-        return response()->json(Board::with(['tasks', 'user'])->get());
+        return response()->json(Board::with(['tasks', 'user', 'kategoriProgram'])->get());
     }
 
     public function store(Request $request) {
@@ -32,12 +32,17 @@ class BoardController extends Controller
             'department_id' => $departmentId,
             'start_date' => $startDate,
             'target_date' => $targetDate,
+            'kategori_program_id' => $request->kategori_program_id ?? $request->kategoriProgramId,
+            'kondisi_aktual' => $request->kondisi_aktual,
+            'target_akhir_tahun' => $request->target_akhir_tahun,
+            'output_akhir' => $request->output_akhir,
+            'prioritas' => $request->prioritas,
         ]);
         return response()->json($board, 201);
     }
 
     public function show($id) {
-        return response()->json(Board::with(['tasks', 'user'])->findOrFail($id));
+        return response()->json(Board::with(['tasks', 'user', 'kategoriProgram'])->findOrFail($id));
     }
 
     public function update(Request $request, $id) {
@@ -55,6 +60,14 @@ class BoardController extends Controller
         if ($request->has('target_date')) $data['target_date'] = $request->target_date;
         if ($request->has('targetDate')) $data['target_date'] = $request->targetDate;
         
+        if ($request->has('kategori_program_id')) $data['kategori_program_id'] = $request->kategori_program_id;
+        if ($request->has('kategoriProgramId')) $data['kategori_program_id'] = $request->kategoriProgramId;
+
+        if ($request->has('kondisi_aktual')) $data['kondisi_aktual'] = $request->kondisi_aktual;
+        if ($request->has('target_akhir_tahun')) $data['target_akhir_tahun'] = $request->target_akhir_tahun;
+        if ($request->has('output_akhir')) $data['output_akhir'] = $request->output_akhir;
+        if ($request->has('prioritas')) $data['prioritas'] = $request->prioritas;
+
         $model->update($data);
         return response()->json($model);
     }

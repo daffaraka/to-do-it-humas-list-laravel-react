@@ -29,7 +29,7 @@ interface KanbanState {
 
   fetchDepartments: () => Promise<void>;
   fetchBoards: () => Promise<void>;
-  createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string, departmentId?: string) => Promise<void>;
+  createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string, departmentId?: string, kategoriProgramId?: string, kondisiAktual?: string, targetAkhirTahun?: string, outputAkhir?: string, prioritas?: string) => Promise<void>;
   updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
   deleteBoard: (id: string) => Promise<void>;
   setActiveBoardId: (boardId: string | null) => void;
@@ -112,18 +112,20 @@ export const useKanban = create<KanbanState>()(
         await fetchBoardsPromise;
       },
 
-      createBoard: async (title, description, kpiId, startDate, targetDate, departmentId) => {
+      createBoard: async (title, description, kpiId, startDate, targetDate, departmentId, kategoriProgramId, kondisiAktual, targetAkhirTahun, outputAkhir, prioritas) => {
         try {
-          const response = await api.post('/boards', { 
-            title, 
-            description, 
-            kpiId, 
-            kpi_id: kpiId,
-            departmentId,
-            department_id: departmentId,
-            startDate,
-            targetDate
-          });
+          const payload: any = { title };
+          if (description) payload.description = description;
+          if (kpiId) payload.kpi_id = kpiId;
+          if (startDate) payload.start_date = startDate;
+          if (targetDate) payload.target_date = targetDate;
+          if (departmentId) payload.department_id = departmentId;
+          if (kategoriProgramId) payload.kategori_program_id = kategoriProgramId;
+          if (kondisiAktual) payload.kondisi_aktual = kondisiAktual;
+          if (targetAkhirTahun) payload.target_akhir_tahun = targetAkhirTahun;
+          if (outputAkhir) payload.output_akhir = outputAkhir;
+          if (prioritas) payload.prioritas = prioritas;
+          const response = await api.post('/boards', payload);
           set((state) => ({ boards: [response.data, ...state.boards] }));
         } catch (err: any) {
           console.error('Failed to create board', err);

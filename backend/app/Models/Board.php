@@ -16,8 +16,13 @@ class Board extends Model
         'user_id',
         'department_id',
         'kpi_id',
+        'kategori_program_id',
         'start_date',
-        'target_date'
+        'target_date',
+        'kondisi_aktual',
+        'target_akhir_tahun',
+        'output_akhir',
+        'prioritas'
     ];
 
     protected $casts = [
@@ -40,5 +45,9 @@ class Board extends Model
     public function tasks()
     {
         return $this->hasMany(Task::class)->orderBy('position');
+    }
+    public function kategoriProgram()
+    {
+        return $this->belongsTo(KategoriProgramKerja::class, 'kategori_program_id');
     }
 }

@@ -35,11 +35,19 @@ export interface Board {
   };
   departmentId: string;
   department?: Department;
+  kategoriProgramId?: string | null;
+  kategori_program_id?: string | null;
+  kategoriProgram?: KategoriProgramKerja | null;
+  kategori_program?: KategoriProgramKerja | null;
   kpiId?: string | null;
   kpi_id?: string | null;
   kpi?: Kpi;
   startDate?: string | null;
   targetDate?: string | null;
+  kondisiAktual?: string | null;
+  targetAkhirTahun?: string | null;
+  outputAkhir?: string | null;
+  prioritas?: 'low' | 'medium' | 'high' | string | null;
   createdAt: string;
   updatedAt: string;
   tasks?: Card[];
@@ -102,6 +110,13 @@ export const AVAILABLE_LABELS: CardLabel[] = [
   { id: 'l6', name: 'Urgent', color: '#f59e0b' },
   { id: 'l8', name: 'Frontend', color: '#3b82f6' },
 ];
+
+export interface KategoriProgramKerja {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export interface Kpi {
   id: string;
