@@ -20,9 +20,10 @@ import { useKanban } from '../store/kanbanStore';
 import { useAuthStore } from '../store/authStore';
 import { KanbanColumn } from './KanbanColumn';
 import { CardDragOverlay } from './KanbanCard';
-import { Tag, ArrowLeft, Search, Calendar, Target } from 'lucide-react';
+import { Tag, ArrowLeft, Search, Calendar, Target, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { differenceInDays, startOfDay } from 'date-fns';
+import { differenceInDays, startOfDay, format } from 'date-fns';
+import { id as dateFnsIdLocale } from 'date-fns/locale';
 
 const getDaysRemaining = (dateString: string) => {
   const target = startOfDay(new Date(dateString));
@@ -47,6 +48,7 @@ export function KanbanBoard() {
   } = useKanban();
   const [activeCard, setActiveCard] = useState<Card | null>(null);
   const [isLabelOpen, setIsLabelOpen] = useState(false);
+  const [isBoardInfoOpen, setIsBoardInfoOpen] = useState(false);
   const navigate = useNavigate();
   const activeBoard = boards.find(b => b.id === activeBoardId);
   
@@ -176,7 +178,7 @@ export function KanbanBoard() {
             Kembali
           </button>
           {activeBoard && (
-            <div className="border-l-2 border-borderBase pl-4">
+            <div className="border-l-2 border-borderBase pl-4 flex items-center gap-3">
               <h2 className="text-lg font-bold text-textPrimary flex items-center gap-2">
                 {activeBoard.title}
                 {activeBoard.targetDate && (() => {
@@ -189,6 +191,15 @@ export function KanbanBoard() {
                   );
                 })()}
               </h2>
+              <button
+                onClick={() => setIsBoardInfoOpen(!isBoardInfoOpen)}
+                className={`p-1.5 rounded-lg flex items-center gap-1 text-xs font-medium transition-colors border ${isBoardInfoOpen ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400' : 'bg-white border-gray-200 text-textSecondary hover:bg-gray-50 dark:bg-bgSecondary dark:border-borderBase dark:hover:bg-bgGlassHover'}`}
+                title="Info Program Kerja"
+              >
+                <Info size={14} />
+                Detail
+                {isBoardInfoOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
             </div>
           )}
         </div>
@@ -255,6 +266,73 @@ export function KanbanBoard() {
           </div>
         </div>
       </div>
+
+      {/* Board Info Panel */}
+      {activeBoard && isBoardInfoOpen && (
+        <div className="relative z-30 mb-6 bg-white/80 dark:bg-bgSecondary/80 backdrop-blur-md border border-borderBase rounded-2xl p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Column 1: Basic Info */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Tujuan / Deskripsi</h4>
+                <p className="text-sm text-textPrimary font-medium">{activeBoard.description || "-"}</p>
+              </div>
+              <div>
+                <h4 className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Periode</h4>
+                <p className="text-sm text-textPrimary font-medium flex items-center gap-1.5">
+                  <Calendar size={14} className="text-textSecondary" />
+                  {activeBoard.startDate ? format(new Date(activeBoard.startDate), "dd MMM yyyy", { locale: dateFnsIdLocale }) : "-"} 
+                  {" - "}
+                  {activeBoard.targetDate ? format(new Date(activeBoard.targetDate), "dd MMM yyyy", { locale: dateFnsIdLocale }) : "-"}
+                </p>
+              </div>
+            </div>
+            
+            {/* Column 2: Details */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Kondisi Aktual</h4>
+                <p className="text-sm text-textPrimary font-medium">{activeBoard.kondisiAktual || "-"}</p>
+              </div>
+              <div>
+                <h4 className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Prioritas</h4>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider ${
+                  activeBoard.prioritas === 'high' ? 'bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400' :
+                  activeBoard.prioritas === 'medium' ? 'bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400' :
+                  activeBoard.prioritas === 'low' ? 'bg-gray-100 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400' :
+                  'text-textSecondary'
+                }`}>
+                  {activeBoard.prioritas === 'high' ? 'Tinggi' : activeBoard.prioritas === 'medium' ? 'Sedang' : activeBoard.prioritas === 'low' ? 'Rendah' : '-'}
+                </span>
+              </div>
+            </div>
+
+            {/* Column 3: Targets */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Target Akhir Tahun</h4>
+                <p className="text-sm text-textPrimary font-medium">{activeBoard.targetAkhirTahun || "-"}</p>
+              </div>
+              <div>
+                <h4 className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Output Akhir</h4>
+                <p className="text-sm text-textPrimary font-medium">{activeBoard.outputAkhir || "-"}</p>
+              </div>
+            </div>
+
+            {/* Column 4: Meta */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Main Project (WIG)</h4>
+                <p className="text-sm text-textPrimary font-medium">{activeBoard.kpi?.title || <span className="text-textSecondary italic text-xs">Non Project</span>}</p>
+              </div>
+              <div>
+                <h4 className="text-[10px] font-extrabold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-1">Kategori Program</h4>
+                <p className="text-sm text-textPrimary font-medium">{activeBoard.kategoriProgram?.name || activeBoard.kategori_program?.name || <span className="text-textSecondary italic text-xs">Tanpa Kategori</span>}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div id="kanban-columns-wrapper" className="relative z-10 flex-1 flex gap-6 items-start w-full overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar">
         <DndContext

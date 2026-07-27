@@ -458,7 +458,7 @@ export function ProgramKerjaBoard({
             return (
               <div
                 key={cat.id}
-                className="bg-gray-50/50 dark:bg-white/[0.02] border-2 border-gray-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/40 hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 space-y-4"
+                className="bg-white dark:bg-bgSecondary border border-l-4 border-l-indigo-500 border-gray-200 dark:border-white/[0.08] shadow-md hover:shadow-xl hover:border-indigo-400 dark:hover:border-indigo-500/60 hover:-translate-y-1 transition-all duration-300 rounded-2xl p-5 space-y-4 group"
               >
                 <div className="flex items-center gap-3 border-b border-gray-100 dark:border-borderBase pb-2">
                   <div className="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
@@ -484,7 +484,7 @@ export function ProgramKerjaBoard({
           })}
 
           {groupedBoards["uncategorized"]?.length > 0 && (
-            <div className="bg-gray-50/50 dark:bg-white/[0.02] border-2 border-gray-200/80 dark:border-white/[0.08] shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-500/40 hover:-translate-y-0.5 transition-all duration-300 rounded-2xl p-5 space-y-4">
+            <div className="bg-white dark:bg-bgSecondary border border-l-4 border-l-gray-400 border-gray-200 dark:border-white/[0.08] shadow-md hover:shadow-xl hover:border-gray-400 dark:hover:border-gray-500/60 hover:-translate-y-1 transition-all duration-300 rounded-2xl p-5 space-y-4 group">
               <div className="flex items-center gap-3 border-b border-gray-100 dark:border-borderBase pb-2">
                 <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-bgSecondary flex items-center justify-center text-gray-500">
                   <LayoutGrid size={16} />
