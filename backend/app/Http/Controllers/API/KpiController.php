@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Kpi;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 
 class KpiController extends Controller
 {
@@ -49,7 +50,7 @@ class KpiController extends Controller
 
         if ($request->has('department_id')) $data['department_id'] = $request->department_id;
         if ($request->has('departmentId')) $data['department_id'] = $request->departmentId;
-        
+
         if ($request->has('bobot')) $data['bobot'] = $request->bobot;
 
         $model->update($data);
@@ -61,7 +62,7 @@ class KpiController extends Controller
         try {
             Kpi::destroy($id);
             return response()->json(['message' => 'Deleted']);
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             if ($e->getCode() === '23000') {
                 return response()->json(['message' => 'Gagal menghapus: Main Project ini masih terkait dengan data lain.'], 400);
             }
