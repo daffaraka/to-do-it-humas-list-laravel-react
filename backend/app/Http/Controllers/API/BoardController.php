@@ -24,14 +24,14 @@ class BoardController extends Controller
             $departmentId = $request->department_id ?? $request->departmentId;
         }
 
-        $bobotInput = $request->has('bobot') ? $request->bobot : 0;
+        $bobotInput = $request->has('bobot_board') ? $request->bobot_board : 0;
         if ($kpiId) {
             $kpi = \App\Models\Kpi::find($kpiId);
             if ($kpi) {
-                $existingBobot = \App\Models\Board::where('kpi_id', $kpiId)->sum('bobot');
-                if (($existingBobot + $bobotInput) > $kpi->bobot) {
+                $existingBobot = \App\Models\Board::where('kpi_id', $kpiId)->sum('bobot_board');
+                if (($existingBobot + $bobotInput) > $kpi->bobot_kpi) {
                     return response()->json([
-                        'message' => 'Total bobot Program Kerja melebihi Sisa Bobot WIG (' . ($kpi->bobot - $existingBobot) . ').'
+                        'message' => 'Total bobot Program Kerja melebihi Sisa Bobot WIG (' . ($kpi->bobot_kpi - $existingBobot) . ').'
                     ], 422);
                 }
             }
@@ -50,7 +50,7 @@ class BoardController extends Controller
             'target_akhir_tahun' => $request->target_akhir_tahun,
             'output_akhir' => $request->output_akhir,
             'prioritas' => $request->prioritas,
-            'bobot' => $bobotInput,
+            'bobot_board' => $bobotInput,
         ]);
         return response()->json($board, 201);
     }
@@ -64,16 +64,16 @@ class BoardController extends Controller
         
         $data = [];
         
-        $bobotInput = $request->has('bobot') ? $request->bobot : $model->bobot;
+        $bobotInput = $request->has('bobot_board') ? $request->bobot_board : $model->bobot_board;
         $kpiId = $request->kpi_id ?? $request->kpiId ?? $model->kpi_id;
         
-        if ($kpiId && $request->has('bobot')) {
+        if ($kpiId && $request->has('bobot_board')) {
             $kpi = \App\Models\Kpi::find($kpiId);
             if ($kpi) {
-                $existingBobot = \App\Models\Board::where('kpi_id', $kpiId)->where('id', '!=', $id)->sum('bobot');
-                if (($existingBobot + $bobotInput) > $kpi->bobot) {
+                $existingBobot = \App\Models\Board::where('kpi_id', $kpiId)->where('id', '!=', $id)->sum('bobot_board');
+                if (($existingBobot + $bobotInput) > $kpi->bobot_kpi) {
                     return response()->json([
-                        'message' => 'Total bobot Program Kerja melebihi Sisa Bobot WIG (' . ($kpi->bobot - $existingBobot) . ').'
+                        'message' => 'Total bobot Program Kerja melebihi Sisa Bobot WIG (' . ($kpi->bobot_kpi - $existingBobot) . ').'
                     ], 422);
                 }
             }
@@ -97,7 +97,7 @@ class BoardController extends Controller
         if ($request->has('target_akhir_tahun')) $data['target_akhir_tahun'] = $request->target_akhir_tahun;
         if ($request->has('output_akhir')) $data['output_akhir'] = $request->output_akhir;
         if ($request->has('prioritas')) $data['prioritas'] = $request->prioritas;
-        if ($request->has('bobot')) $data['bobot'] = $request->bobot;
+        if ($request->has('bobot_board')) $data['bobot_board'] = $request->bobot_board;
 
         $model->update($data);
         return response()->json($model);

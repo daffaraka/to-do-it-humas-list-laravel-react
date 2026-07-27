@@ -125,7 +125,7 @@ export const useKanban = create<KanbanState>()(
           if (targetAkhirTahun) payload.target_akhir_tahun = targetAkhirTahun;
           if (outputAkhir) payload.output_akhir = outputAkhir;
           if (prioritas) payload.prioritas = prioritas;
-          if (bobot !== undefined && bobot !== "") payload.bobot = bobot;
+          if (bobot !== undefined && bobot !== "") payload.bobot_board = bobot;
           const response = await api.post('/boards', payload);
           set((state) => ({ boards: [response.data, ...state.boards] }));
         } catch (err: any) {

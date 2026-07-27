@@ -56,12 +56,12 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
     title: string;
     description: string;
     targetDate: string;
-    bobot?: number | string;
+    bobot_kpi?: number | string;
   }>({
     title: "",
     description: "",
     targetDate: "",
-    bobot: 100,
+    bobot_kpi: 100,
   });
 
   // Board Modal state
@@ -151,11 +151,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         targetDate: kpi.targetDate
           ? new Date(kpi.targetDate).toISOString().split("T")[0]
           : "",
-        bobot: kpi.bobot ? Number(kpi.bobot) : 100,
+        bobot_kpi: kpi.bobot_kpi ? Number(kpi.bobot_kpi) : 100,
       });
     } else {
       setEditingKpi(null);
-      setFormData({ title: "", description: "", targetDate: "", bobot: 100 });
+      setFormData({ title: "", description: "", targetDate: "", bobot_kpi: 100 });
     }
     setIsModalOpen(true);
   };
@@ -298,8 +298,8 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                 const progress = calculateProgress(kpi.boards || []);
                 const canViewDetails = isAdmin || kpi.userId === user?.id;
                 
-                const bobotWig = Number(kpi.bobot ?? 100);
-                const usedBobot = (kpi.boards || []).reduce((acc, board) => acc + Number(board.bobot ?? 0), 0);
+                const bobotWig = Number(kpi.bobot_kpi ?? 100);
+                const usedBobot = (kpi.boards || []).reduce((acc, board) => acc + Number(board.bobot_board ?? 0), 0);
                 const sisaBobot = bobotWig - usedBobot;
 
                 return (
@@ -489,7 +489,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                                   setTargetKpiIdForBoard(
                                     board.kpiId || board.kpi_id || null,
                                   );
-                                  setBoardBobot(board.bobot || "");
+                                  setBoardBobot(board.bobot_board || "");
                                   setBoardType("kpi");
                                   setIsBoardModalOpen(true);
                                 }}
@@ -540,7 +540,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
               board.kategoriProgramId || board.kategori_program_id || null,
             );
             setTargetKpiIdForBoard(null);
-            setBoardBobot(board.bobot || "");
+            setBoardBobot(board.bobot_board || "");
             setBoardType("non-kpi");
             setIsBoardModalOpen(true);
           }}

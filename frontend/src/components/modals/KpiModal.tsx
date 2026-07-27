@@ -8,8 +8,8 @@ interface KpiModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingKpi: any;
-  formData: { title: string; description: string; targetDate: string; bobot?: number | string };
-  setFormData: (data: { title: string; description: string; targetDate: string; bobot?: number | string }) => void;
+  formData: { title: string; description: string; targetDate: string; bobot_kpi?: number | string };
+  setFormData: (data: { title: string; description: string; targetDate: string; bobot_kpi?: number | string }) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -102,9 +102,9 @@ export function KpiModal({
               step="any"
               min="0"
               required
-              value={formData.bobot ?? 100}
+              value={formData.bobot_kpi ?? ""}
               onChange={(e) =>
-                setFormData({ ...formData, bobot: e.target.value })
+                setFormData({ ...formData, bobot_kpi: e.target.value })
               }
               className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary/50"
               placeholder="Contoh: 100"
