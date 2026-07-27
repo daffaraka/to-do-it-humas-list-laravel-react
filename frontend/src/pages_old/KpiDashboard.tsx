@@ -56,7 +56,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
     title: string;
     description: string;
     targetDate: string;
-    bobot: number | string;
+    bobot?: number | string;
   }>({
     title: "",
     description: "",
@@ -181,7 +181,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const handleDeleteBoard = async (e: React.MouseEvent, id: string | number) => {
     e.stopPropagation();
     if (window.confirm("Apakah Anda yakin ingin menghapus Board ini?")) {
-      await deleteBoard(id);
+      await deleteBoard(id.toString());
       fetchKpis();
       fetchBoards();
     }
