@@ -15,7 +15,8 @@ class Kpi extends Model
         'description',
         'department_id',
         'user_id',
-        'target_date'
+        'target_date',
+        'bobot'
     ];
 
     protected $casts = [

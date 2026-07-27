@@ -29,7 +29,7 @@ interface KanbanState {
 
   fetchDepartments: () => Promise<void>;
   fetchBoards: () => Promise<void>;
-  createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string, departmentId?: string, kategoriProgramId?: string, kondisiAktual?: string, targetAkhirTahun?: string, outputAkhir?: string, prioritas?: string) => Promise<void>;
+  createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string, departmentId?: string, kategoriProgramId?: string, kondisiAktual?: string, targetAkhirTahun?: string, outputAkhir?: string, prioritas?: string, bobot?: number | string) => Promise<void>;
   updateBoard: (id: string, updates: Partial<Board>) => Promise<void>;
   deleteBoard: (id: string) => Promise<void>;
   setActiveBoardId: (boardId: string | null) => void;
@@ -112,7 +112,7 @@ export const useKanban = create<KanbanState>()(
         await fetchBoardsPromise;
       },
 
-      createBoard: async (title, description, kpiId, startDate, targetDate, departmentId, kategoriProgramId, kondisiAktual, targetAkhirTahun, outputAkhir, prioritas) => {
+      createBoard: async (title, description, kpiId, startDate, targetDate, departmentId, kategoriProgramId, kondisiAktual, targetAkhirTahun, outputAkhir, prioritas, bobot) => {
         try {
           const payload: any = { title };
           if (description) payload.description = description;
@@ -125,6 +125,7 @@ export const useKanban = create<KanbanState>()(
           if (targetAkhirTahun) payload.target_akhir_tahun = targetAkhirTahun;
           if (outputAkhir) payload.output_akhir = outputAkhir;
           if (prioritas) payload.prioritas = prioritas;
+          if (bobot !== undefined && bobot !== "") payload.bobot = bobot;
           const response = await api.post('/boards', payload);
           set((state) => ({ boards: [response.data, ...state.boards] }));
         } catch (err: any) {

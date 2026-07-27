@@ -22,7 +22,8 @@ class Board extends Model
         'kondisi_aktual',
         'target_akhir_tahun',
         'output_akhir',
-        'prioritas'
+        'prioritas',
+        'bobot'
     ];
 
     protected $casts = [

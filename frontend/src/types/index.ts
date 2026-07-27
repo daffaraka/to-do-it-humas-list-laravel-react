@@ -48,6 +48,7 @@ export interface Board {
   targetAkhirTahun?: string | null;
   outputAkhir?: string | null;
   prioritas?: 'low' | 'medium' | 'high' | string | null;
+  bobot?: number | string | null;
   createdAt: string;
   updatedAt: string;
   tasks?: Card[];
@@ -127,6 +128,7 @@ export interface Kpi {
   userId: string;
   user?: { id: string; name: string };
   targetDate: string;
+  bobot?: number | string | null;
   createdAt: string;
   updatedAt: string;
   boards?: Board[];

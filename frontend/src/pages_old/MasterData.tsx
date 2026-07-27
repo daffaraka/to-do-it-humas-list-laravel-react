@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Users, Briefcase, UserPlus, Shield, Target, FolderTree } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  Briefcase,
+  UserPlus,
+  Shield,
+  Target,
+  FolderTree,
+} from "lucide-react";
 import { MasterDataModal } from "../components/MasterDataModal";
 import api from "../lib/api";
 import { useAuthStore } from "../store/authStore";
@@ -75,7 +83,7 @@ export function MasterData() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-bgPrimary p-6 sm:p-10">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-8xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
@@ -153,7 +161,11 @@ export function MasterData() {
                 <thead className="bg-bgGlass text-textPrimary">
                   <tr>
                     <th className="px-6 py-4 font-medium">
-                      {activeTab === "kpis" ? "Judul" : activeTab === "kategori-program-kerja" ? "Nama Kategori" : "Name"}
+                      {activeTab === "kpis"
+                        ? "Judul"
+                        : activeTab === "kategori-program-kerja"
+                          ? "Nama Kategori"
+                          : "Name"}
                     </th>
                     {activeTab === "users" && (
                       <th className="px-6 py-4 font-medium">Email</th>

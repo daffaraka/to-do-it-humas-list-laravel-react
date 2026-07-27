@@ -26,6 +26,7 @@ class KpiController extends Controller
             'target_date' => $date,
             'department_id' => $request->filled('department_id') ? $request->department_id : $user->department_id,
             'user_id' => $user->id,
+            'bobot' => $request->has('bobot') ? $request->bobot : 100,
         ]);
         return response()->json($kpi, 201);
     }
@@ -48,6 +49,8 @@ class KpiController extends Controller
 
         if ($request->has('department_id')) $data['department_id'] = $request->department_id;
         if ($request->has('departmentId')) $data['department_id'] = $request->departmentId;
+        
+        if ($request->has('bobot')) $data['bobot'] = $request->bobot;
 
         $model->update($data);
         return response()->json($model);

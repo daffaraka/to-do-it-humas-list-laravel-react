@@ -24,6 +24,19 @@ class BoardController extends Controller
             $departmentId = $request->department_id ?? $request->departmentId;
         }
 
+        $bobotInput = $request->has('bobot') ? $request->bobot : 0;
+        if ($kpiId) {
+            $kpi = \App\Models\Kpi::find($kpiId);
+            if ($kpi) {
+                $existingBobot = \App\Models\Board::where('kpi_id', $kpiId)->sum('bobot');
+                if (($existingBobot + $bobotInput) > $kpi->bobot) {
+                    return response()->json([
+                        'message' => 'Total bobot Program Kerja melebihi Sisa Bobot WIG (' . ($kpi->bobot - $existingBobot) . ').'
+                    ], 422);
+                }
+            }
+        }
+
         $board = Board::create([
             'title' => $request->title,
             'description' => $request->description,
@@ -37,6 +50,7 @@ class BoardController extends Controller
             'target_akhir_tahun' => $request->target_akhir_tahun,
             'output_akhir' => $request->output_akhir,
             'prioritas' => $request->prioritas,
+            'bobot' => $bobotInput,
         ]);
         return response()->json($board, 201);
     }
@@ -49,6 +63,22 @@ class BoardController extends Controller
         $model = Board::findOrFail($id);
         
         $data = [];
+        
+        $bobotInput = $request->has('bobot') ? $request->bobot : $model->bobot;
+        $kpiId = $request->kpi_id ?? $request->kpiId ?? $model->kpi_id;
+        
+        if ($kpiId && $request->has('bobot')) {
+            $kpi = \App\Models\Kpi::find($kpiId);
+            if ($kpi) {
+                $existingBobot = \App\Models\Board::where('kpi_id', $kpiId)->where('id', '!=', $id)->sum('bobot');
+                if (($existingBobot + $bobotInput) > $kpi->bobot) {
+                    return response()->json([
+                        'message' => 'Total bobot Program Kerja melebihi Sisa Bobot WIG (' . ($kpi->bobot - $existingBobot) . ').'
+                    ], 422);
+                }
+            }
+        }
+
         if ($request->has('title')) $data['title'] = $request->title;
         if ($request->has('description')) $data['description'] = $request->description;
         if ($request->has('kpi_id')) $data['kpi_id'] = $request->kpi_id;
@@ -67,6 +97,7 @@ class BoardController extends Controller
         if ($request->has('target_akhir_tahun')) $data['target_akhir_tahun'] = $request->target_akhir_tahun;
         if ($request->has('output_akhir')) $data['output_akhir'] = $request->output_akhir;
         if ($request->has('prioritas')) $data['prioritas'] = $request->prioritas;
+        if ($request->has('bobot')) $data['bobot'] = $request->bobot;
 
         $model->update($data);
         return response()->json($model);
