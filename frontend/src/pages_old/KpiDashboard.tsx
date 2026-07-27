@@ -36,19 +36,7 @@ interface KpiDashboardProps {
   viewType?: "all" | "me";
 }
 
-const getDaysRemaining = (dateString: string) => {
-  const target = startOfDay(new Date(dateString));
-  const now = startOfDay(new Date());
-  const diff = differenceInDays(target, now);
-
-  if (diff < 0) {
-    return { text: `Terlewat ${Math.abs(diff)} hari`, isOverdue: true };
-  } else if (diff === 0) {
-    return { text: `Batas waktu hari ini`, isOverdue: false };
-  } else {
-    return { text: `Sisa waktu ${diff} hari`, isOverdue: false };
-  }
-};
+import { getDaysRemaining } from "../lib/utils";
 
 export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   viewType = "me",
@@ -64,7 +52,12 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const [editingKpi, setEditingKpi] = useState<Kpi | null>(null);
   const [activeTab, setActiveTab] = useState<"wig" | "program_kerja">("wig");
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    description: string;
+    targetDate: string;
+    bobot: number | string;
+  }>({
     title: "",
     description: "",
     targetDate: "",
@@ -185,7 +178,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
     }
   };
 
-  const handleDeleteBoard = async (e: React.MouseEvent, id: string) => {
+  const handleDeleteBoard = async (e: React.MouseEvent, id: string | number) => {
     e.stopPropagation();
     if (window.confirm("Apakah Anda yakin ingin menghapus Board ini?")) {
       await deleteBoard(id);
@@ -501,7 +494,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                                   setIsBoardModalOpen(true);
                                 }}
                                 onDelete={(boardId, e) =>
-                                  handleDeleteBoard(e, boardId as number)
+                                  handleDeleteBoard(e, boardId)
                                 }
                               />
                             );
