@@ -8,8 +8,8 @@ interface KpiModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingKpi: any;
-  formData: { title: string; description: string; targetDate: string };
-  setFormData: (data: { title: string; description: string; targetDate: string }) => void;
+  formData: { title: string; description: string; targetDate: string; bobot?: number | string };
+  setFormData: (data: { title: string; description: string; targetDate: string; bobot?: number | string }) => void;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -90,6 +90,24 @@ export function KpiModal({
               showYearDropdown
               dropdownMode="select"
               className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-textSecondary mb-2">
+              Bobot WIG (%) <span className="text-red-400">*</span>
+            </label>
+            <input
+              type="number"
+              step="any"
+              min="0"
+              required
+              value={formData.bobot ?? 100}
+              onChange={(e) =>
+                setFormData({ ...formData, bobot: e.target.value })
+              }
+              className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary/50"
+              placeholder="Contoh: 100"
             />
           </div>
 
