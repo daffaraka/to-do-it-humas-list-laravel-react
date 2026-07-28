@@ -63,9 +63,11 @@ export function KpiBoardCard({
           <div className="relative group/desc mt-2 mb-1 w-fit">
             <button className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-900 hover:bg-black text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors cursor-help">
               <Info size={12} />
-              <span className="text-[10px] font-semibold tracking-wide">Deskripsi</span>
+              <span className="text-[10px] font-semibold tracking-wide">
+                Deskripsi
+              </span>
             </button>
-            
+
             <div className="absolute left-0 top-full mt-2 w-64 sm:w-72 p-3 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 text-xs rounded-lg shadow-xl opacity-0 invisible group-hover/desc:opacity-100 group-hover/desc:visible transition-all duration-200 z-[60] pointer-events-none">
               {board.description}
               <div className="absolute -top-1.5 left-4 w-3 h-3 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
@@ -100,6 +102,11 @@ export function KpiBoardCard({
                 })()}
               </span>
             )}
+            {/* {board.bobot_board !== undefined && ( */}
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+              Bobot: {board.bobot_board ?? 0}
+            </span>
+            {/* )} */}
           </div>
         )}
       </div>

@@ -191,35 +191,44 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
     e.preventDefault();
     if (!boardTitle.trim()) return;
 
-    if (editingBoardId) {
-      await updateBoard(editingBoardId, {
-        title: boardTitle,
-        description: boardDesc,
-        kpiId: boardType === "kpi" ? targetKpiIdForBoard || undefined : null,
-        startDate: boardStartDate || null,
-        targetDate: boardTargetDate || null,
-        kategoriProgramId: kategoriProgramIdForBoard || null,
-        kondisiAktual: boardKondisiAktual || null,
-        targetAkhirTahun: boardTargetAkhirTahun || null,
-        outputAkhir: boardOutputAkhir || null,
-        prioritas: boardPrioritas || null,
-        bobot: boardBobot || null,
-      });
-    } else {
-      await createBoard(
-        boardTitle,
-        boardDesc,
-        boardType === "kpi" ? targetKpiIdForBoard || undefined : undefined,
-        boardStartDate || undefined,
-        boardTargetDate || undefined,
-        undefined,
-        kategoriProgramIdForBoard || undefined,
-        boardKondisiAktual || undefined,
-        boardTargetAkhirTahun || undefined,
-        boardOutputAkhir || undefined,
-        boardPrioritas || undefined,
-        boardBobot || undefined
-      );
+    try {
+      if (editingBoardId) {
+        await updateBoard(editingBoardId, {
+          title: boardTitle,
+          description: boardDesc,
+          kpiId: boardType === "kpi" ? targetKpiIdForBoard || undefined : null,
+          startDate: boardStartDate || null,
+          targetDate: boardTargetDate || null,
+          kategoriProgramId: kategoriProgramIdForBoard || null,
+          kondisi_aktual: boardKondisiAktual || null,
+          target_akhir_tahun: boardTargetAkhirTahun || null,
+          output_akhir: boardOutputAkhir || null,
+          prioritas: boardPrioritas || null,
+          bobot_board: boardBobot || null,
+        });
+      } else {
+        await createBoard(
+          boardTitle,
+          boardDesc,
+          boardType === "kpi" ? targetKpiIdForBoard || undefined : undefined,
+          boardStartDate || undefined,
+          boardTargetDate || undefined,
+          undefined,
+          kategoriProgramIdForBoard || undefined,
+          boardKondisiAktual || undefined,
+          boardTargetAkhirTahun || undefined,
+          boardOutputAkhir || undefined,
+          boardPrioritas || undefined,
+          boardBobot || undefined
+        );
+      }
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("Gagal menyimpan Program Kerja.");
+      }
+      return;
     }
 
     setIsBoardModalOpen(false);
