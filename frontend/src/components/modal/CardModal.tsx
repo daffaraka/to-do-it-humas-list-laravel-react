@@ -18,13 +18,13 @@ import {
   History,
   Plus,
 } from "lucide-react";
-import { COLUMNS, AVAILABLE_LABELS } from "../types";
-import type { Card, ColumnId } from "../types";
-import { useKanban } from "../store/kanbanStore";
-import { useAuthStore } from "../store/authStore";
+import { COLUMNS, AVAILABLE_LABELS } from "../../types";
+import type { Card, ColumnId } from "../../types";
+import { useKanban } from "../../store/kanbanStore";
+import { useAuthStore } from "../../store/authStore";
 import { v4 as uuidv4 } from "uuid";
-import api from "../lib/api";
-import type { Comment } from "../types";
+import api from "../../lib/api";
+import type { Comment } from "../../types";
 
 interface CardModalProps {
   card: Card;

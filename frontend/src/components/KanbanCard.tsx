@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Edit2, Trash2, FileText, AlertTriangle } from "lucide-react";
 import type { Card } from "../types";
 import { useState, useRef } from "react";
-import { CardModal } from "./CardModal";
+import { CardModal } from "./modal/CardModal";
 import { useKanban } from "../store/kanbanStore";
 import { useAuthStore } from "../store/authStore";
 import { differenceInDays, startOfDay } from 'date-fns';

@@ -6,13 +6,13 @@ import { createPortal } from 'react-dom';
 import DatePicker from 'react-datepicker';
 import { id as dateFnsIdLocale } from 'date-fns/locale';
 import { format } from 'date-fns';
-import { X, User, Briefcase, Lock, Mail, Tag } from 'lucide-react';
-import api from '../lib/api';
-import { useKanban } from '../store/kanbanStore';
-import { useAuthStore } from '../store/authStore';
+import { X, User, Briefcase, Lock, Mail, Tag, Target } from 'lucide-react';
+import api from '../../lib/api';
+import { useKanban } from '../../store/kanbanStore';
+import { useAuthStore } from '../../store/authStore';
 
 interface MasterDataModalProps {
-  type: 'users' | 'departments' | 'roles' | 'kpis' | 'kategori-program-kerja';
+  type: 'users' | 'departments' | 'roles' | 'kpis' | 'kategori-program-kerja' | 'task-weights';
   initialData?: any;
   onClose: () => void;
   onSuccess: () => void;
@@ -33,6 +33,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [targetDate, setTargetDate] = useState<Date | null>(null);
+  // Task Weight specific
+  const [weight, setWeight] = useState(0);
 
   const user = useAuthStore(state => state.user);
 
@@ -64,6 +66,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
         setDescription(initialData.description || '');
         setDepartmentId(initialData.departmentId || (initialData.department?.id) || '');
         if (initialData.targetDate) setTargetDate(new Date(initialData.targetDate));
+      } else if (type === 'task-weights') {
+        setWeight(initialData.weight || 0);
       } else {
         setName(initialData.name || '');
       }
@@ -72,8 +76,9 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (type !== 'kpis' && !name.trim()) return;
+    if (type !== 'kpis' && type !== 'task-weights' && !name.trim()) return;
     if (type === 'kpis' && !title.trim()) return;
+    if (type === 'task-weights' && weight < 1) return;
 
     setLoading(true);
     try {
@@ -85,6 +90,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           await api.patch(`/users/${initialData.id}`, payload);
         } else if (type === 'kpis') {
           await api.put(`/kpis/${initialData.id}`, { title, description, targetDate: targetDate ? format(targetDate, "yyyy-MM-dd") : null, departmentId });
+        } else if (type === 'task-weights') {
+          await api.put(`/task-weights/${initialData.id}`, { weight });
         } else {
           await api.patch(`/${type}/${initialData.id}`, { name });
         }
@@ -112,6 +119,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
     if (type === 'users') return `${action} Pengguna`;
     if (type === 'departments') return `${action} Departemen`;
     if (type === 'kpis') return `${action} WIG`;
+    if (type === 'task-weights') return `${action} Bobot Pekerjaan`;
     return `${action} Jabatan (Role)`;
   };
 
@@ -149,6 +157,38 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                 onChange={(e) => setName(e.target.value)}
                 placeholder={`Masukkan nama ${type.slice(0, -1)}`}
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
+              />
+            </div>
+          )}
+
+          {/* Task Weight Specific Fields */}
+          {type === 'task-weights' && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
+                <Target size={14} className="text-indigo-400" />
+                Level
+              </label>
+              <input
+                type="text"
+                disabled
+                value={initialData?.level || ''}
+                className="w-full bg-gray-100 border border-gray-200 dark:bg-bgPrimary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary capitalize opacity-70"
+              />
+            </div>
+          )}
+          {type === 'task-weights' && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
+                <Target size={14} className="text-indigo-400" />
+                Bobot (Nilai) <span className="text-red-400">*</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                required
+                value={weight}
+                onChange={(e) => setWeight(Number(e.target.value))}
+                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all"
               />
             </div>
           )}

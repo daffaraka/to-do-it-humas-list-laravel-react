@@ -48,7 +48,8 @@ export interface Board {
   targetAkhirTahun?: string | null;
   outputAkhir?: string | null;
   prioritas?: 'low' | 'medium' | 'high' | string | null;
-  bobot_board?: number | string | null;
+  bobotBoard?: number | string | null;
+  score?: number;
   createdAt: string;
   updatedAt: string;
   tasks?: Card[];

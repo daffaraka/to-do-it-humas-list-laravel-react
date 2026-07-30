@@ -14,6 +14,7 @@ use App\Http\Controllers\API\NotificationController;
 use App\Http\Controllers\API\KpiController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\MeetingController;
+use App\Http\Controllers\API\TaskWeightController;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -33,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('kpis', KpiController::class);
     Route::apiResource('kategori-program-kerja', \App\Http\Controllers\API\KategoriProgramKerjaController::class);
     Route::apiResource('meetings', MeetingController::class);
+    Route::apiResource('task-weights', TaskWeightController::class);
 
     // Custom Routes for Frontend compatibility
     Route::apiResource('users', UserController::class);

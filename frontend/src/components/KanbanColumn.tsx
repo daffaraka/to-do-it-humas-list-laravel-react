@@ -6,7 +6,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react';
 import type { Column, Card } from '../types';
 import { KanbanCard } from './KanbanCard';
-import { CreateTaskModal } from './CreateTaskModal';
+import { CreateTaskModal } from './modal/CreateTaskModal';
 
 interface KanbanColumnProps {
   column: Column;

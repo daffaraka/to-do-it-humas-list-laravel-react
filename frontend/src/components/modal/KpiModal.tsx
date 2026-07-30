@@ -3,14 +3,19 @@ import { X } from "lucide-react";
 import DatePicker from "react-datepicker";
 import { format } from "date-fns";
 import { id as dateFnsIdLocale } from "date-fns/locale";
-
 interface KpiModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingKpi: any;
-  formData: { title: string; description: string; targetDate: string; bobot_kpi?: number | string };
-  setFormData: (data: { title: string; description: string; targetDate: string; bobot_kpi?: number | string }) => void;
+  formData: {
+    title: string;
+    description: string;
+    targetDate: string;
+    bobot_kpi?: number | string | null;
+  };
+  setFormData: (data: any) => void;
   onSubmit: (e: React.FormEvent) => void;
+  isSubmitting?: boolean;
 }
 
 export function KpiModal({
@@ -20,6 +25,7 @@ export function KpiModal({
   formData,
   setFormData,
   onSubmit,
+  isSubmitting = false,
 }: KpiModalProps) {
   if (!isOpen) return null;
 
@@ -121,9 +127,17 @@ export function KpiModal({
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700 rounded-xl shadow-sm transition-all"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {editingKpi ? "Simpan Perubahan" : "Buat KPI"}
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                editingKpi ? "Simpan Perubahan" : "Buat KPI"
+              )}
             </button>
           </div>
         </form>

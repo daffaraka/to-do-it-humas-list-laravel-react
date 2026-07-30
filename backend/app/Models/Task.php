@@ -9,6 +9,8 @@ class Task extends Model
 {
     use HasUuids;
 
+    protected $with = ['taskWeight'];
+
     protected $fillable = [
         'id',
         'title',
@@ -40,6 +42,12 @@ class Task extends Model
     {
         return $this->belongsTo(User::class, 'pic_id');
     }
+
+    public function taskWeight()
+    {
+        return $this->belongsTo(TaskWeight::class, 'priority', 'level');
+    }
+
     public function board()
     {
         return $this->belongsTo(Board::class);

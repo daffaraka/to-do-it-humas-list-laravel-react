@@ -10,13 +10,13 @@ import {
   Target,
   FolderTree,
 } from "lucide-react";
-import { MasterDataModal } from "../components/MasterDataModal";
+import { MasterDataModal } from "../components/modal/MasterDataModal";
 import api from "../lib/api";
 import { useAuthStore } from "../store/authStore";
 
 export function MasterData() {
   const [activeTab, setActiveTab] = useState<
-    "users" | "departments" | "roles" | "kpis" | "kategori-program-kerja"
+    "users" | "departments" | "roles" | "kpis" | "kategori-program-kerja" | "task-weights"
   >("users");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,6 +55,7 @@ export function MasterData() {
 
   // Open modal function
   const handleAdd = () => {
+    if (activeTab === 'task-weights') return; // Cannot add new weights
     setEditingItem(null);
     setIsModalOpen(true);
   };
@@ -128,12 +129,28 @@ export function MasterData() {
           >
             <Target size={16} /> WIG
           </button>
-          <button
-            onClick={() => setActiveTab("kategori-program-kerja")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${activeTab === "kategori-program-kerja" ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30" : "text-textSecondary hover:bg-bgGlass"}`}
-          >
-            <FolderTree size={16} /> Kategori Program
-          </button>
+                <button
+                  onClick={() => setActiveTab("kategori-program-kerja")}
+                  className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors relative whitespace-nowrap
+                    ${activeTab === "kategori-program-kerja" ? "text-indigo-600" : "text-textSecondary hover:text-textPrimary"}`}
+                >
+                  <FolderTree size={18} />
+                  Kategori WIG
+                  {activeTab === "kategori-program-kerja" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab("task-weights")}
+                  className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors relative whitespace-nowrap
+                    ${activeTab === "task-weights" ? "text-indigo-600" : "text-textSecondary hover:text-textPrimary"}`}
+                >
+                  <Target size={18} />
+                  Bobot Pekerjaan
+                  {activeTab === "task-weights" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
+                  )}
+                </button>
         </div>
 
         {loading ? (
@@ -142,51 +159,52 @@ export function MasterData() {
           <div className="text-center text-red-500 py-10">{error}</div>
         ) : (
           <div className="bg-bgSecondary rounded-2xl border border-borderBase overflow-hidden">
-            <div className="p-4 border-b border-borderBase flex justify-end bg-bgGlass">
+          <div className="flex justify-between items-center px-6 py-4 border-b border-borderLight">
+            <h2 className="text-lg font-semibold text-textPrimary capitalize">
+              Data {activeTab.replace("-", " ")}
+            </h2>
+            {activeTab !== 'task-weights' && (
               <button
                 onClick={handleAdd}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm"
               >
-                <UserPlus size={16} />
-                Tambah{" "}
-                {activeTab === "kpis"
-                  ? "WIG"
-                  : activeTab === "kategori-program-kerja"
-                    ? "Kategori Program"
-                    : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                <UserPlus size={18} />
+                Tambah Data
               </button>
-            </div>
+            )}
+          </div>
             <div className="overflow-x-auto w-full">
               <table className="w-full min-w-[1000px] text-left text-sm text-textSecondary whitespace-nowrap">
                 <thead className="bg-bgGlass text-textPrimary">
                   <tr>
-                    <th className="px-6 py-4 font-medium">
-                      {activeTab === "kpis"
-                        ? "Judul"
-                        : activeTab === "kategori-program-kerja"
-                          ? "Nama Kategori"
-                          : "Name"}
-                    </th>
-                    {activeTab === "users" && (
-                      <th className="px-6 py-4 font-medium">Email</th>
-                    )}
-                    {activeTab === "users" && (
-                      <th className="px-6 py-4 font-medium">Department</th>
-                    )}
-                    {activeTab === "users" && (
-                      <th className="px-6 py-4 font-medium">Role</th>
-                    )}
-                    {activeTab === "kpis" && (
-                      <th className="px-6 py-4 font-medium">Target WIG</th>
-                    )}
-                    {activeTab === "kpis" && (
-                      <th className="px-6 py-4 font-medium">Kategori</th>
+                    {activeTab === "users" ? (
+                      <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider w-1/4">
+                        Akses Data
+                      </th>
+                    ) : null}
+                    {activeTab === "task-weights" ? (
+                      <>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                          Level
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                          Bobot (Nilai)
+                        </th>
+                      </>
+                    ) : (
+                      <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                        Nama / Judul
+                      </th>
                     )}
                     {activeTab === "kpis" && (
-                      <th className="px-6 py-4 font-medium">Departemen</th>
-                    )}
-                    {activeTab === "kpis" && (
-                      <th className="px-6 py-4 font-medium">Target Date</th>
+                      <>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                          Departemen
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                          Target Selesai
+                        </th>
+                      </>
                     )}
                     <th className="px-6 py-4 font-medium text-right">Aksi</th>
                   </tr>
@@ -197,9 +215,20 @@ export function MasterData() {
                       key={item.id}
                       className="hover:bg-bgGlass transition-colors"
                     >
-                      <td className="px-6 py-4 text-textPrimary font-medium max-w-[200px] truncate">
-                        {activeTab === "kpis" ? item.title : item.name}
-                      </td>
+                      {activeTab === "task-weights" ? (
+                        <>
+                          <td className="px-6 py-4 text-textPrimary font-medium max-w-[200px] truncate capitalize">
+                            {item.level}
+                          </td>
+                          <td className="px-6 py-4 text-textSecondary">
+                            {item.weight}
+                          </td>
+                        </>
+                      ) : (
+                        <td className="px-6 py-4 text-textPrimary font-medium max-w-[200px] truncate">
+                          {activeTab === "kpis" ? item.title : item.name}
+                        </td>
+                      )}
                       {activeTab === "users" && (
                         <td className="px-6 py-4">{item.email}</td>
                       )}

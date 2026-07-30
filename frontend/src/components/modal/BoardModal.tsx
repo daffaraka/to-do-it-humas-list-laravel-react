@@ -37,6 +37,7 @@ interface BoardModalProps {
   boardBobot: number | string;
   setBoardBobot: (val: number | string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  isSubmitting?: boolean;
 }
 
 export function BoardModal({
@@ -72,6 +73,7 @@ export function BoardModal({
   boardBobot,
   setBoardBobot,
   onSubmit,
+  isSubmitting = false,
 }: BoardModalProps) {
   if (!isOpen) return null;
 
@@ -375,10 +377,21 @@ export function BoardModal({
             </button>
             <button
               type="submit"
-              disabled={!boardTitle.trim()}
-              className="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-sm transition-all"
+              disabled={!boardTitle.trim() || isSubmitting}
+              className={`px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 border border-indigo-700 hover:bg-indigo-700 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 ${
+                !boardTitle.trim() || isSubmitting
+                  ? "opacity-50 cursor-not-allowed"
+                  : ""
+              }`}
             >
-              {editingBoardId ? "Simpan Perubahan" : "Buat Program Kerja"}
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Menyimpan...</span>
+                </>
+              ) : (
+                editingBoardId ? "Simpan Perubahan" : "Buat Program Kerja"
+              )}
             </button>
           </div>
         </form>

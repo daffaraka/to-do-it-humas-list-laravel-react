@@ -28,8 +28,8 @@ import { id as dateFnsIdLocale } from "date-fns/locale";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/api";
 import { ProgramKerjaBoard } from "../components/ProgramKerjaBoard";
-import { KpiModal } from "../components/modals/KpiModal";
-import { BoardModal } from "../components/modals/BoardModal";
+import { KpiModal } from "../components/modal/KpiModal";
+import { BoardModal } from "../components/modal/BoardModal";
 import { KpiBoardCard } from "../components/KpiBoardCard";
 import { DashboardFilter } from "../components/DashboardFilter";
 interface KpiDashboardProps {
@@ -80,6 +80,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const [boardOutputAkhir, setBoardOutputAkhir] = useState("");
   const [boardPrioritas, setBoardPrioritas] = useState("");
   const [boardBobot, setBoardBobot] = useState<number | string>("");
+
+  const [isSubmittingKpi, setIsSubmittingKpi] = useState(false);
+  const [isDeletingKpiId, setIsDeletingKpiId] = useState<string | null>(null);
+  const [isSubmittingBoard, setIsSubmittingBoard] = useState(false);
+  const [isDeletingBoardId, setIsDeletingBoardId] = useState<string | null>(null);
   const [kategoriProgramIdForBoard, setKategoriProgramIdForBoard] = useState<
     string | null
   >(null);
@@ -155,35 +160,58 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
       });
     } else {
       setEditingKpi(null);
-      setFormData({ title: "", description: "", targetDate: "", bobot_kpi: 100 });
+      setFormData({
+        title: "",
+        description: "",
+        targetDate: "",
+        bobot_kpi: 100,
+      });
     }
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingKpi) {
-      await updateKpi(editingKpi.id, formData);
-    } else {
-      await createKpi(formData);
+    setIsSubmittingKpi(true);
+    try {
+      if (editingKpi) {
+        await updateKpi(editingKpi.id, formData);
+      } else {
+        await createKpi(formData);
+      }
+      setIsModalOpen(false);
+      fetchKpis(); // refresh
+    } finally {
+      setIsSubmittingKpi(false);
     }
-    setIsModalOpen(false);
-    fetchKpis(); // refresh
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm("Apakah Anda yakin ingin menghapus KPI ini?")) {
-      await deleteKpi(id);
-      fetchKpis(); // refresh
+      setIsDeletingKpiId(id);
+      try {
+        await deleteKpi(id);
+        fetchKpis(); // refresh
+      } finally {
+        setIsDeletingKpiId(null);
+      }
     }
   };
 
-  const handleDeleteBoard = async (e: React.MouseEvent, id: string | number) => {
+  const handleDeleteBoard = async (
+    e: React.MouseEvent,
+    id: string | number,
+  ) => {
     e.stopPropagation();
     if (window.confirm("Apakah Anda yakin ingin menghapus Board ini?")) {
-      await deleteBoard(id.toString());
-      fetchKpis();
-      fetchBoards();
+      setIsDeletingBoardId(id.toString());
+      try {
+        await deleteBoard(id.toString());
+        fetchKpis();
+        fetchBoards();
+      } finally {
+        setIsDeletingBoardId(null);
+      }
     }
   };
 
@@ -191,6 +219,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
     e.preventDefault();
     if (!boardTitle.trim()) return;
 
+    setIsSubmittingBoard(true);
     try {
       if (editingBoardId) {
         await updateBoard(editingBoardId, {
@@ -200,11 +229,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
           startDate: boardStartDate || null,
           targetDate: boardTargetDate || null,
           kategoriProgramId: kategoriProgramIdForBoard || null,
-          kondisi_aktual: boardKondisiAktual || null,
-          target_akhir_tahun: boardTargetAkhirTahun || null,
-          output_akhir: boardOutputAkhir || null,
+          kondisiAktual: boardKondisiAktual || null,
+          targetAkhirTahun: boardTargetAkhirTahun || null,
+          outputAkhir: boardOutputAkhir || null,
           prioritas: boardPrioritas || null,
-          bobot_board: boardBobot || null,
+          bobotBoard: boardBobot || null,
         });
       } else {
         await createBoard(
@@ -219,7 +248,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
           boardTargetAkhirTahun || undefined,
           boardOutputAkhir || undefined,
           boardPrioritas || undefined,
-          boardBobot || undefined
+          boardBobot || undefined,
         );
       }
     } catch (error: any) {
@@ -229,6 +258,8 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         alert("Gagal menyimpan Program Kerja.");
       }
       return;
+    } finally {
+      setIsSubmittingBoard(false);
     }
 
     setIsBoardModalOpen(false);
@@ -306,9 +337,12 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
               .map((kpi) => {
                 const progress = calculateProgress(kpi.boards || []);
                 const canViewDetails = isAdmin || kpi.userId === user?.id;
-                
+
                 const bobotWig = Number(kpi.bobot_kpi ?? 100);
-                const usedBobot = (kpi.boards || []).reduce((acc, board) => acc + Number(board.bobot_board ?? 0), 0);
+                const usedBobot = (kpi.boards || []).reduce(
+                  (acc, board) => acc + Number(board.bobotBoard ?? 0),
+                  0,
+                );
                 const sisaBobot = bobotWig - usedBobot;
 
                 return (
@@ -337,9 +371,11 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                             <div className="relative group flex items-center">
                               <button className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-gray-900 hover:bg-black text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors cursor-help">
                                 <Info size={14} />
-                                <span className="text-[11px] font-semibold tracking-wide">Deskripsi</span>
+                                <span className="text-[11px] font-semibold tracking-wide">
+                                  Target WIG
+                                </span>
                               </button>
-                              
+
                               <div className="absolute left-0 sm:left-4 top-full mt-2 w-72 sm:w-80 p-3 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
                                 {kpi.description}
                                 <div className="absolute -top-1.5 left-6 w-3 h-3 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
@@ -372,11 +408,13 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                               <div className="flex items-center bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2.5 py-1 rounded-md text-xs font-semibold border border-indigo-200 dark:border-indigo-800">
                                 Bobot WIG: {bobotWig}
                               </div>
-                              <div className={`flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${
-                                sisaBobot < 0 
-                                  ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
-                                  : 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                              }`}>
+                              <div
+                                className={`flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border ${
+                                  sisaBobot < 0
+                                    ? "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
+                                    : "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                }`}
+                              >
                                 Sisa Bobot: {sisaBobot}
                               </div>
                             </span>
@@ -394,10 +432,15 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                           </button>
                           <button
                             onClick={() => handleDelete(kpi.id)}
-                            className="p-2 text-textSecondary hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
+                            disabled={isDeletingKpiId === kpi.id}
+                            className="p-2 text-textSecondary hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Hapus KPI"
                           >
-                            <Trash2 size={16} />
+                            {isDeletingKpiId === kpi.id ? (
+                              <div className="w-4 h-4 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+                            ) : (
+                              <Trash2 size={16} />
+                            )}
                           </button>
                         </div>
                       )}
@@ -498,13 +541,14 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
                                   setTargetKpiIdForBoard(
                                     board.kpiId || board.kpi_id || null,
                                   );
-                                  setBoardBobot(board.bobot_board || "");
+                                  setBoardBobot(board.bobotBoard || "");
                                   setBoardType("kpi");
                                   setIsBoardModalOpen(true);
                                 }}
                                 onDelete={(boardId, e) =>
                                   handleDeleteBoard(e, boardId)
                                 }
+                                isDeleting={isDeletingBoardId === board.id}
                               />
                             );
                           })}
@@ -549,7 +593,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
               board.kategoriProgramId || board.kategori_program_id || null,
             );
             setTargetKpiIdForBoard(null);
-            setBoardBobot(board.bobot_board || "");
+            setBoardBobot(board.bobotBoard || "");
             setBoardType("non-kpi");
             setIsBoardModalOpen(true);
           }}
@@ -570,6 +614,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
             setKategoriProgramIdForBoard(null);
             setIsBoardModalOpen(true);
           }}
+          isDeletingBoardId={isDeletingBoardId}
         />
       )}
 
@@ -597,7 +642,6 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
           </div>
         )}
 
-      {/* KPI Modal */}
       <KpiModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -605,6 +649,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         formData={formData}
         setFormData={setFormData}
         onSubmit={handleSubmit}
+        isSubmitting={isSubmittingKpi}
       />
 
       {/* Create Board Modal */}
@@ -648,6 +693,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         boardBobot={boardBobot}
         setBoardBobot={setBoardBobot}
         onSubmit={handleCreateBoardSubmit}
+        isSubmitting={isSubmittingBoard}
       />
     </div>
   );

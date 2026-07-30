@@ -21,6 +21,8 @@ interface KanbanState {
   myJobs: Card[];
   searchQuery: string;
   filterLabel: string | null;
+  filterPic: string | null;
+  filterPriority: string | null;
   activeDepartment: ActiveDepartmentType;
   viewMode: ViewMode;
   isDarkMode: boolean;
@@ -43,6 +45,8 @@ interface KanbanState {
   reorderCards: (activeId: string, overId: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   setFilterLabel: (labelId: string | null) => void;
+  setFilterPic: (picId: string | null) => void;
+  setFilterPriority: (priority: string | null) => void;
   setActiveDepartment: (department: ActiveDepartmentType) => void;
   setViewMode: (mode: ViewMode) => void;
   toggleDarkMode: () => void;
@@ -59,7 +63,9 @@ export const useKanban = create<KanbanState>()(
       myJobs: [],
       searchQuery: '',
       filterLabel: null,
-      activeDepartment: 'all',
+      filterPic: null,
+      filterPriority: null,
+      activeDepartment: 'All',
       viewMode: 'kanban',
       isDarkMode: false,
       isLoading: false,
@@ -117,15 +123,15 @@ export const useKanban = create<KanbanState>()(
           const payload: any = { title };
           if (description) payload.description = description;
           if (kpiId) payload.kpi_id = kpiId;
-          if (startDate) payload.start_date = startDate;
-          if (targetDate) payload.target_date = targetDate;
-          if (departmentId) payload.department_id = departmentId;
-          if (kategoriProgramId) payload.kategori_program_id = kategoriProgramId;
-          if (kondisiAktual) payload.kondisi_aktual = kondisiAktual;
-          if (targetAkhirTahun) payload.target_akhir_tahun = targetAkhirTahun;
-          if (outputAkhir) payload.output_akhir = outputAkhir;
+          if (startDate) payload.startDate = startDate;
+          if (targetDate) payload.targetDate = targetDate;
+          if (departmentId) payload.departmentId = departmentId;
+          if (kategoriProgramId) payload.kategoriProgramId = kategoriProgramId;
+          if (kondisiAktual) payload.kondisiAktual = kondisiAktual;
+          if (targetAkhirTahun) payload.targetAkhirTahun = targetAkhirTahun;
+          if (outputAkhir) payload.outputAkhir = outputAkhir;
           if (prioritas) payload.prioritas = prioritas;
-          if (bobot !== undefined && bobot !== "") payload.bobot_board = bobot;
+          if (bobot !== undefined && bobot !== "") payload.bobotBoard = bobot;
           const response = await api.post('/boards', payload);
           set((state) => ({ boards: [response.data, ...state.boards] }));
         } catch (err: any) {
@@ -371,6 +377,8 @@ export const useKanban = create<KanbanState>()(
 
       setSearchQuery: (query) => set({ searchQuery: query }),
       setFilterLabel: (labelId) => set({ filterLabel: labelId }),
+      setFilterPic: (picId) => set({ filterPic: picId }),
+      setFilterPriority: (priority) => set({ filterPriority: priority }),
       setActiveDepartment: (department) => set({ activeDepartment: department }),
       setViewMode: (mode) => set({ viewMode: mode }),
       toggleDarkMode: () => {
@@ -384,7 +392,7 @@ export const useKanban = create<KanbanState>()(
       },
 
       getFilteredCards: (columnId) => {
-        const { cards, searchQuery, filterLabel, activeDepartment } = get();
+        const { cards, searchQuery, filterLabel, filterPic, filterPriority } = get();
         return cards
           .filter((card) => {
             if (card.columnId !== columnId) return false;
@@ -400,6 +408,17 @@ export const useKanban = create<KanbanState>()(
             }
             if (filterLabel) {
               if (!card.labels.some((l) => l.id === filterLabel)) {
+                return false;
+              }
+            }
+            if (filterPic) {
+              const cardPicId = card.pic && typeof card.pic === 'object' ? (card.pic as any).id : typeof card.pic === 'string' ? card.pic : (card as any).picId || (card as any).pic_id;
+              if (cardPicId !== filterPic) {
+                return false;
+              }
+            }
+            if (filterPriority) {
+              if (card.priority !== filterPriority) {
                 return false;
               }
             }

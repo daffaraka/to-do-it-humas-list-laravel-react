@@ -25,6 +25,7 @@ interface ProgramKerjaBoardProps {
   onEditBoard: (board: any) => void;
   onDeleteBoard: (e: React.MouseEvent, boardId: string) => void;
   onCreateBoard: () => void;
+  isDeletingBoardId?: string | null;
 }
 
 export function ProgramKerjaBoard({
@@ -39,6 +40,7 @@ export function ProgramKerjaBoard({
   onEditBoard,
   onDeleteBoard,
   onCreateBoard,
+  isDeletingBoardId = null,
 }: ProgramKerjaBoardProps) {
   const [filterIndepDepartment, setFilterIndepDepartment] =
     useState<string>("all");
@@ -166,10 +168,15 @@ export function ProgramKerjaBoard({
             </button>
             <button
               onClick={(e) => onDeleteBoard(e, board.id)}
-              className="p-1 text-red-500 hover:text-red-600 hover:bg-red-500/10 hover:ring-2 hover:ring-red-500/50 rounded-md transition-all"
+              disabled={isDeletingBoardId === board.id}
+              className="p-1 text-red-500 hover:text-red-600 hover:bg-red-500/10 hover:ring-2 hover:ring-red-500/50 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               title="Hapus Leadmeassure"
             >
-              <Trash2 size={14} />
+              {isDeletingBoardId === board.id ? (
+                <div className="w-3.5 h-3.5 border-2 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+              ) : (
+                <Trash2 size={14} />
+              )}
             </button>
           </div>
         )}
@@ -177,19 +184,57 @@ export function ProgramKerjaBoard({
           <h5 className="font-semibold text-sm sm:text-base text-textPrimary group-hover:text-indigo-500 transition-all mb-1 line-clamp-2 leading-tight pr-12">
             {board.title}
           </h5>
-          {board.description && (
-            <div className="relative group/desc mt-2 mb-1 w-fit">
-              <button className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-900 hover:bg-black text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors cursor-help">
-                <Info size={12} />
-                <span className="text-[10px] font-semibold tracking-wide">
-                  Deskripsi
-                </span>
-              </button>
+          {(board.description || (board.bobotBoard !== undefined && board.bobotBoard !== null)) && (
+            <div className="flex flex-wrap items-center gap-2 mt-2 mb-1">
+              {board.description && (
+                <div className="relative group/desc w-fit">
+                  <button className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-gray-900 hover:bg-black text-white dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200 transition-colors cursor-help">
+                    <Info size={12} />
+                    <span className="text-[10px] font-semibold tracking-wide">
+                      Target Board
+                    </span>
+                  </button>
 
-              <div className="absolute left-0 top-full mt-2 w-64 sm:w-72 p-3 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 text-xs rounded-lg shadow-xl opacity-0 invisible group-hover/desc:opacity-100 group-hover/desc:visible transition-all duration-200 z-[60] pointer-events-none">
-                {board.description}
-                <div className="absolute -top-1.5 left-4 w-3 h-3 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
-              </div>
+                  <div className="absolute left-0 top-full mt-2 w-64 sm:w-72 p-3 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 text-xs rounded-lg shadow-xl opacity-0 invisible group-hover/desc:opacity-100 group-hover/desc:visible transition-all duration-200 z-[60] pointer-events-none">
+                    {board.description}
+                    <div className="absolute -top-1.5 left-4 w-3 h-3 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
+                  </div>
+                </div>
+              )}
+
+              {board.bobotBoard !== undefined && board.bobotBoard !== null && (
+                <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold tracking-wider bg-green-600 text-white dark:bg-green-500 shadow-sm border border-green-700 dark:border-green-600">
+                  Bobot: {board.bobotBoard}
+                </span>
+              )}
+
+              {board.score !== undefined && board.score !== null && (() => {
+                const lowCount = tasks.filter((t: any) => t.priority === "low").length;
+                const medCount = tasks.filter((t: any) => t.priority === "medium").length;
+                const highCount = tasks.filter((t: any) => t.priority === "high").length;
+                const completedScore = tasks.reduce((sum: number, t: any) => sum + (t.columnId === 'done' ? (t.priority === 'high' ? 5 : t.priority === 'medium' ? 3 : t.priority === 'low' ? 1 : 0) : 0), 0);
+                const maxScore = tasks.reduce((sum: number, t: any) => sum + (t.priority === 'high' ? 5 : t.priority === 'medium' ? 3 : t.priority === 'low' ? 1 : 0), 0);
+                
+                return (
+                  <div className="relative group/score w-fit">
+                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-bold tracking-wider bg-blue-600 hover:bg-blue-700 transition-colors text-white shadow-sm border border-blue-700 cursor-help">
+                      Ketercapaian: {board.score}%
+                    </span>
+                    <div className="absolute left-0 top-full mt-2 w-56 p-3 bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 text-xs rounded-lg shadow-xl opacity-0 invisible group-hover/score:opacity-100 group-hover/score:visible transition-all duration-200 z-[60] pointer-events-none">
+                      <div className="font-bold border-b border-gray-700 dark:border-gray-300 pb-1 mb-2">Detail Pekerjaan</div>
+                      <div className="flex justify-between mb-1"><span>Low (Bobot 1):</span> <span className="font-semibold">{lowCount}</span></div>
+                      <div className="flex justify-between mb-1"><span>Medium (Bobot 3):</span> <span className="font-semibold">{medCount}</span></div>
+                      <div className="flex justify-between mb-2"><span>High (Bobot 5):</span> <span className="font-semibold">{highCount}</span></div>
+                      
+                      <div className="font-bold border-t border-gray-700 dark:border-gray-300 pt-2 mt-1">Formula Ketercapaian:</div>
+                      <div className="text-[10px] text-gray-300 dark:text-gray-600 font-mono mt-1 text-center bg-black/20 dark:bg-black/5 p-1.5 rounded">
+                        ({completedScore} / {maxScore}) * {board.bobotBoard || 0}
+                      </div>
+                      <div className="absolute -top-1.5 left-4 w-3 h-3 bg-gray-900 dark:bg-gray-100 rotate-45"></div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
           <p className="text-[10px] text-indigo-400 mt-2 font-medium">
@@ -210,36 +255,11 @@ export function ProgramKerjaBoard({
                   {new Date(board.targetDate).toLocaleDateString("id-ID")}
                 </span>
               )}
-              {/* {board.bobot_board !== undefined && ( */}
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-                Bobot: {board.bobot_board ?? 0}
-              </span>
-              {/* )} */}
+
             </div>
           )}
 
-          <div className="mt-2 space-y-1">
-            {board.kondisiAktual && (
-              <div className="text-[10px] text-textSecondary line-clamp-1">
-                <span className="font-semibold text-textPrimary">
-                  Kondisi Aktual:
-                </span>{" "}
-                {board.kondisiAktual}
-              </div>
-            )}
-            {board.targetAkhirTahun && (
-              <div className="text-[10px] text-textSecondary line-clamp-1">
-                <span className="font-semibold text-textPrimary">Target:</span>{" "}
-                {board.targetAkhirTahun}
-              </div>
-            )}
-            {board.outputAkhir && (
-              <div className="text-[10px] text-textSecondary line-clamp-1">
-                <span className="font-semibold text-textPrimary">Output:</span>{" "}
-                {board.outputAkhir}
-              </div>
-            )}
-          </div>
+
 
           {board.prioritas && (
             <div className="mt-2">

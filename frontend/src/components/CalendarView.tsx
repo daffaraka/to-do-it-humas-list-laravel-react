@@ -20,7 +20,7 @@ import { id } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Printer, Search, Info } from "lucide-react";
 import { useKanban } from "../store/kanbanStore";
 import { useKpiStore } from "../store/kpiStore";
-import { CardModal } from "./CardModal";
+import { CardModal } from "./modal/CardModal";
 import type { Card } from "../types";
 import { AVAILABLE_LABELS } from "../types";
 
