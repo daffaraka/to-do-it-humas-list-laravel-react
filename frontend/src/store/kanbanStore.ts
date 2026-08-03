@@ -142,7 +142,10 @@ export const useKanban = create<KanbanState>()(
       deleteBoard: async (id) => {
         try {
           await api.delete(`/boards/${id}`);
-          set((state) => ({ boards: state.boards.filter(b => b.id !== id) }));
+          set((state) => ({ 
+            boards: state.boards.filter(b => b.id !== id),
+            cards: state.cards.filter(c => c.boardId !== id)
+          }));
         } catch (err) {
           console.error('Failed to delete board', err);
           throw err;

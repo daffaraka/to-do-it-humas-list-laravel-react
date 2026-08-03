@@ -27,12 +27,12 @@
 
   .dark {
     --bg-primary: #09090b;
-    --bg-secondary: #18181b;
-    --bg-glass: rgba(255, 255, 255, 0.03);
-    --bg-glass-hover: rgba(255, 255, 255, 0.06);
+    --bg-secondary: #1e1e22; /* Lighter than #18181b for better contrast */
+    --bg-glass: rgba(255, 255, 255, 0.05);
+    --bg-glass-hover: rgba(255, 255, 255, 0.09);
     --text-primary: #fafafa;
     --text-secondary: #a1a1aa;
-    --border-base: #27272a;
+    --border-base: #3f3f46; /* zinc-700 for more visible borders */
   }
 
   body {

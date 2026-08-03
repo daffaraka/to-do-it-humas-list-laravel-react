@@ -258,21 +258,25 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
           )}
         </div>
 
-        {/* PIC Row */}
-        {card.pic && (
-          <div className="flex items-center gap-2 mt-1">
-            <div className="w-5 h-5 shrink-0 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-[10px] font-bold text-indigo-500 dark:text-indigo-400">
-              {typeof card.pic === "object"
-                ? (card.pic as any).name?.charAt(0).toUpperCase()
-                : (card.pic as string).charAt(0).toUpperCase()}
+        {/* PIC & Collaborators Row */}
+        {(card.pic || (card.collaborators && card.collaborators.length > 0)) && (() => {
+          const names = [
+            card.pic ? (typeof card.pic === "object" ? (card.pic as any).name : card.pic) : null,
+            ...(card.collaborators?.map((c: any) => c.name) || [])
+          ].filter(Boolean);
+          const firstLetter = names.length > 0 ? names[0].charAt(0).toUpperCase() : "?";
+          const allNamesStr = names.join(", ");
+          return (
+            <div className="flex items-center gap-2 mt-1">
+              <div className="w-5 h-5 shrink-0 rounded-full bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-[10px] font-bold text-indigo-500 dark:text-indigo-400" title={allNamesStr}>
+                {firstLetter}
+              </div>
+              <span className="text-xs text-textSecondary flex-1 min-w-0 truncate" title={allNamesStr}>
+                {allNamesStr}
+              </span>
             </div>
-            <span className="text-xs text-textSecondary flex-1 min-w-0 truncate">
-              {typeof card.pic === "object"
-                ? (card.pic as any).name
-                : (card.pic as string)}
-            </span>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );

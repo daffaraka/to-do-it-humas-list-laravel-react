@@ -43,6 +43,8 @@ export function CardModal({ card, onClose }: CardModalProps) {
   const [mentions, setMentions] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [collaboratorIds, setCollaboratorIds] = useState<string[]>(card.collaborators?.map(c => c.id) || []);
+  const [requestDate, setRequestDate] = useState<string | null>(card.requestDate || null);
+  const [dueDate, setDueDate] = useState<string | null>(card.dueDate || null);
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [histories, setHistories] = useState<any[]>(card.histories || []);
@@ -57,9 +59,6 @@ export function CardModal({ card, onClose }: CardModalProps) {
         .catch(console.error);
     }
     if (activeTab === "histories") {
-       // Optional: Refetch task to get latest histories if needed
-       // using the store or API, but we already have card.histories.
-       // Still good to ensure it's up to date.
        api.get(`/tasks/${card.id}`)
           .then((res) => setHistories(res.data.histories || []))
           .catch(console.error);
@@ -69,6 +68,12 @@ export function CardModal({ card, onClose }: CardModalProps) {
       .then((res) => setUsers(res.data))
       .catch(console.error);
   }, [activeTab, card.id]);
+
+  useEffect(() => {
+    // Keep local state in sync if card props change externally (except when we are editing)
+    setRequestDate(card.requestDate || null);
+    setDueDate(card.dueDate || null);
+  }, [card.requestDate, card.dueDate]);
 
   const handleCommentSubmit = async () => {
     if (!newComment.trim()) return;
@@ -114,7 +119,13 @@ export function CardModal({ card, onClose }: CardModalProps) {
   const labels = card.labels || [];
 
   const handleSave = () => {
-    updateCard(card.id, { title, description, collaborator_ids: collaboratorIds } as any);
+    updateCard(card.id, { 
+      title, 
+      description, 
+      collaborator_ids: collaboratorIds,
+      requestDate,
+      dueDate
+    } as any);
   };
 
   const handleAddChecklist = (e: KeyboardEvent | MouseEvent) => {
@@ -243,12 +254,10 @@ export function CardModal({ card, onClose }: CardModalProps) {
                     </h4>
                     <DatePicker
                       selected={
-                        card.requestDate ? new Date(card.requestDate) : null
+                        requestDate ? new Date(requestDate) : null
                       }
                       onChange={(date: any) =>
-                        updateCard(card.id, {
-                          requestDate: date ? format(date, "yyyy-MM-dd") : null,
-                        })
+                        setRequestDate(date ? format(date, "yyyy-MM-dd") : null)
                       }
                       dateFormat="dd/MM/yyyy"
                       locale={dateFnsIdLocale}
@@ -266,11 +275,9 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       Tanggal Selesai
                     </h4>
                     <DatePicker
-                      selected={card.dueDate ? new Date(card.dueDate) : null}
+                      selected={dueDate ? new Date(dueDate) : null}
                       onChange={(date: any) =>
-                        updateCard(card.id, {
-                          dueDate: date ? format(date, "yyyy-MM-dd") : null,
-                        })
+                        setDueDate(date ? format(date, "yyyy-MM-dd") : null)
                       }
                       dateFormat="dd/MM/yyyy"
                       locale={dateFnsIdLocale}
@@ -288,24 +295,24 @@ export function CardModal({ card, onClose }: CardModalProps) {
                   <h4 className="text-sm font-medium text-textSecondary mb-2">
                     Tautan Dokumen
                   </h4>
-                  <input
-                    type="url"
-                    value={card.documentLink || ""}
-                    onChange={(e) =>
-                      updateCard(card.id, { documentLink: e.target.value })
-                    }
-                    placeholder="https://..."
-                    className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
-                  />
-                  {card.documentLink && (
-                    <a
-                      href={card.documentLink}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-block mt-2 text-xs text-indigo-400 hover:text-indigo-300 underline"
-                    >
-                      Buka Dokumen
-                    </a>
+                  {card.documentLink ? (
+                    <div className="flex items-center gap-3 bg-bgSecondary border border-borderBase p-3 rounded-xl">
+                      <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg dark:bg-indigo-500/20 dark:text-indigo-400">
+                        <FileText size={20} />
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <a
+                          href={card.documentLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sm font-medium text-indigo-500 hover:text-indigo-400 hover:underline truncate block"
+                        >
+                          Buka Tautan Dokumen
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-textSecondary italic">Tidak ada dokumen</p>
                   )}
                 </div>
 
@@ -688,7 +695,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
             onClick={() => {
               if (confirm("Hapus tugas ini?")) {
                 deleteCard(card.id);
-                // No need to onClose manually here if the component unmounts, but good practice
+                onClose();
               }
             }}
             className="flex-[2] flex items-center justify-center py-2.5 px-4 bg-white border border-red-500 hover:bg-red-50 text-red-500 rounded-xl text-sm font-medium transition-colors"

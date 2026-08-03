@@ -103,18 +103,53 @@ export function CalendarView() {
     return "bg-gray-500 border-gray-600 text-white dark:bg-gray-600 dark:border-gray-500 hover:bg-gray-600 dark:hover:bg-gray-500";
   };
 
-  const getDaysRemaining = (dateString?: string | null) => {
+  const getDaysRemaining = (card: Card) => {
+    // Check if the card is already marked as done
+    const isDone =
+      card.columnId === "done" ||
+      (card as any).column_id === "done" ||
+      (card as any).status === "done";
+
+    if (isDone) {
+      return {
+        text: "Done",
+        isDone: true,
+        isOverdue: false,
+        isWarning: false,
+        inProgress: false,
+      };
+    }
+
+    const dateString = card.dueDate || card.requestDate || card.createdAt;
     if (!dateString) return null;
+
     const target = startOfDay(parseDateSafe(dateString));
     const now = startOfDay(new Date());
     const diff = differenceInDays(target, now);
-    
+
     if (diff < 0) {
-      return { text: `Terlewat ${Math.abs(diff)} hr`, isOverdue: true };
+      return {
+        text: `Terlewat ${Math.abs(diff)} hr`,
+        isOverdue: true,
+        isDone: false,
+        inProgress: false,
+      };
     } else if (diff === 0) {
-      return { text: `Hari ini`, isOverdue: false, isWarning: true };
+      return {
+        text: `Hari ini`,
+        isOverdue: false,
+        isWarning: true,
+        isDone: false,
+        inProgress: false,
+      };
     } else {
-      return { text: `Sisa ${diff} hr`, isOverdue: false, isWarning: diff <= 3 };
+      return {
+        text: `Dalam proses`,
+        isOverdue: false,
+        isWarning: false,
+        isDone: false,
+        inProgress: true,
+      };
     }
   };
 
@@ -284,6 +319,14 @@ export function CalendarView() {
                 ? "bg-white text-gray-800"
                 : "bg-black/80 dark:bg-black/60 text-white";
 
+              const olehTextClasses = isKpi
+                ? "text-white"
+                : "text-gray-900 dark:text-white print:text-gray-900";
+
+              const outlineBadgeClasses = isKpi
+                ? "border-white text-white"
+                : "border-white text-gray-900 dark:border-white dark:text-white print:border-gray-900 print:text-gray-900";
+
               return (
                 <div
                   key={card.id}
@@ -312,27 +355,58 @@ export function CalendarView() {
                       {card.title}
                     </span>
                     <div className="flex flex-wrap items-center gap-1 mt-1">
-                      {card.pic && (
-                        <span
-                          className={`text-[9px] px-1.5 py-0.5 rounded-sm font-medium w-fit shadow-sm whitespace-normal break-words print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${badgeClasses}`}
-                        >
-                          Oleh:{" "}
-                          {typeof card.pic === "object" && card.pic !== null
-                            ? (card.pic as any).name
-                            : card.pic}
-                        </span>
-                      )}
+                      {(card.pic ||
+                        (card.collaborators &&
+                          card.collaborators.length > 0)) &&
+                        (() => {
+                          const names = [
+                            card.pic
+                              ? typeof card.pic === "object" &&
+                                card.pic !== null
+                                ? (card.pic as any).name
+                                : card.pic
+                              : null,
+                            ...(card.collaborators?.map((c: any) => c.name) ||
+                              []),
+                          ].filter(Boolean);
+
+                          return (
+                            <div className="flex flex-wrap gap-1 items-center mt-0.5">
+                              <span
+                                className={`text-[9px] text-white font-medium mr-0.5 ${olehTextClasses}`}
+                              >
+                                Oleh:
+                              </span>
+                              {names.map((name, idx) => (
+                                <span
+                                  key={idx}
+                                  className={`text-[9px] text-white px-1.5 py-0.5 rounded border font-medium whitespace-nowrap bg-transparent ${outlineBadgeClasses}`}
+                                >
+                                  {name}
+                                </span>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       {(() => {
-                        const targetDate = card.dueDate || card.requestDate || card.createdAt;
-                        const remaining = getDaysRemaining(targetDate);
+                        const remaining = getDaysRemaining(card);
                         if (!remaining) return null;
-                        
-                        let remainingClasses = "bg-green-500 text-white";
-                        if (remaining.isOverdue) remainingClasses = "bg-red-500 text-white";
-                        else if (remaining.isWarning) remainingClasses = "bg-yellow-500 text-white";
-                        
+
+                        let remainingClasses = "bg-green-500 text-white"; // default green
+                        if (remaining.isDone) {
+                          remainingClasses = "bg-green-600 text-white";
+                        } else if (remaining.isOverdue) {
+                          remainingClasses = "bg-red-500 text-white";
+                        } else if (remaining.isWarning) {
+                          remainingClasses = "bg-yellow-500 text-white";
+                        } else if (remaining.inProgress) {
+                          remainingClasses = "bg-blue-500 text-white";
+                        }
+
                         return (
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded-sm font-medium w-fit shadow-sm whitespace-nowrap print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${remainingClasses}`}>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded font-medium w-fit shadow-sm whitespace-nowrap print:bg-transparent print:border print:border-gray-300 print:text-gray-700 print:shadow-none print:px-1 ${remainingClasses}`}
+                          >
                             {remaining.text}
                           </span>
                         );
@@ -460,15 +534,17 @@ export function CalendarView() {
             </select>
 
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-sm font-medium text-textSecondary whitespace-nowrap">Tanggal:</span>
-              <input 
+              <span className="text-sm font-medium text-textSecondary whitespace-nowrap">
+                Tanggal:
+              </span>
+              <input
                 type="date"
                 value={filterStartDate}
                 onChange={(e) => setFilterStartDate(e.target.value)}
                 className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-2 py-1.5 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto h-[38px]"
               />
               <span className="text-sm font-medium text-textSecondary">-</span>
-              <input 
+              <input
                 type="date"
                 value={filterEndDate}
                 onChange={(e) => setFilterEndDate(e.target.value)}
@@ -476,20 +552,24 @@ export function CalendarView() {
               />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-4 mt-1 border-t border-gray-300 dark:border-zinc-800 pt-3">
-             <div className="flex items-center gap-1.5 text-sm">
-                <Info size={16} className="text-textSecondary" />
-                <span className="font-semibold text-textPrimary mr-2">Legenda:</span>
-                <div className="flex items-center gap-1.5 mr-4">
-                  <span className="w-3 h-3 rounded-full bg-blue-500 border border-blue-600"></span>
-                  <span className="text-textSecondary">Tugas KPI / WIG</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3 h-3 rounded-full bg-gray-500 border border-gray-600"></span>
-                  <span className="text-textSecondary">Tugas Rutin / Non-KPI</span>
-                </div>
-             </div>
+            <div className="flex items-center gap-1.5 text-sm">
+              <Info size={16} className="text-textSecondary" />
+              <span className="font-semibold text-textPrimary mr-2">
+                Legenda:
+              </span>
+              <div className="flex items-center gap-1.5 mr-4">
+                <span className="w-3 h-3 rounded-full bg-blue-500 border border-blue-600"></span>
+                <span className="text-textSecondary">Tugas KPI / WIG</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-gray-500 border border-gray-600"></span>
+                <span className="text-textSecondary">
+                  Tugas Rutin / Non-KPI
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -537,7 +617,7 @@ export function CalendarView() {
 
         {selectedCard && (
           <CardModal
-            card={selectedCard}
+            card={cards.find((c) => c.id === selectedCard.id) || selectedCard}
             onClose={() => setSelectedCard(null)}
           />
         )}

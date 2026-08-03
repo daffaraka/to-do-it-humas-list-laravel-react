@@ -458,7 +458,7 @@ export function KanbanBoard() {
             <div className="shrink-0 w-full sm:w-auto">
               <button
                 onClick={() => setIsBoardInfoOpen(!isBoardInfoOpen)}
-                className={`w-full sm:w-auto px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-colors border shadow-sm ${isBoardInfoOpen ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:border-indigo-500 dark:hover:bg-indigo-600" : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 dark:bg-indigo-500/20 dark:text-indigo-300 dark:border-indigo-500/30 dark:hover:bg-indigo-500/30"}`}
+                className={`w-full sm:w-auto px-4 py-2 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-colors border shadow-sm ${isBoardInfoOpen ? "bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:border-indigo-500 dark:hover:bg-indigo-500" : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 dark:bg-zinc-800 dark:text-indigo-400 dark:border-zinc-700 dark:hover:bg-zinc-700"}`}
                 title="Info Program Kerja"
               >
                 <Info size={16} />

@@ -16,7 +16,12 @@ import { useAuthStore } from "../store/authStore";
 
 export function MasterData() {
   const [activeTab, setActiveTab] = useState<
-    "users" | "departments" | "roles" | "kpis" | "kategori-program-kerja" | "task-weights"
+    | "users"
+    | "departments"
+    | "roles"
+    | "kpis"
+    | "kategori-program-kerja"
+    | "task-weights"
   >("users");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -55,7 +60,7 @@ export function MasterData() {
 
   // Open modal function
   const handleAdd = () => {
-    if (activeTab === 'task-weights') return; // Cannot add new weights
+    if (activeTab === "task-weights") return; // Cannot add new weights
     setEditingItem(null);
     setIsModalOpen(true);
   };
@@ -129,28 +134,28 @@ export function MasterData() {
           >
             <Target size={16} /> WIG
           </button>
-                <button
-                  onClick={() => setActiveTab("kategori-program-kerja")}
-                  className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors relative whitespace-nowrap
+          <button
+            onClick={() => setActiveTab("kategori-program-kerja")}
+            className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors relative whitespace-nowrap
                     ${activeTab === "kategori-program-kerja" ? "text-indigo-600" : "text-textSecondary hover:text-textPrimary"}`}
-                >
-                  <FolderTree size={18} />
-                  Kategori WIG
-                  {activeTab === "kategori-program-kerja" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab("task-weights")}
-                  className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors relative whitespace-nowrap
+          >
+            <FolderTree size={18} />
+            Kategori Program
+            {activeTab === "kategori-program-kerja" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("task-weights")}
+            className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors relative whitespace-nowrap
                     ${activeTab === "task-weights" ? "text-indigo-600" : "text-textSecondary hover:text-textPrimary"}`}
-                >
-                  <Target size={18} />
-                  Bobot Pekerjaan
-                  {activeTab === "task-weights" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
-                  )}
-                </button>
+          >
+            <Target size={18} />
+            Bobot Pekerjaan
+            {activeTab === "task-weights" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
+            )}
+          </button>
         </div>
 
         {loading ? (
@@ -159,20 +164,20 @@ export function MasterData() {
           <div className="text-center text-red-500 py-10">{error}</div>
         ) : (
           <div className="bg-bgSecondary rounded-2xl border border-borderBase overflow-hidden">
-          <div className="flex justify-between items-center px-6 py-4 border-b border-borderLight">
-            <h2 className="text-lg font-semibold text-textPrimary capitalize">
-              Data {activeTab.replace("-", " ")}
-            </h2>
-            {activeTab !== 'task-weights' && (
-              <button
-                onClick={handleAdd}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm"
-              >
-                <UserPlus size={18} />
-                Tambah Data
-              </button>
-            )}
-          </div>
+            <div className="flex justify-between items-center px-6 py-4 border-b border-borderLight">
+              <h2 className="text-lg font-semibold text-textPrimary capitalize">
+                Data {activeTab.replace("-", " ")}
+              </h2>
+              {activeTab !== "task-weights" && (
+                <button
+                  onClick={handleAdd}
+                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm text-sm"
+                >
+                  <UserPlus size={18} />
+                  Tambah Data
+                </button>
+              )}
+            </div>
             <div className="overflow-x-auto w-full">
               <table className="w-full min-w-[1000px] text-left text-sm text-textSecondary whitespace-nowrap">
                 <thead className="bg-bgGlass text-textPrimary">
