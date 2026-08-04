@@ -11,6 +11,7 @@ let fetchDepartmentsPromise: Promise<void> | null = null;
 let fetchBoardsPromise: Promise<void> | null = null;
 let fetchCardsPromises: Record<string, Promise<void> | undefined> = {};
 let fetchAllCardsPromise: Promise<void> | null = null;
+let fetchCardsByDateRangePromise: Promise<void> | null = null;
 let fetchMyJobsPromise: Promise<void> | null = null;
 
 interface KanbanState {
@@ -37,6 +38,7 @@ interface KanbanState {
   setActiveBoardId: (boardId: string | null) => void;
   fetchCards: (boardId: string) => Promise<void>;
   fetchAllCards: () => Promise<void>;
+  fetchCardsByDateRange: (startDate: string, endDate: string) => Promise<void>;
   fetchMyJobs: () => Promise<void>;
   addCard: (title: string, columnId: ColumnId, extraData?: Partial<Card>) => Promise<void>;
   updateCard: (id: string, updates: Partial<Card>) => Promise<void>;
@@ -191,6 +193,23 @@ export const useKanban = create<KanbanState>()(
           });
           
         await fetchCardsPromises[boardId];
+      },
+
+      fetchCardsByDateRange: async (startDate: string, endDate: string) => {
+
+        set({ isLoading: true, error: null });
+        fetchCardsByDateRangePromise = api.get(`/tasks?start_date=${startDate}&end_date=${endDate}`)
+          .then((response) => {
+            set({ cards: response.data, isLoading: false });
+          })
+          .catch((err: any) => {
+            set({ error: err.message, isLoading: false });
+          })
+          .finally(() => {
+            fetchCardsByDateRangePromise = null;
+          });
+          
+        await fetchCardsByDateRangePromise;
       },
 
       fetchAllCards: async () => {

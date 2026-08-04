@@ -4,11 +4,11 @@ import { useKanban } from '@/store/kanbanStore';
 import { CalendarSkeleton } from '@/components/Skeleton';
 
 export default function GlobalCalendarPage() {
-  const { fetchAllCards, isLoading } = useKanban();
+  const { isLoading } = useKanban();
 
   useEffect(() => {
-    fetchAllCards();
-  }, [fetchAllCards]);
+    // Data fetching is now handled inside CalendarView.tsx
+  }, []);
 
   if (isLoading) {
     return <CalendarSkeleton />;

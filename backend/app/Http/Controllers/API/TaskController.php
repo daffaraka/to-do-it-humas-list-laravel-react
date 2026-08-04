@@ -6,12 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user']);
+        if ($request->has('start_date') && $request->has('end_date')) {
+            // Lightweight eager loading for Calendar
+            $query = Task::with(['pic:id,name', 'labels:id,task_id,label_id', 'collaborators:id,name', 'board:id,kpi_id']);
+            
+            // Filter by date range (checking due_date, request_date, and created_at)
+            $query->where(function($q) use ($request) {
+                $q->whereBetween('due_date', [$request->start_date, $request->end_date])
+                  ->orWhereBetween('request_date', [$request->start_date, $request->end_date])
+                  ->orWhereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+            });
+        } else {
+            // Full eager loading for Kanban boards
+            $query = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user']);
+        }
 
         if ($request->boardId) {
             $query->where('board_id', $request->boardId);
@@ -39,29 +53,35 @@ class TaskController extends Controller
             $attachmentPath = $request->file('attachment')->store('attachments', 'public');
         }
 
-        $task = Task::create([
-            'title' => $data['title'],
-            'description' => $data['description'],
-            'board_id' => $data['boardId'],
-            'department_id' => $request->user()->department_id,
-            'pic_id' => $data['picId'] ?? $request->user()->id,
-            'priority' => $data['priority'] ?? 'low',
-            'request_date' => $data['requestDate'] ?? null,
-            'due_date' => $data['dueDate'] ?? null,
-            'position' => Task::where('board_id', $data['boardId'])->max('position') + 1,
-            'attachment' => $attachmentPath,
-            'new_date' => now(),
-            'column_id' => 'new',
-        ]);
+        $task = DB::transaction(function () use ($data, $request, $attachmentPath) {
+            $maxPosition = Task::where('board_id', $data['boardId'])->lockForUpdate()->max('position');
 
-        if (isset($data['collaborator_ids']) && is_array($data['collaborator_ids'])) {
-            $task->collaborators()->sync($data['collaborator_ids']);
-        }
+            $task = Task::create([
+                'title' => $data['title'],
+                'description' => $data['description'],
+                'board_id' => $data['boardId'],
+                'department_id' => $request->user()->department_id,
+                'pic_id' => $data['picId'] ?? $request->user()->id,
+                'priority' => $data['priority'] ?? 'low',
+                'request_date' => $data['requestDate'] ?? null,
+                'due_date' => $data['dueDate'] ?? null,
+                'position' => $maxPosition + 1,
+                'attachment' => $attachmentPath,
+                'new_date' => now(),
+                'column_id' => 'new',
+            ]);
 
-        $task->histories()->create([
-            'user_id' => $request->user()->id,
-            'action' => 'new'
-        ]);
+            if (isset($data['collaborator_ids']) && is_array($data['collaborator_ids'])) {
+                $task->collaborators()->sync($data['collaborator_ids']);
+            }
+
+            $task->histories()->create([
+                'user_id' => $request->user()->id,
+                'action' => 'new'
+            ]);
+
+            return $task;
+        });
 
         return response()->json($task, 201);
     }
@@ -120,7 +140,7 @@ class TaskController extends Controller
             'action' => $isCompleted ? 'selesai' : 'update'
         ]);
 
-        return response()->json($task->fresh());
+        return response()->json(['id' => $task->id, 'status' => 'success']);
     }
 
     public function destroy($id)
@@ -131,7 +151,10 @@ class TaskController extends Controller
 
     public function myJobs(Request $request)
     {
-        $tasks = Task::with(['board'])->where('pic_id', $request->user()->id)->get();
+        $tasks = Task::with(['board'])
+            ->where('pic_id', $request->user()->id)
+            ->where('column_id', '!=', 'done')
+            ->get();
         return response()->json($tasks);
     }
 }

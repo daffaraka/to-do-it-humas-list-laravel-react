@@ -25,14 +25,24 @@ import type { Card } from "../types";
 import { AVAILABLE_LABELS } from "../types";
 
 export function CalendarView() {
-  const { cards, activeDepartment, departments, boards } = useKanban();
+  const { cards, activeDepartment, departments, boards, fetchCardsByDateRange } = useKanban();
   const { kpis, fetchKpis } = useKpiStore();
+
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   useEffect(() => {
     fetchKpis();
   }, [fetchKpis]);
 
-  const [currentDate, setCurrentDate] = useState(new Date());
+  useEffect(() => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+    const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    
+    fetchCardsByDateRange(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
+  }, [currentDate, fetchCardsByDateRange]);
+
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
   const [filterDepartment, setFilterDepartment] = useState<string>("all");
