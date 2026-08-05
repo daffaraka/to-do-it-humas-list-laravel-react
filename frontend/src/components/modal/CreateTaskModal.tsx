@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import DatePicker from "react-datepicker";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
-import { X, Type, FileText, User, Calendar, Briefcase, Users } from "lucide-react";
+import { X, Type, FileText, User, Calendar, Briefcase, Users, Tag } from "lucide-react";
 import type { ColumnId } from "../../types";
 import { useKanban } from "../../store/kanbanStore";
 import api from "../../lib/api";
@@ -18,7 +18,7 @@ interface CreateTaskModalProps {
 }
 
 export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
-  const { addCard } = useKanban();
+  const { addCard, labels } = useKanban();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("medium");
@@ -26,6 +26,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [collaboratorIds, setCollaboratorIds] = useState<string[]>([]);
+  const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -75,11 +76,18 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
       if (dueDate) formData.append("dueDate", format(dueDate, "yyyy-MM-dd"));
       if (attachment) formData.append("attachment", attachment);
       collaboratorIds.forEach((id) => formData.append("collaborator_ids[]", id));
+      selectedLabels.forEach((id) => formData.append("label_ids[]", id));
 
       const { data } = await api.post("/tasks", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      useKanban.setState((state) => ({ cards: [...state.cards, data] }));
+      
+      const formattedData = {
+        ...data,
+        labels: selectedLabels.map(id => labels.find(l => l.id === id)).filter(Boolean)
+      };
+      
+      useKanban.setState((state) => ({ cards: [...state.cards, formattedData] }));
 
       onClose();
     } catch (err: any) {
@@ -116,7 +124,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
 
         <form
           onSubmit={handleSubmit}
-          className="p-4 sm:p-6 flex flex-col overflow-y-auto custom-scrollbar"
+          className="p-4 sm:p-6 pb-[10%] flex flex-col overflow-y-auto custom-scrollbar"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Left Column */}
@@ -241,6 +249,37 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
                   className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                   accept=".jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf"
                 />
+              </div>
+
+              {/* Jenis Pekerjaan (Labels) */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
+                  <Tag size={14} className="text-pink-400" />
+                  Jenis Pekerjaan (Label)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {labels.map(label => {
+                    const isSelected = selectedLabels.includes(label.id);
+                    return (
+                      <button
+                        key={label.id}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedLabels(selectedLabels.filter(id => id !== label.id));
+                          } else {
+                            setSelectedLabels([...selectedLabels, label.id]);
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${label.color} ${
+                          isSelected ? 'opacity-100 ring-2 ring-offset-2 ring-indigo-500/30' : 'opacity-40 hover:opacity-80'
+                        }`}
+                      >
+                        {label.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Collaborators */}

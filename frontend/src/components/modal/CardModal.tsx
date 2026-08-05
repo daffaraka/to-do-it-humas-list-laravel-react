@@ -18,7 +18,7 @@ import {
   History,
   Plus,
 } from "lucide-react";
-import { COLUMNS, AVAILABLE_LABELS } from "../../types";
+import { COLUMNS } from "../../types";
 import type { Card, ColumnId } from "../../types";
 import { useKanban } from "../../store/kanbanStore";
 import { useAuthStore } from "../../store/authStore";
@@ -32,7 +32,7 @@ interface CardModalProps {
 }
 
 export function CardModal({ card, onClose }: CardModalProps) {
-  const { updateCard, deleteCard, moveCard } = useKanban();
+  const { updateCard, deleteCard, moveCard, labels: storeLabels } = useKanban();
   const [title, setTitle] = useState(card.title);
   const [description, setDescription] = useState(card.description);
   const [newChecklistText, setNewChecklistText] = useState("");
@@ -166,7 +166,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
         labels: labels.filter((l) => l.id !== labelId),
       });
     } else {
-      const labelData = AVAILABLE_LABELS.find((l) => l.id === labelId);
+      const labelData = storeLabels.find((l) => l.id === labelId);
       if (labelData) {
         updateCard(card.id, {
           labels: [...labels, labelData],
@@ -568,20 +568,15 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 </h4>
               </div>
               <div className="flex flex-wrap gap-2">
-                {AVAILABLE_LABELS.map((label) => {
+                {storeLabels.map((label) => {
                   const isActive = labels.some((l) => l.id === label.id);
                   return (
                     <button
                       key={label.id}
                       onClick={() => toggleLabel(label.id)}
-                      className="px-2.5 py-1 rounded-md text-xs font-medium transition-all"
-                      style={{
-                        backgroundColor: isActive
-                          ? label.color
-                          : "rgba(255,255,255,0.05)",
-                        color: isActive ? "#fff" : label.color,
-                        border: `1px solid ${isActive ? "transparent" : label.color + "40"}`,
-                      }}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${label.color} ${
+                        isActive ? 'opacity-100' : 'opacity-40 hover:opacity-80'
+                      }`}
                     >
                       {label.name}
                     </button>
