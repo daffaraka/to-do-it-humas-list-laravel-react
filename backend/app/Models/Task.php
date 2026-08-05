@@ -9,8 +9,6 @@ class Task extends Model
 {
     use HasUuids;
 
-    protected $with = ['taskWeight'];
-
     protected $fillable = [
         'id',
         'title',

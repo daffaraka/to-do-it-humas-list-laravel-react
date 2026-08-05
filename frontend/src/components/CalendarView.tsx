@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   format,
   addMonths,
@@ -25,7 +25,7 @@ import type { Card } from "../types";
 import { AVAILABLE_LABELS } from "../types";
 
 export function CalendarView() {
-  const { cards, activeDepartment, departments, boards, fetchCardsByDateRange } = useKanban();
+  const { cards, activeDepartment, departments, boards, fetchCardsByDateRange, isLoading } = useKanban();
   const { kpis, fetchKpis } = useKpiStore();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -34,14 +34,23 @@ export function CalendarView() {
     fetchKpis();
   }, [fetchKpis]);
 
+  // Use ref to hold latest fetch fn — prevents useEffect re-triggering when store reference changes
+  const fetchCardsByDateRangeRef = useRef(fetchCardsByDateRange);
+  useEffect(() => {
+    fetchCardsByDateRangeRef.current = fetchCardsByDateRange;
+  });
+
   useEffect(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
     const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
     const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
-    
-    fetchCardsByDateRange(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
-  }, [currentDate, fetchCardsByDateRange]);
+
+    fetchCardsByDateRangeRef.current(
+      format(startDate, 'yyyy-MM-dd'),
+      format(endDate, 'yyyy-MM-dd')
+    );
+  }, [currentDate]); // Stable: only re-runs when user changes month
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
@@ -163,73 +172,82 @@ export function CalendarView() {
     }
   };
 
-  // Filter cards by active department, filters, and date availability
+  // Filter cards + pre-parse date ONCE here so grid loop never calls parseDateSafe() again
   const filteredCards = useMemo(() => {
-    return cards.filter((card) => {
-      const hasDate = card.requestDate || card.dueDate || card.createdAt;
-      if (!hasDate) return false;
+    return cards
+      .filter((card) => {
+        const hasDate = card.requestDate || card.dueDate || card.createdAt;
+        if (!hasDate) return false;
 
-      const deptIdToUse =
-        filterDepartment !== "all"
-          ? filterDepartment
-          : effectiveActiveDepartment;
-      if (deptIdToUse !== "all" && card.departmentId !== deptIdToUse) {
-        return false;
-      }
-
-      const picName =
-        typeof card.pic === "object" && card.pic !== null
-          ? (card.pic as any).name
-          : card.pic;
-      if (filterPic !== "all" && picName !== filterPic) {
-        return false;
-      }
-
-      if (searchQuery.trim() !== "") {
-        const query = searchQuery.toLowerCase();
-        const matchesTitle = card.title?.toLowerCase().includes(query);
-        const matchesDesc = card.description?.toLowerCase().includes(query);
-        if (!matchesTitle && !matchesDesc) {
+        const deptIdToUse =
+          filterDepartment !== "all"
+            ? filterDepartment
+            : effectiveActiveDepartment;
+        if (deptIdToUse !== "all" && card.departmentId !== deptIdToUse) {
           return false;
         }
-      }
 
-      if (filterLabel !== "all") {
-        if (!card.labels || !card.labels.some((l) => l.id === filterLabel)) {
+        const picName =
+          typeof card.pic === "object" && card.pic !== null
+            ? (card.pic as any).name
+            : card.pic;
+        if (filterPic !== "all" && picName !== filterPic) {
           return false;
         }
-      }
 
-      if (filterPriority !== "all") {
-        if (card.priority !== filterPriority) {
-          return false;
+        if (searchQuery.trim() !== "") {
+          const query = searchQuery.toLowerCase();
+          const matchesTitle = card.title?.toLowerCase().includes(query);
+          const matchesDesc = card.description?.toLowerCase().includes(query);
+          if (!matchesTitle && !matchesDesc) {
+            return false;
+          }
         }
-      }
 
-      if (filterKpi !== "all") {
-        const board = card.board || boards.find((b) => b.id === card.boardId);
-        const kpiId = board?.kpiId || board?.kpi_id;
-        if (kpiId !== filterKpi) {
-          return false;
+        if (filterLabel !== "all") {
+          if (!card.labels || !card.labels.some((l) => l.id === filterLabel)) {
+            return false;
+          }
         }
-      }
 
-      const cardDateStr = card.requestDate || card.dueDate || card.createdAt;
-      if (cardDateStr) {
-        const cardDate = parseDateSafe(cardDateStr);
-        if (filterStartDate) {
-          const start = startOfDay(parseDateSafe(filterStartDate));
-          if (cardDate < start) return false;
+        if (filterPriority !== "all") {
+          if (card.priority !== filterPriority) {
+            return false;
+          }
         }
-        if (filterEndDate) {
-          const end = startOfDay(parseDateSafe(filterEndDate));
-          end.setHours(23, 59, 59, 999);
-          if (cardDate > end) return false;
-        }
-      }
 
-      return true;
-    });
+        if (filterKpi !== "all") {
+          const board = card.board || boards.find((b) => b.id === card.boardId);
+          const kpiId = board?.kpiId || board?.kpi_id;
+          if (kpiId !== filterKpi) {
+            return false;
+          }
+        }
+
+        const cardDateStr = card.requestDate || card.dueDate || card.createdAt;
+        if (cardDateStr) {
+          const cardDate = parseDateSafe(cardDateStr);
+          if (filterStartDate) {
+            const start = startOfDay(parseDateSafe(filterStartDate));
+            if (cardDate < start) return false;
+          }
+          if (filterEndDate) {
+            const end = startOfDay(parseDateSafe(filterEndDate));
+            end.setHours(23, 59, 59, 999);
+            if (cardDate > end) return false;
+          }
+        }
+
+        return true;
+      })
+      .map((card) => {
+        // Pre-compute parsed date once — avoids re-parsing 35x per render in the grid loop
+        const dateStr = card.requestDate || card.dueDate || card.createdAt;
+        return {
+          ...card,
+          _parsedDate: dateStr ? parseDateSafe(dateStr) : null,
+        };
+      });
   }, [
     cards,
     effectiveActiveDepartment,
@@ -241,6 +259,7 @@ export function CalendarView() {
     filterKpi,
     filterStartDate,
     filterEndDate,
+    boards,
   ]);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -280,11 +299,9 @@ export function CalendarView() {
       formattedDate = format(day, "d");
       const cloneDay = day;
 
-      // Find cards for this specific day
+      // Use pre-parsed _parsedDate — no more parseDateSafe() call per cell per card
       const dayCards = filteredCards.filter((c) => {
-        const dateStr = c.requestDate || c.dueDate || c.createdAt;
-        if (!dateStr) return false;
-        return isSameDay(parseDateSafe(dateStr), cloneDay);
+        return c._parsedDate ? isSameDay(c._parsedDate, cloneDay) : false;
       });
 
       days.push(
@@ -619,7 +636,12 @@ export function CalendarView() {
           </div>
 
           {/* Calendar Grid */}
-          <div className="flex-1 overflow-y-auto custom-scrollbar print:overflow-visible">
+          <div className="relative flex-1 overflow-y-auto custom-scrollbar print:overflow-visible">
+            {isLoading && (
+              <div className="absolute inset-0 z-10 bg-bgPrimary/50 backdrop-blur-sm flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
+              </div>
+            )}
             {renderDaysHeader()}
             <div className="flex flex-col">{rows}</div>
           </div>

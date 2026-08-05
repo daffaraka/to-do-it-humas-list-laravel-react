@@ -13,18 +13,24 @@ class TaskController extends Controller
     public function index(Request $request)
     {
         if ($request->has('start_date') && $request->has('end_date')) {
-            // Lightweight eager loading for Calendar
-            $query = Task::with(['pic:id,name', 'labels:id,task_id,label_id', 'collaborators:id,name', 'board:id,kpi_id']);
-            
-            // Filter by date range (checking due_date, request_date, and created_at)
+            // Lightweight eager loading for Calendar — only columns needed by frontend
+            $query = Task::without(['taskWeight'])
+                ->with(['pic:id,name', 'labels:id,task_id,label_id', 'collaborators:id,name', 'board:id,kpi_id'])
+                ->select([
+                    'id', 'title', 'pic_id', 'board_id', 'department_id',
+                    'request_date', 'due_date', 'column_id', 'priority',
+                    'position', 'created_at'
+                ]);
+
+            // Filter only by indexed date columns (due_date OR request_date)
+            // Removed: orWhereBetween created_at — caused full table scan on unindexed column
             $query->where(function($q) use ($request) {
                 $q->whereBetween('due_date', [$request->start_date, $request->end_date])
-                  ->orWhereBetween('request_date', [$request->start_date, $request->end_date])
-                  ->orWhereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+                  ->orWhereBetween('request_date', [$request->start_date, $request->end_date]);
             });
         } else {
-            // Full eager loading for Kanban boards
-            $query = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user']);
+            // Full eager loading for Kanban boards (taskWeight now explicit since removed from $with)
+            $query = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user', 'taskWeight']);
         }
 
         if ($request->boardId) {
@@ -151,7 +157,8 @@ class TaskController extends Controller
 
     public function myJobs(Request $request)
     {
-        $tasks = Task::with(['board'])
+        $tasks = Task::with(['board', 'taskWeight'])
+            ->select(['id', 'title', 'pic_id', 'board_id', 'column_id', 'priority', 'due_date', 'request_date', 'created_at'])
             ->where('pic_id', $request->user()->id)
             ->where('column_id', '!=', 'done')
             ->get();
