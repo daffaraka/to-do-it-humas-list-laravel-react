@@ -23,12 +23,26 @@ import { useKpiStore } from "../store/kpiStore";
 import { CardModal } from "./modal/CardModal";
 import type { Card } from "../types";
 import { AVAILABLE_LABELS } from "../types";
+import { useSearchParams } from "react-router-dom";
 
 export function CalendarView() {
   const { cards, activeDepartment, departments, boards, fetchCardsByDateRange, isLoading } = useKanban();
   const { kpis, fetchKpis } = useKpiStore();
+  const [searchParams] = useSearchParams();
+  const calendarType = searchParams.get('type');
 
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    setIsTransitioning(true);
+    const timer = setTimeout(() => {
+      setIsTransitioning(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [calendarType]);
+
+  const showLoading = isLoading || isTransitioning;
 
   useEffect(() => {
     fetchKpis();
@@ -176,6 +190,12 @@ export function CalendarView() {
   const filteredCards = useMemo(() => {
     return cards
       .filter((card) => {
+        if (calendarType === 'publikasi') {
+          if (!card.labels || !card.labels.some((l: any) => l.id === 'l9' || l.name === 'Publikasi')) return false;
+        } else if (calendarType === 'meeting') {
+          if (!card.labels || !card.labels.some((l: any) => l.id === 'l10' || l.name === 'Meeting')) return false;
+        }
+
         const hasDate = card.requestDate || card.dueDate || card.createdAt;
         if (!hasDate) return false;
 
@@ -260,6 +280,7 @@ export function CalendarView() {
     filterStartDate,
     filterEndDate,
     boards,
+    calendarType,
   ]);
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
@@ -604,6 +625,7 @@ export function CalendarView() {
           {/* Calendar Header */}
           <div className="p-4 border-b border-borderBase flex items-center justify-between bg-bgGlass print:bg-transparent print:border-b-2 print:border-black">
             <h2 className="text-xl font-bold text-textPrimary tracking-tight print:text-black">
+              {calendarType === 'publikasi' ? 'Kalender Publikasi - ' : calendarType === 'meeting' ? 'Kalender Meeting - ' : 'Kalender Kerja - '}
               {format(currentDate, dateFormat, { locale: id })}
             </h2>
             <div className="flex items-center gap-2 print:hidden">
@@ -637,8 +659,9 @@ export function CalendarView() {
 
           {/* Calendar Grid */}
           <div className="relative flex-1 overflow-y-auto custom-scrollbar print:overflow-visible">
-            {isLoading && (
-              <div className="absolute inset-0 z-10 bg-bgPrimary/50 backdrop-blur-sm flex items-center justify-center">
+            {/* Loading Overlay */}
+            {showLoading && (
+              <div className="absolute inset-0 bg-white/50 dark:bg-black/50 flex items-center justify-center z-10">
                 <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent"></div>
               </div>
             )}
