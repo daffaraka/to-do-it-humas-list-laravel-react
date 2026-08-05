@@ -51,7 +51,7 @@ function useScrollRestoration() {
 
 export default function ClientLayout() {
   useScrollRestoration();
-  const { isDarkMode, fetchDepartments } = useKanban();
+  const { isDarkMode, fetchDepartments, fetchLabels } = useKanban();
   const { token } = useAuthStore();
   const [mounted, setMounted] = useState(false);
   const location = useLocation();
@@ -73,8 +73,9 @@ export default function ClientLayout() {
     setMounted(true);
     if (token) {
       fetchDepartments();
+      fetchLabels();
     }
-  }, [fetchDepartments, token]);
+  }, [fetchDepartments, fetchLabels, token]);
 
   useEffect(() => {
     if (isDarkMode) {

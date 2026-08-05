@@ -12,7 +12,7 @@ import { useKanban } from '../../store/kanbanStore';
 import { useAuthStore } from '../../store/authStore';
 
 interface MasterDataModalProps {
-  type: 'users' | 'departments' | 'roles' | 'kpis' | 'kategori-program-kerja' | 'task-weights';
+  type: 'users' | 'departments' | 'roles' | 'kpis' | 'kategori-program-kerja' | 'task-weights' | 'labels';
   initialData?: any;
   onClose: () => void;
   onSuccess: () => void;
@@ -35,6 +35,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
   const [targetDate, setTargetDate] = useState<Date | null>(null);
   // Task Weight specific
   const [weight, setWeight] = useState(0);
+  // Label specific
+  const [color, setColor] = useState('bg-gray-500 text-white');
 
   const user = useAuthStore(state => state.user);
 
@@ -68,6 +70,9 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
         if (initialData.targetDate) setTargetDate(new Date(initialData.targetDate));
       } else if (type === 'task-weights') {
         setWeight(initialData.weight || 0);
+      } else if (type === 'labels') {
+        setName(initialData.name || '');
+        setColor(initialData.color || 'bg-gray-500 text-white');
       } else {
         setName(initialData.name || '');
       }
@@ -79,6 +84,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
     if (type !== 'kpis' && type !== 'task-weights' && !name.trim()) return;
     if (type === 'kpis' && !title.trim()) return;
     if (type === 'task-weights' && weight < 1) return;
+    if (type === 'labels' && !color) return;
 
     setLoading(true);
     try {
@@ -92,6 +98,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           await api.put(`/kpis/${initialData.id}`, { title, description, targetDate: targetDate ? format(targetDate, "yyyy-MM-dd") : null, departmentId });
         } else if (type === 'task-weights') {
           await api.put(`/task-weights/${initialData.id}`, { weight });
+        } else if (type === 'labels') {
+          await api.put(`/labels/${initialData.id}`, { name, color });
         } else {
           await api.patch(`/${type}/${initialData.id}`, { name });
         }
@@ -102,6 +110,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           await api.post('/users', { name, email, password, departmentId, roleId });
         } else if (type === 'kpis') {
           await api.post('/kpis', { title, description, targetDate: targetDate ? format(targetDate, "yyyy-MM-dd") : null, departmentId });
+        } else if (type === 'labels') {
+          await api.post('/labels', { name, color });
         } else {
           await api.post(`/${type}`, { name });
         }
@@ -120,6 +130,7 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
     if (type === 'departments') return `${action} Departemen`;
     if (type === 'kpis') return `${action} WIG`;
     if (type === 'task-weights') return `${action} Bobot Pekerjaan`;
+    if (type === 'labels') return `${action} Label`;
     return `${action} Jabatan (Role)`;
   };
 
@@ -155,9 +166,51 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={`Masukkan nama ${type.slice(0, -1)}`}
+                placeholder={`Masukkan nama ${type === 'labels' ? 'label' : type.slice(0, -1)}`}
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
               />
+            </div>
+          )}
+
+          {/* Label Specific Fields */}
+          {type === 'labels' && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
+                <Tag size={14} className="text-indigo-400" />
+                Warna (Tailwind Class) <span className="text-red-400">*</span>
+              </label>
+              <div className="relative">
+                <select
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 pr-10 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all appearance-none"
+                >
+                  <option value="bg-gray-500 text-white">Gray</option>
+                  <option value="bg-red-500 text-white">Red</option>
+                  <option value="bg-orange-500 text-white">Orange</option>
+                  <option value="bg-amber-500 text-white">Amber</option>
+                  <option value="bg-yellow-500 text-black">Yellow</option>
+                  <option value="bg-lime-500 text-black">Lime</option>
+                  <option value="bg-green-500 text-white">Green</option>
+                  <option value="bg-emerald-500 text-white">Emerald</option>
+                  <option value="bg-teal-500 text-white">Teal</option>
+                  <option value="bg-cyan-500 text-black">Cyan</option>
+                  <option value="bg-sky-500 text-white">Sky</option>
+                  <option value="bg-blue-500 text-white">Blue</option>
+                  <option value="bg-indigo-500 text-white">Indigo</option>
+                  <option value="bg-violet-500 text-white">Violet</option>
+                  <option value="bg-purple-500 text-white">Purple</option>
+                  <option value="bg-fuchsia-500 text-white">Fuchsia</option>
+                  <option value="bg-pink-500 text-white">Pink</option>
+                  <option value="bg-rose-500 text-white">Rose</option>
+                </select>
+                <div className="absolute top-1/2 -translate-y-1/2 right-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-textSecondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
+              <div className="mt-2 flex items-center gap-2 text-sm text-textSecondary">
+                Preview: <span className={`px-2 py-1 text-xs rounded-full ${color}`}>Warna Terpilih</span>
+              </div>
             </div>
           )}
 

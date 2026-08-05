@@ -104,13 +104,15 @@ export const COLUMNS: Column[] = [
 ];
 
 export const AVAILABLE_LABELS: CardLabel[] = [
-  { id: 'l1', name: 'Bug', color: '#ef4444' },
-  { id: 'l2', name: 'Feature', color: '#6366f1' },
-  { id: 'l3', name: 'Enhancement', color: '#8b5cf6' },
-  { id: 'l4', name: 'Documentation', color: '#06b6d4' },
-  { id: 'l5', name: 'Design', color: '#ec4899' },
-  { id: 'l6', name: 'Urgent', color: '#f59e0b' },
-  { id: 'l8', name: 'Frontend', color: '#3b82f6' },
+  { id: 'l1', name: 'Bug', color: 'bg-red-500 text-white' },
+  { id: 'l2', name: 'Feature', color: 'bg-indigo-500 text-white' },
+  { id: 'l3', name: 'Enhancement', color: 'bg-purple-500 text-white' },
+  { id: 'l4', name: 'Documentation', color: 'bg-cyan-500 text-white' },
+  { id: 'l5', name: 'Design', color: 'bg-pink-500 text-white' },
+  { id: 'l6', name: 'Urgent', color: 'bg-amber-500 text-white' },
+  { id: 'l8', name: 'Frontend', color: 'bg-blue-500 text-white' },
+  { id: 'l9', name: 'Publikasi', color: 'bg-emerald-500 text-white' },
+  { id: 'l10', name: 'Meeting', color: 'bg-purple-500 text-white' },
 ];
 
 export interface KategoriProgramKerja {

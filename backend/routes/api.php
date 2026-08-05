@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('kategori-program-kerja', \App\Http\Controllers\API\KategoriProgramKerjaController::class);
     Route::apiResource('meetings', MeetingController::class);
     Route::apiResource('task-weights', TaskWeightController::class);
+    Route::apiResource('labels', \App\Http\Controllers\API\LabelController::class);
 
     // Custom Routes for Frontend compatibility
     Route::apiResource('users', UserController::class);
