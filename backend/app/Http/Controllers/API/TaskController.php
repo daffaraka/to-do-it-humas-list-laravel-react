@@ -15,7 +15,7 @@ class TaskController extends Controller
         if ($request->has('start_date') && $request->has('end_date')) {
             // Lightweight eager loading for Calendar — only columns needed by frontend
             $query = Task::without(['taskWeight'])
-                ->with(['pic:id,name', 'labels:id,task_id,label_id', 'collaborators:id,name', 'board:id,kpi_id'])
+                ->with(['pic:id,name', 'labels:id,name,color', 'collaborators:id,name', 'board:id,kpi_id'])
                 ->select([
                     'id', 'title', 'pic_id', 'board_id', 'department_id',
                     'request_date', 'due_date', 'column_id', 'priority',
@@ -81,6 +81,25 @@ class TaskController extends Controller
                 $task->collaborators()->sync($data['collaborator_ids']);
             }
 
+            if ($request->has('label_ids') && is_array($request->input('label_ids'))) {
+                $currentLabels = $task->labels()->pluck('labels.id')->toArray();
+                $newLabels = $request->input('label_ids');
+                
+                $toAttach = array_diff($newLabels, $currentLabels);
+                $toDetach = array_diff($currentLabels, $newLabels);
+                
+                if (!empty($toDetach)) {
+                    $task->labels()->detach($toDetach);
+                }
+                if (!empty($toAttach)) {
+                    $attachData = [];
+                    foreach ($toAttach as $labelId) {
+                        $attachData[$labelId] = ['id' => (string) \Illuminate\Support\Str::uuid()];
+                    }
+                    $task->labels()->attach($attachData);
+                }
+            }
+
             $task->histories()->create([
                 'user_id' => $request->user()->id,
                 'action' => 'new'
@@ -137,6 +156,25 @@ class TaskController extends Controller
 
         if (isset($data['collaborator_ids']) && is_array($data['collaborator_ids'])) {
             $task->collaborators()->sync($data['collaborator_ids']);
+        }
+
+        if ($request->has('label_ids') && is_array($request->input('label_ids'))) {
+            $currentLabels = $task->labels()->pluck('labels.id')->toArray();
+            $newLabels = $request->input('label_ids');
+            
+            $toAttach = array_diff($newLabels, $currentLabels);
+            $toDetach = array_diff($currentLabels, $newLabels);
+            
+            if (!empty($toDetach)) {
+                $task->labels()->detach($toDetach);
+            }
+            if (!empty($toAttach)) {
+                $attachData = [];
+                foreach ($toAttach as $labelId) {
+                    $attachData[$labelId] = ['id' => (string) \Illuminate\Support\Str::uuid()];
+                }
+                $task->labels()->attach($attachData);
+            }
         }
 
         $task->update($updateData);
