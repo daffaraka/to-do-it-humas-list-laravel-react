@@ -16,6 +16,7 @@ import {
   Briefcase,
   Bell,
   Menu,
+  X,
 } from "lucide-react";
 import { AVAILABLE_LABELS } from "../types";
 import { useKanban } from "../store/kanbanStore";

@@ -87,6 +87,12 @@ export function CalendarView() {
           ? (c.pic as any).name
           : c.pic;
       if (name) pics.add(name as string);
+
+      if (c.collaborators && Array.isArray(c.collaborators)) {
+        c.collaborators.forEach((collab: any) => {
+          if (collab.name) pics.add(collab.name as string);
+        });
+      }
     });
     return Array.from(pics).sort();
   }, [cards]);
@@ -212,8 +218,12 @@ export function CalendarView() {
           typeof card.pic === "object" && card.pic !== null
             ? (card.pic as any).name
             : card.pic;
-        if (filterPic !== "all" && picName !== filterPic) {
-          return false;
+        if (filterPic !== "all") {
+          const isPic = picName === filterPic;
+          const isCollab = card.collaborators?.some((c: any) => c.name === filterPic);
+          if (!isPic && !isCollab) {
+            return false;
+          }
         }
 
         if (searchQuery.trim() !== "") {
