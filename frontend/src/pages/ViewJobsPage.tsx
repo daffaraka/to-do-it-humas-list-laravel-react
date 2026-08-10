@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { useKanban } from "@/store/kanbanStore";
 import api from "@/lib/api";
 import {
@@ -133,7 +134,7 @@ export default function ViewJobsPage() {
           {filteredGroups.map(
             ([picName, group]: [string, any]) => {
               const basePicCards = group.cards;
-              const monthFilter = picMonthFilters[picName];
+              const monthFilter = picMonthFilters[picName] !== undefined ? picMonthFilters[picName] : format(new Date(), 'yyyy-MM');
               const picCards = monthFilter
                 ? basePicCards.filter((c: any) => {
                     const d = c.requestDate || c.dueDate || c.createdAt;
@@ -232,7 +233,7 @@ export default function ViewJobsPage() {
                       <div className="flex justify-end mb-2">
                         <input 
                           type="month"
-                          value={picMonthFilters[picName] || ""}
+                          value={picMonthFilters[picName] !== undefined ? picMonthFilters[picName] : format(new Date(), 'yyyy-MM')}
                           onChange={(e) => setPicMonthFilters(prev => ({ ...prev, [picName]: e.target.value }))}
                           onClick={(e) => {
                             try { e.currentTarget.showPicker(); } catch (err) {}

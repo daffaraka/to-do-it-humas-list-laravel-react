@@ -329,8 +329,7 @@ export function KanbanBoard() {
                       }`}
                     >
                       <span
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: label.color }}
+                        className={`w-3 h-3 rounded-full ${label.color.replace('text-white', '')}`}
                       />
                       {label.name}
                     </button>

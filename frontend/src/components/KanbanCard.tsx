@@ -127,11 +127,7 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
           {labels.map((label) => (
             <span
               key={label.id}
-              className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-              style={{
-                backgroundColor: `${label.color}20`,
-                color: label.color,
-              }}
+              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${label.color}`}
             >
               {label.name}
             </span>

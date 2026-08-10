@@ -2,15 +2,31 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Card, ColumnId, Department, ActiveDepartmentType, Board } from '../types';
+import type { Card, ColumnId, Department, ActiveDepartmentType, Board, CardLabel } from '../types';
+import { AVAILABLE_LABELS } from '../types';
 import api from '../lib/api';
 
 export type ViewMode = 'kanban' | 'calendar';
+
+let globalLabels: CardLabel[] = []; // Store fetched labels for the formatter to use
+
+const formatTasksWithLabels = (tasks: any[]) => {
+  return tasks.map(task => ({
+    ...task,
+    labels: (task.labels || []).map((tl: any) => {
+      if (tl.name && tl.color) return tl;
+      const labelId = tl.label_id || tl.id;
+      const found = globalLabels.find(l => l.id === labelId) || AVAILABLE_LABELS.find(l => l.id === labelId);
+      return found || { id: labelId, name: 'Unknown', color: 'bg-gray-400 text-white' };
+    })
+  }));
+};
 
 let fetchDepartmentsPromise: Promise<void> | null = null;
 let fetchBoardsPromise: Promise<void> | null = null;
 let fetchCardsPromises: Record<string, Promise<void> | undefined> = {};
 let fetchAllCardsPromise: Promise<void> | null = null;
+let fetchCardsByDateRangePromise: Promise<void> | null = null;
 let fetchMyJobsPromise: Promise<void> | null = null;
 
 interface KanbanState {
@@ -28,7 +44,10 @@ interface KanbanState {
   isDarkMode: boolean;
   isLoading: boolean;
   error: string | null;
-
+  labels: CardLabel[];
+  
+  // Actions
+  fetchLabels: () => Promise<void>;
   fetchDepartments: () => Promise<void>;
   fetchBoards: () => Promise<void>;
   createBoard: (title: string, description?: string, kpiId?: string, startDate?: string, targetDate?: string, departmentId?: string, kategoriProgramId?: string, kondisiAktual?: string, targetAkhirTahun?: string, outputAkhir?: string, prioritas?: string, bobot?: number | string) => Promise<void>;
@@ -37,6 +56,7 @@ interface KanbanState {
   setActiveBoardId: (boardId: string | null) => void;
   fetchCards: (boardId: string) => Promise<void>;
   fetchAllCards: () => Promise<void>;
+  fetchCardsByDateRange: (startDate: string, endDate: string) => Promise<void>;
   fetchMyJobs: () => Promise<void>;
   addCard: (title: string, columnId: ColumnId, extraData?: Partial<Card>) => Promise<void>;
   updateCard: (id: string, updates: Partial<Card>) => Promise<void>;
@@ -70,6 +90,17 @@ export const useKanban = create<KanbanState>()(
       isDarkMode: false,
       isLoading: false,
       error: null,
+      labels: [],
+
+      fetchLabels: async () => {
+        try {
+          const response = await api.get('/labels');
+          globalLabels = response.data;
+          set({ labels: response.data });
+        } catch (err) {
+          console.error('Failed to fetch labels', err);
+        }
+      },
 
       fetchDepartments: async () => {
         if (fetchDepartmentsPromise) {
@@ -181,7 +212,7 @@ export const useKanban = create<KanbanState>()(
         set({ isLoading: true, error: null });
         fetchCardsPromises[boardId] = api.get(`/tasks?boardId=${boardId}`)
           .then((response) => {
-            set({ cards: response.data, isLoading: false });
+            set({ cards: formatTasksWithLabels(response.data), isLoading: false });
           })
           .catch((err: any) => {
             set({ error: err.message, isLoading: false });
@@ -193,6 +224,23 @@ export const useKanban = create<KanbanState>()(
         await fetchCardsPromises[boardId];
       },
 
+      fetchCardsByDateRange: async (startDate: string, endDate: string) => {
+
+        set({ isLoading: true, error: null });
+        fetchCardsByDateRangePromise = api.get(`/tasks?start_date=${startDate}&end_date=${endDate}`)
+          .then((response) => {
+            set({ cards: formatTasksWithLabels(response.data), isLoading: false });
+          })
+          .catch((err: any) => {
+            set({ error: err.message, isLoading: false });
+          })
+          .finally(() => {
+            fetchCardsByDateRangePromise = null;
+          });
+          
+        await fetchCardsByDateRangePromise;
+      },
+
       fetchAllCards: async () => {
         if (fetchAllCardsPromise) {
           await fetchAllCardsPromise;
@@ -202,7 +250,7 @@ export const useKanban = create<KanbanState>()(
         set({ isLoading: true, error: null });
         fetchAllCardsPromise = api.get(`/tasks`)
           .then((response) => {
-            set({ cards: response.data, isLoading: false });
+            set({ cards: formatTasksWithLabels(response.data), isLoading: false });
           })
           .catch((err: any) => {
             set({ error: err.message, isLoading: false });
@@ -223,7 +271,7 @@ export const useKanban = create<KanbanState>()(
         set({ isLoading: true, error: null });
         fetchMyJobsPromise = api.get('/tasks/my-jobs')
           .then((response) => {
-            set({ myJobs: response.data, isLoading: false });
+            set({ myJobs: formatTasksWithLabels(response.data), isLoading: false });
           })
           .catch((err: any) => {
             set({ error: err.message, isLoading: false });
@@ -264,7 +312,12 @@ export const useKanban = create<KanbanState>()(
         }));
 
         try {
-          await api.patch(`/tasks/${id}`, updates);
+          const apiUpdates = { ...updates } as any;
+          if (apiUpdates.labels) {
+            apiUpdates.label_ids = apiUpdates.labels.map((l: any) => l.id);
+            delete apiUpdates.labels;
+          }
+          await api.patch(`/tasks/${id}`, apiUpdates);
         } catch (err: any) {
           console.error('Failed to update card', err);
           // Revert on failure

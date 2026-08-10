@@ -40,7 +40,7 @@ export function Header() {
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
   const isAdmin = user?.role?.name?.toLowerCase() === "admin";
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const navigate = useNavigate();
   const isMasterData = pathname === "/master";
 
@@ -92,17 +92,26 @@ export function Header() {
           <Link
             to="/calendar"
             onClick={() => setActiveBoardId(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/calendar" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-            title="Kalender"
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/calendar" && !search ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            title="Kalender Kerja"
           >
             Kalender
           </Link>
           <Link
-            to="/meetings"
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/meetings" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-            title="Meeting"
+            to="/calendar?type=publikasi"
+            onClick={() => setActiveBoardId(null)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/calendar" && search === "?type=publikasi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            title="Kalender Publikasi"
           >
-            Meeting
+            Kalender Publikasi
+          </Link>
+          <Link
+            to="/calendar?type=meeting"
+            onClick={() => setActiveBoardId(null)}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/calendar" && search === "?type=meeting" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            title="Kalender Meeting"
+          >
+            Kalender Meeting
           </Link>
           {isAdmin && (
             <Link

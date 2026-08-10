@@ -9,6 +9,7 @@ import {
   Shield,
   Target,
   FolderTree,
+  Tag,
 } from "lucide-react";
 import { MasterDataModal } from "../components/modal/MasterDataModal";
 import api from "../lib/api";
@@ -22,6 +23,7 @@ export function MasterData() {
     | "kpis"
     | "kategori-program-kerja"
     | "task-weights"
+    | "labels"
   >("users");
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -156,6 +158,17 @@ export function MasterData() {
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
             )}
           </button>
+          <button
+            onClick={() => setActiveTab("labels")}
+            className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition-colors relative whitespace-nowrap
+                    ${activeTab === "labels" ? "text-indigo-600" : "text-textSecondary hover:text-textPrimary"}`}
+          >
+            <Tag size={18} />
+            Label
+            {activeTab === "labels" && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-t-full" />
+            )}
+          </button>
         </div>
 
         {loading ? (
@@ -196,6 +209,18 @@ export function MasterData() {
                           Bobot (Nilai)
                         </th>
                       </>
+                    ) : activeTab === "labels" ? (
+                      <>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                          Nama Label
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                          Warna
+                        </th>
+                        <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                          Preview
+                        </th>
+                      </>
                     ) : (
                       <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
                         Nama / Judul
@@ -229,8 +254,22 @@ export function MasterData() {
                             {item.weight}
                           </td>
                         </>
+                      ) : activeTab === "labels" ? (
+                        <>
+                          <td className="px-6 py-4 text-sm font-medium text-textPrimary">
+                            {item.name}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-textSecondary">
+                            <code>{item.color}</code>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2 py-1 text-xs rounded-full ${item.color}`}>
+                              {item.name}
+                            </span>
+                          </td>
+                        </>
                       ) : (
-                        <td className="px-6 py-4 text-textPrimary font-medium max-w-[200px] truncate">
+                        <td className="px-6 py-4 text-sm font-medium text-textPrimary max-w-[200px] truncate">
                           {activeTab === "kpis" ? item.title : item.name}
                         </td>
                       )}
