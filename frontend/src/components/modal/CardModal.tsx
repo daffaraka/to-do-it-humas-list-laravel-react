@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import DatePicker from "react-datepicker";
@@ -48,8 +48,17 @@ export function CardModal({ card, onClose }: CardModalProps) {
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [histories, setHistories] = useState<any[]>(card.histories || []);
+  const [collabSearchQuery, setCollabSearchQuery] = useState("");
 
   const currentUser = useAuthStore((state) => state.user);
+
+  const isOwner = useMemo(() => {
+    if (!currentUser) return false;
+    const picId = typeof card.pic === 'object' && card.pic !== null ? (card.pic as any).id : card.pic;
+    if (picId === currentUser.id) return true;
+    if (card.collaborators?.some(c => c.id === currentUser.id)) return true;
+    return false;
+  }, [currentUser, card.pic, card.collaborators]);
 
   useEffect(() => {
     if (activeTab === "comments") {
@@ -119,16 +128,19 @@ export function CardModal({ card, onClose }: CardModalProps) {
   const labels = card.labels || [];
 
   const handleSave = () => {
+    if (!isOwner) return;
     updateCard(card.id, { 
       title, 
       description, 
       collaborator_ids: collaboratorIds,
+      collaborators: users.filter(u => collaboratorIds.includes(u.id)),
       requestDate,
       dueDate
     } as any);
   };
 
   const handleAddChecklist = (e: KeyboardEvent | MouseEvent) => {
+    if (!isOwner) return;
     if (
       (e.type === "keydown" && (e as KeyboardEvent).key === "Enter") ||
       e.type === "click"
@@ -146,6 +158,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
   };
 
   const toggleChecklist = (itemId: string) => {
+    if (!isOwner) return;
     updateCard(card.id, {
       checklist: checklist.map((item) =>
         item.id === itemId ? { ...item, completed: !item.completed } : item,
@@ -154,12 +167,14 @@ export function CardModal({ card, onClose }: CardModalProps) {
   };
 
   const deleteChecklist = (itemId: string) => {
+    if (!isOwner) return;
     updateCard(card.id, {
       checklist: checklist.filter((item) => item.id !== itemId),
     });
   };
 
   const toggleLabel = (labelId: string) => {
+    if (!isOwner) return;
     const hasLabel = labels.some((l) => l.id === labelId);
     if (hasLabel) {
       updateCard(card.id, {
@@ -196,7 +211,8 @@ export function CardModal({ card, onClose }: CardModalProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onBlur={handleSave}
-            className="flex-1 shadow-xs border border-gray-200 dark:border-gray-200 bg-transparent text-lg sm:text-xl font-semibold text-textPrimary focus:outline-none focus:ring-1 focus:ring-gray-400 rounded-md px-2 py-1 mr-4"
+            disabled={!isOwner}
+            className="flex-1 shadow-xs border border-gray-200 dark:border-gray-200 bg-transparent text-lg sm:text-xl font-semibold text-textPrimary focus:outline-none focus:ring-1 focus:ring-gray-400 rounded-md px-2 py-1 mr-4 disabled:opacity-70"
           />
           <button
             onClick={onClose}
@@ -242,8 +258,9 @@ export function CardModal({ card, onClose }: CardModalProps) {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     onBlur={handleSave}
-                    placeholder="Tambahkan deskripsi lebih detail..."
-                    className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary min-h-[100px] sm:min-h-[120px] focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 resize-none"
+                    disabled={!isOwner}
+                    placeholder={isOwner ? "Tambahkan deskripsi lebih detail..." : "Tidak ada deskripsi"}
+                    className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary min-h-[100px] sm:min-h-[120px] focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 resize-none disabled:opacity-70"
                   />
                 </div>
 
@@ -259,6 +276,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       onChange={(date: any) =>
                         setRequestDate(date ? format(date, "yyyy-MM-dd") : null)
                       }
+                      disabled={!isOwner}
                       dateFormat="dd/MM/yyyy"
                       locale={dateFnsIdLocale}
                       placeholderText="dd/mm/yyyy"
@@ -266,7 +284,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       showYearDropdown
                       dropdownMode="select"
                       onKeyDown={(e) => e.preventDefault()}
-                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all disabled:opacity-70"
                     />
                   </div>
 
@@ -279,6 +297,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       onChange={(date: any) =>
                         setDueDate(date ? format(date, "yyyy-MM-dd") : null)
                       }
+                      disabled={!isOwner}
                       dateFormat="dd/MM/yyyy"
                       locale={dateFnsIdLocale}
                       placeholderText="dd/mm/yyyy"
@@ -286,7 +305,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       showYearDropdown
                       dropdownMode="select"
                       onKeyDown={(e) => e.preventDefault()}
-                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                      className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all disabled:opacity-70"
                     />
                   </div>
                 </div>
@@ -375,11 +394,12 @@ export function CardModal({ card, onClose }: CardModalProps) {
                       >
                         <button
                           onClick={() => toggleChecklist(item.id)}
+                          disabled={!isOwner}
                           className={`w-4 h-4 shrink-0 rounded flex items-center justify-center border transition-colors ${
                             item.completed
                               ? "bg-indigo-500 border-indigo-500 text-white"
                               : "border-textSecondary hover:border-gray-400"
-                          }`}
+                          } ${!isOwner ? 'opacity-70 cursor-not-allowed' : ''}`}
                         >
                           {item.completed && (
                             <CheckSquare
@@ -398,38 +418,42 @@ export function CardModal({ card, onClose }: CardModalProps) {
                         >
                           {item.text}
                         </span>
-                        <button
-                          onClick={() => deleteChecklist(item.id)}
-                          className="text-textSecondary hover:text-red-400 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {isOwner && (
+                          <button
+                            onClick={() => deleteChecklist(item.id)}
+                            className="text-textSecondary hover:text-red-400 md:opacity-0 md:group-hover:opacity-100 transition-opacity p-1"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
-                    <textarea
-                      value={newChecklistText}
-                      onChange={(e) => setNewChecklistText(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleAddChecklist(e as any);
-                        }
-                      }}
-                      placeholder="Tambah item baru..."
-                      rows={1}
-                      className="flex-1 bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 resize-y"
-                    />
-                    <button
-                      onClick={handleAddChecklist}
-                      disabled={!newChecklistText.trim()}
-                      className="bg-bgGlass hover:bg-bgGlassHover disabled:opacity-50 text-textSecondary p-2 rounded-xl transition-colors flex items-center justify-center"
-                    >
-                      <Plus size={18} />
-                    </button>
-                  </div>
+                  {isOwner && (
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-3">
+                      <textarea
+                        value={newChecklistText}
+                        onChange={(e) => setNewChecklistText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleAddChecklist(e as any);
+                          }
+                        }}
+                        placeholder="Tambah item baru..."
+                        rows={1}
+                        className="flex-1 bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 resize-y"
+                      />
+                      <button
+                        onClick={handleAddChecklist}
+                        disabled={!newChecklistText.trim()}
+                        className="bg-bgGlass hover:bg-bgGlassHover disabled:opacity-50 text-textSecondary p-2 rounded-xl transition-colors flex items-center justify-center"
+                      >
+                        <Plus size={18} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             ) : activeTab === "comments" ? (
@@ -544,8 +568,9 @@ export function CardModal({ card, onClose }: CardModalProps) {
               </h4>
               <select
                 value={card.columnId}
+                disabled={!isOwner}
                 onChange={(e) => moveCard(card.id, e.target.value as ColumnId)}
-                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400"
+                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 disabled:opacity-70"
               >
                 {COLUMNS.map((col) => (
                   <option
@@ -573,10 +598,11 @@ export function CardModal({ card, onClose }: CardModalProps) {
                   return (
                     <button
                       key={label.id}
+                      disabled={!isOwner}
                       onClick={() => toggleLabel(label.id)}
                       className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${label.color} ${
-                        isActive ? 'opacity-100' : 'opacity-40 hover:opacity-80'
-                      }`}
+                        isActive ? 'opacity-100' : 'opacity-40'
+                      } ${isOwner ? 'hover:opacity-80' : 'cursor-default'}`}
                     >
                       {label.name}
                     </button>
@@ -597,6 +623,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 {(["low", "medium", "high"] as const).map((p) => (
                   <button
                     key={p}
+                    disabled={!isOwner}
                     onClick={() => updateCard(card.id, { priority: p })}
                     className={`flex-1 py-1.5 rounded-md text-xs font-medium uppercase tracking-wide transition-all ${
                       card.priority === p
@@ -605,8 +632,8 @@ export function CardModal({ card, onClose }: CardModalProps) {
                           : p === "medium"
                             ? "bg-indigo-500/20 text-indigo-500 border border-indigo-500/50 dark:text-indigo-300"
                             : "bg-gray-500/20 text-gray-600 border border-gray-500/50 dark:text-gray-400"
-                        : "bg-bgGlass text-textSecondary border border-transparent hover:bg-bgGlassHover"
-                    }`}
+                        : `bg-bgGlass text-textSecondary border border-transparent ${isOwner ? 'hover:bg-bgGlassHover' : ''}`
+                    } ${!isOwner ? 'cursor-default' : ''}`}
                   >
                     {p}
                   </button>
@@ -629,6 +656,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                     dueDate: date ? format(date, "yyyy-MM-dd") : null,
                   })
                 }
+                disabled={!isOwner}
                 dateFormat="dd/MM/yyyy"
                 locale={dateFnsIdLocale}
                 placeholderText="dd/mm/yyyy"
@@ -636,7 +664,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 showYearDropdown
                 dropdownMode="select"
                 onKeyDown={(e) => e.preventDefault()}
-                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all"
+                className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all disabled:opacity-70"
               />
             </div>
 
@@ -648,23 +676,36 @@ export function CardModal({ card, onClose }: CardModalProps) {
                   Anggota Tim
                 </h4>
               </div>
+              {isOwner && (
+                <input
+                  type="text"
+                  placeholder="Cari anggota tim..."
+                  value={collabSearchQuery}
+                  onChange={(e) => setCollabSearchQuery(e.target.value)}
+                  className="w-full bg-white dark:bg-bgSecondary border border-gray-200 dark:border-borderBase rounded-md px-3 py-1.5 text-sm text-textPrimary mb-2 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              )}
               <div className="bg-bgSecondary border border-borderBase rounded-xl px-3 py-2 max-h-48 overflow-y-auto custom-scrollbar">
                 {users.length === 0 ? (
                   <p className="text-xs text-textSecondary p-1">Memuat pengguna...</p>
                 ) : (
-                  users.map(user => (
-                    <label key={user.id} className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-bgGlass rounded px-2">
+                  users.filter(u => u.name.toLowerCase().includes(collabSearchQuery.toLowerCase())).map(user => (
+                    <label key={user.id} className={`flex items-center gap-2 py-1.5 ${isOwner ? 'cursor-pointer hover:bg-bgGlass' : 'cursor-default'} rounded px-2`}>
                       <input
                         type="checkbox"
                         checked={collaboratorIds.includes(user.id)}
+                        disabled={!isOwner}
                         onChange={(e) => {
                           const newIds = e.target.checked
                             ? [...collaboratorIds, user.id]
                             : collaboratorIds.filter(id => id !== user.id);
                           setCollaboratorIds(newIds);
-                          updateCard(card.id, { collaborator_ids: newIds } as any);
+                          updateCard(card.id, { 
+                             collaborator_ids: newIds,
+                             collaborators: users.filter(u => newIds.includes(u.id))
+                          } as any);
                         }}
-                        className="rounded text-indigo-500 focus:ring-indigo-500 border-gray-400 dark:border-gray-600 bg-transparent"
+                        className="rounded text-indigo-500 focus:ring-indigo-500 border-gray-400 dark:border-gray-600 bg-transparent disabled:opacity-70"
                       />
                       <span className="text-sm text-textPrimary">{user.name}</span>
                     </label>
@@ -676,30 +717,41 @@ export function CardModal({ card, onClose }: CardModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 sm:p-5 border-t border-borderBase bg-bgGlass flex gap-3 shrink-0">
-          <button
-            onClick={() => {
-              handleSave();
-              onClose();
-            }}
-            className="flex-[8] flex items-center justify-center gap-2 py-2.5 px-4 bg-indigo-600 border border-indigo-700 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"
-          >
-            Simpan
-          </button>
-          <button
-            onClick={() => {
-              if (confirm("Hapus tugas ini?")) {
-                deleteCard(card.id);
+        {isOwner ? (
+          <div className="p-4 sm:p-5 border-t border-borderBase bg-bgGlass flex gap-3 shrink-0">
+            <button
+              onClick={() => {
+                handleSave();
                 onClose();
-              }
-            }}
-            className="flex-[2] flex items-center justify-center py-2.5 px-4 bg-white border border-red-500 hover:bg-red-50 text-red-500 rounded-xl text-sm font-medium transition-colors"
-            title="Hapus Tugas"
-          >
-            <Trash2 size={16} />
-            <span className="hidden sm:inline ml-2">Hapus</span>
-          </button>
-        </div>
+              }}
+              className="flex-[8] flex items-center justify-center gap-2 py-2.5 px-4 bg-indigo-600 border border-indigo-700 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors shadow-sm"
+            >
+              Simpan
+            </button>
+            <button
+              onClick={() => {
+                if (confirm("Hapus tugas ini?")) {
+                  deleteCard(card.id);
+                  onClose();
+                }
+              }}
+              className="flex-[2] flex items-center justify-center py-2.5 px-4 bg-white border border-red-500 hover:bg-red-50 text-red-500 rounded-xl text-sm font-medium transition-colors"
+              title="Hapus Tugas"
+            >
+              <Trash2 size={16} />
+              <span className="hidden sm:inline ml-2">Hapus</span>
+            </button>
+          </div>
+        ) : (
+          <div className="p-4 sm:p-5 border-t border-borderBase bg-bgGlass flex justify-end gap-3 shrink-0">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 bg-white border border-gray-300 dark:bg-bgSecondary dark:border-borderBase hover:bg-gray-50 dark:hover:bg-bgGlassHover text-textPrimary rounded-xl text-sm font-medium transition-colors"
+            >
+              Tutup
+            </button>
+          </div>
+        )}
       </div>
     </div>,
     document.body,

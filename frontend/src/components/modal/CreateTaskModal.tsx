@@ -28,6 +28,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const [collaboratorIds, setCollaboratorIds] = useState<string[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [collabSearchQuery, setCollabSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -288,8 +289,15 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
                   <Users size={14} className="text-indigo-400" />
                   Anggota Tim (Opsional)
                 </label>
+                <input
+                  type="text"
+                  placeholder="Cari anggota tim..."
+                  value={collabSearchQuery}
+                  onChange={(e) => setCollabSearchQuery(e.target.value)}
+                  className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-md px-3 py-1.5 text-sm text-textPrimary mb-2 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
                 <div className="bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-2 max-h-[140px] overflow-y-auto custom-scrollbar">
-                  {users.map(user => (
+                  {users.filter(u => u.name.toLowerCase().includes(collabSearchQuery.toLowerCase())).map(user => (
                     <label key={user.id} className="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-black/[0.02] dark:hover:bg-white/[0.02] rounded px-2">
                       <input
                         type="checkbox"
