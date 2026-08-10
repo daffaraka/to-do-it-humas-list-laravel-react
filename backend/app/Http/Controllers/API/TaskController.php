@@ -11,13 +11,21 @@ class TaskController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user']);
+        $query = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'collaborators']);
 
         if ($request->boardId) {
             $query->where('board_id', $request->boardId);
         }
 
         return response()->json($query->orderBy('position')->get());
+    }
+
+    public function show($id)
+    {
+        $task = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user'])
+            ->findOrFail($id);
+
+        return response()->json($task);
     }
 
     public function store(Request $request)
