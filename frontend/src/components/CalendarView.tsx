@@ -70,6 +70,7 @@ export function CalendarView() {
 
   const [filterDepartment, setFilterDepartment] = useState<string>("all");
   const [filterPic, setFilterPic] = useState<string>("all");
+  const [filterCollab, setFilterCollab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   const [filterLabel, setFilterLabel] = useState<string>("all");
@@ -236,6 +237,12 @@ export function CalendarView() {
           }
         }
 
+        if (filterCollab !== "all") {
+          const hasCollab = card.collaborators && card.collaborators.length > 0;
+          if (filterCollab === "yes" && !hasCollab) return false;
+          if (filterCollab === "no" && hasCollab) return false;
+        }
+
         if (filterKpi !== "all") {
           const board = card.board || boards.find((b) => b.id === card.boardId);
           const kpiId = board?.kpiId || board?.kpi_id;
@@ -273,6 +280,7 @@ export function CalendarView() {
     effectiveActiveDepartment,
     filterDepartment,
     filterPic,
+    filterCollab,
     searchQuery,
     filterLabel,
     filterPriority,
@@ -564,6 +572,16 @@ export function CalendarView() {
                   {pic}
                 </option>
               ))}
+            </select>
+
+            <select
+              value={filterCollab}
+              onChange={(e) => setFilterCollab(e.target.value)}
+              className="bg-white dark:bg-bgSecondary border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50 w-full sm:w-auto min-w-[150px]"
+            >
+              <option value="all">Semua (Termasuk Kolaborasi)</option>
+              <option value="yes">Hanya Kolaborasi</option>
+              <option value="no">Tanpa Kolaborasi</option>
             </select>
           </div>
 
