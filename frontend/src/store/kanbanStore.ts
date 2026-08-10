@@ -225,6 +225,10 @@ export const useKanban = create<KanbanState>()(
       },
 
       fetchCardsByDateRange: async (startDate: string, endDate: string) => {
+        if (fetchCardsByDateRangePromise) {
+          await fetchCardsByDateRangePromise;
+          return;
+        }
 
         set({ isLoading: true, error: null });
         fetchCardsByDateRangePromise = api.get(`/tasks?start_date=${startDate}&end_date=${endDate}`)

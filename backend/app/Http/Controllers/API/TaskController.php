@@ -30,8 +30,6 @@ class TaskController extends Controller
                     'created_at'
                 ]);
 
-            // Filter only by indexed date columns (due_date OR request_date)
-            // Removed: orWhereBetween created_at — caused full table scan on unindexed column
             $query->where(function ($q) use ($request) {
                 $q->whereBetween('due_date', [$request->start_date, $request->end_date])
                     ->orWhereBetween('request_date', [$request->start_date, $request->end_date]);
@@ -44,8 +42,13 @@ class TaskController extends Controller
         if ($request->boardId) {
             $query->where('board_id', $request->boardId);
         }
+        $tasks = $query->orderBy('position')->get();
+        
+        if ($request->has('start_date')) {
+            $tasks->each(fn ($t) => $t->board?->makeHidden(['tasks']));
+        }
 
-        return response()->json($query->orderBy('position')->get());
+        return response()->json($tasks);
     }
 
     public function show($id)

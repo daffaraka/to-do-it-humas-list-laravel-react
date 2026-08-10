@@ -8,7 +8,9 @@ use App\Models\Board;
 class BoardController extends Controller
 {
     public function index() {
-        return response()->json(Board::with(['tasks', 'user', 'kategoriProgram'])->get());
+        $boards = Board::with(['tasks', 'user', 'kategoriProgram'])->get();
+        $boards->each->append('score');
+        return response()->json($boards);
     }
 
     public function store(Request $request) {
@@ -56,7 +58,9 @@ class BoardController extends Controller
     }
 
     public function show($id) {
-        return response()->json(Board::with(['tasks', 'user', 'kategoriProgram'])->findOrFail($id));
+        $board = Board::with(['tasks', 'user', 'kategoriProgram'])->findOrFail($id);
+        $board->append('score');
+        return response()->json($board);
     }
 
     public function update(Request $request, $id) {

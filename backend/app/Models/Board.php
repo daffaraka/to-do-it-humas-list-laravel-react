@@ -31,14 +31,12 @@ class Board extends Model
         'target_date' => 'date',
     ];
 
-    protected $appends = ['score'];
-
     public function getScoreAttribute()
     {
-        // Prevent loading tasks if they are not already loaded to avoid N+1,
-        // but since this is usually appended, it's safer to just check relationLoaded
-        // Or we can just sum it if tasks are loaded. Let's just calculate it.
-        $tasks = $this->tasks;
+        // Only calculate score if tasks are already eager-loaded.
+        // This prevents N+1 lazy-loading which caused 9.4 MB response on calendar.
+        if (!$this->relationLoaded('tasks')) return 0;
+        $tasks = $this->getRelation('tasks');
         if (!$tasks || $tasks->isEmpty()) return 0;
 
         $maxScore = 0;
