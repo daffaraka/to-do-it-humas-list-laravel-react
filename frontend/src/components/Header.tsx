@@ -15,6 +15,7 @@ import {
   Target,
   Briefcase,
   Bell,
+  Menu,
 } from "lucide-react";
 import { AVAILABLE_LABELS } from "../types";
 import { useKanban } from "../store/kanbanStore";
@@ -47,6 +48,7 @@ export function Header() {
   const { notifications, unreadCount, fetchNotifications, markAsRead } =
     useNotificationStore();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
@@ -58,10 +60,18 @@ export function Header() {
       className="bg-bgSecondary/80 backdrop-blur-md border-b border-borderBase sticky top-0 z-20 flex flex-col transition-colors duration-300"
     >
       {/* Main Nav */}
-      <div className="px-6 py-4 flex items-center justify-between gap-4">
+      <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-2 sm:gap-4">
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="md:hidden p-2 -ml-2 text-textSecondary hover:text-textPrimary hover:bg-bgGlass rounded-lg transition-colors"
+        >
+          {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+
         {/* Logo */}
-        <div className="flex items-center gap-4 min-w-[200px]">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+        <div className="flex items-center gap-4 flex-1 md:flex-none md:min-w-[200px]">
+          <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent truncate">
             TimePro IT & Branding
           </h1>
         </div>
@@ -125,7 +135,7 @@ export function Header() {
         </div>
 
         {/* Profile (Right) */}
-        <div className="flex items-center min-w-[200px] justify-end gap-4 ml-auto">
+        <div className="flex items-center justify-end gap-2 sm:gap-4 ml-auto">
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
@@ -203,7 +213,7 @@ export function Header() {
             {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
-          <div className="flex items-center gap-3 pl-4 border-l border-borderBase">
+          <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-borderBase">
             <div className="hidden lg:block text-right">
               <div className="text-sm font-medium text-textPrimary">
                 {user?.name}
@@ -223,6 +233,65 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Nav Menu */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden border-t border-borderBase bg-bgSecondary/95 backdrop-blur-md px-4 py-3 flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
+          <Link
+            to="/kpi"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/kpi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+          >
+            Dashboard Project
+          </Link>
+          <Link
+            to="/view-jobs"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/view-jobs" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+          >
+            Semua Pekerjaan
+          </Link>
+          <Link
+            to="/calendar"
+            onClick={() => {
+              setActiveBoardId(null);
+              setIsMobileMenuOpen(false);
+            }}
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/calendar" && !search ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+          >
+            Kalender
+          </Link>
+          <Link
+            to="/calendar?type=publikasi"
+            onClick={() => {
+              setActiveBoardId(null);
+              setIsMobileMenuOpen(false);
+            }}
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/calendar" && search === "?type=publikasi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+          >
+            Kalender Publikasi
+          </Link>
+          <Link
+            to="/calendar?type=meeting"
+            onClick={() => {
+              setActiveBoardId(null);
+              setIsMobileMenuOpen(false);
+            }}
+            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/calendar" && search === "?type=meeting" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+          >
+            Kalender Meeting
+          </Link>
+          {isAdmin && (
+            <Link
+              to="/master"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isMasterData ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            >
+              Master Data
+            </Link>
+          )}
+        </div>
+      )}
     </header>
   );
 }
