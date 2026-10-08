@@ -15,12 +15,17 @@ use App\Http\Controllers\API\KpiController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\MeetingController;
 use App\Http\Controllers\API\TaskWeightController;
+use App\Http\Controllers\API\ExportController;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'getMe']);
+    
+    // Timeline Spreadsheet Export Routes
+    Route::get('/export/timeline-data', [ExportController::class, 'timelineData']);
+    Route::get('/export/users', [ExportController::class, 'availableUsers']);
     
     Route::get('/tasks/my-jobs', [TaskController::class, 'myJobs']);
     Route::apiResource('tasks', TaskController::class);

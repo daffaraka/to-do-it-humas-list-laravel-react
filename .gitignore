@@ -1,0 +1,11 @@
+# Antigravity Skills & Docs
+*antigravity-skills*
+
+# Dependencies & Build
+node_modules/
+dist/
+vendor/
+.env
+.env.*
+!.env.example
+*.log

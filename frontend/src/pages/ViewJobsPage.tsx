@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
+import { ExportTimelineButton } from "@/components/export-timeline/ExportTimelineButton";
 
 export default function ViewJobsPage() {
   const navigate = useNavigate();
@@ -104,18 +105,21 @@ export default function ViewJobsPage() {
           </p>
         </div>
 
-        <div className="relative w-full sm:w-64">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary"
-          />
-          <input
-            type="text"
-            placeholder="Cari pekerjaan atau nama PIC..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white dark:bg-bgSecondary border border-gray-200 dark:border-borderBase rounded-xl pl-9 pr-4 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-          />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-textSecondary"
+            />
+            <input
+              type="text"
+              placeholder="Cari pekerjaan atau nama PIC..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white dark:bg-bgSecondary border border-gray-200 dark:border-borderBase rounded-xl pl-9 pr-4 py-2 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+            />
+          </div>
+          <ExportTimelineButton />
         </div>
       </div>
 

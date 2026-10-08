@@ -22,6 +22,7 @@ import { AVAILABLE_LABELS } from "../types";
 import { useKanban } from "../store/kanbanStore";
 import { useAuthStore } from "../store/authStore";
 import { useNotificationStore } from "../store/notificationStore";
+import { ExportTimelineButton } from "./export-timeline/ExportTimelineButton";
 
 export function Header() {
   const {
@@ -137,6 +138,8 @@ export function Header() {
 
         {/* Profile (Right) */}
         <div className="flex items-center justify-end gap-2 sm:gap-4 ml-auto">
+          <ExportTimelineButton variant="minimal" />
+
           <div className="relative">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
@@ -291,6 +294,10 @@ export function Header() {
               Master Data
             </Link>
           )}
+
+          <div className="pt-2 border-t border-borderBase/50">
+            <ExportTimelineButton className="w-full justify-center py-2.5" />
+          </div>
         </div>
       )}
     </header>
