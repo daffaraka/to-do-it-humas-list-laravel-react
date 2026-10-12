@@ -87,7 +87,7 @@ export function ExportTimelineModal({
 
   const totalTasksSelected = userGroups
     .filter((g) => selectedUserIds.includes(g.user.id))
-    .reduce((sum, g) => sum + g.total_tasks, 0);
+    .reduce((sum, g) => sum + (g.totalTasks ?? g.total_tasks ?? g.tasks?.length ?? 0), 0);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">

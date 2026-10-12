@@ -33,10 +33,8 @@ class ExportController extends Controller
         $result = [];
 
         foreach ($users as $user) {
-            $tasks = Task::with(['board:id,title', 'department:id,name'])
+            $tasks = Task::with(['board:id,title,kpi_id', 'department:id,name'])
                 ->where('pic_id', $user->id)
-                ->orderByRaw('request_date IS NULL, request_date ASC')
-                ->orderBy('created_at', 'ASC')
                 ->get()
                 ->map(function ($task) {
                     $reqDate = $task->request_date ? Carbon::parse($task->request_date) : null;
@@ -44,46 +42,89 @@ class ExportController extends Controller
 
                     $durationDays = null;
                     if ($reqDate && $dueDate) {
-                        $diff = $dueDate->diffInDays($reqDate);
+                        $diff = abs((int) $dueDate->diffInDays($reqDate, false));
                         $durationDays = $diff === 0 ? 1 : $diff;
                     }
 
-                    $statusMap = [
-                        'done' => 'Selesai',
-                        'progress' => 'Dalam Proses',
-                        'new' => 'Belum Dimulai',
-                    ];
+                    $statusHariIni = match (strtolower($task->column_id ?? '')) {
+                        'done', 'selesai' => 'Done',
+                        'progress', 'dalam proses' => 'Progress',
+                        default => 'New',
+                    };
 
-                    $statusLabel = $statusMap[$task->column_id] ?? ($task->column_id ?: '-');
-                    $boardTitle = $task->board?->title ?? '';
+                    $board = $task->board;
+                    $boardTitle = $board?->title ?? '';
+                    $isWig = (bool) $board?->kpi_id;
+                    $projectType = $board ? ($isWig ? 'WIG' : 'Program Kerja') : null;
+                    $keterangan = $boardTitle ? "{$projectType}: {$boardTitle}" : '-';
 
-                    $keterangan = $boardTitle 
-                        ? "{$statusLabel} | Proyek: {$boardTitle}" 
-                        : $statusLabel;
+                    $reqFormatted = $reqDate ? $reqDate->format('Y-m-d') : null;
+                    $dueFormatted = $dueDate ? $dueDate->format('Y-m-d') : null;
 
                     return [
                         'id' => $task->id,
                         'title' => trim($task->title),
-                        'request_date' => $task->request_date ? $task->request_date->format('Y-m-d') : null,
-                        'due_date' => $task->due_date ? $task->due_date->format('Y-m-d') : null,
+                        'request_date' => $reqFormatted,
+                        'requestDate' => $reqFormatted,
+                        'due_date' => $dueFormatted,
+                        'dueDate' => $dueFormatted,
                         'priority' => $task->priority,
                         'column_id' => $task->column_id,
-                        'status_label' => $statusLabel,
+                        'columnId' => $task->column_id,
+                        'status_hari_ini' => $statusHariIni,
+                        'statusHariIni' => $statusHariIni,
+                        'status_label' => $statusHariIni,
+                        'statusLabel' => $statusHariIni,
                         'board_title' => $boardTitle,
+                        'boardTitle' => $boardTitle,
+                        'is_wig' => $isWig,
+                        'isWig' => $isWig,
+                        'project_type' => $projectType ?? '-',
+                        'projectType' => $projectType ?? '-',
                         'duration_days' => $durationDays,
+                        'durationDays' => $durationDays,
                         'keterangan' => $keterangan,
+                        'program' => $keterangan,
                     ];
-                });
+                })
+                ->sort(function ($a, $b) {
+                    $progA = $a['program'] ?? '-';
+                    $progB = $b['program'] ?? '-';
+
+                    if ($progA === '-' && $progB !== '-') return 1;
+                    if ($progA !== '-' && $progB === '-') return -1;
+
+                    $isWigA = (bool) ($a['is_wig'] ?? false);
+                    $isWigB = (bool) ($b['is_wig'] ?? false);
+                    if ($isWigA !== $isWigB) {
+                        return $isWigA ? -1 : 1;
+                    }
+
+                    $progCmp = strcasecmp($progA, $progB);
+                    if ($progCmp !== 0) return $progCmp;
+
+                    $reqA = $a['request_date'] ?? '9999-12-31';
+                    $reqB = $b['request_date'] ?? '9999-12-31';
+                    $reqCmp = strcmp($reqA, $reqB);
+                    if ($reqCmp !== 0) return $reqCmp;
+
+                    $dueA = $a['due_date'] ?? '9999-12-31';
+                    $dueB = $b['due_date'] ?? '9999-12-31';
+                    return strcmp($dueA, $dueB);
+                })
+                ->values();
 
             $result[] = [
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'short_name' => explode(' ', $user->name)[0],
+                    'shortName' => explode(' ', $user->name)[0],
                     'email' => $user->email,
                     'department' => $user->department?->name ?? '-',
                 ],
                 'total_tasks' => $tasks->count(),
+                'totalTasks' => $tasks->count(),
                 'tasks' => $tasks,
             ];
         }

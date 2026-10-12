@@ -9,3 +9,10 @@ vendor/
 .env.*
 !.env.example
 *.log
+*.xlsx
+
+# Backend public built assets
+backend/public/assets/
+backend/public/index.html
+backend/public/favicon.svg
+backend/public/icons.svg

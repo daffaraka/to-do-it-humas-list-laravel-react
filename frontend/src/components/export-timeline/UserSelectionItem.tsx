@@ -41,7 +41,7 @@ export function UserSelectionItem({
         </div>
       </div>
       <span className="text-xs px-2.5 py-1 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-        {group.total_tasks} Pekerjaan
+        {(group.totalTasks ?? group.total_tasks ?? group.tasks?.length ?? 0)} Pekerjaan
       </span>
     </div>
   );
