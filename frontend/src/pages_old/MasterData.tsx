@@ -236,6 +236,11 @@ export function MasterData() {
                         </th>
                       </>
                     )}
+                    {activeTab === "roles" && (
+                      <th className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
+                        Departemen yang dapat dilihat
+                      </th>
+                    )}
                     <th className="px-6 py-4 font-medium text-right">Aksi</th>
                   </tr>
                 </thead>
@@ -271,6 +276,11 @@ export function MasterData() {
                       ) : (
                         <td className="px-6 py-4 text-sm font-medium text-textPrimary max-w-[200px] truncate">
                           {activeTab === "kpis" ? item.title : item.name}
+                        </td>
+                      )}
+                      {activeTab === "roles" && (
+                        <td className="px-6 py-4 max-w-[420px] whitespace-normal">
+                          {(item.viewDepartments || item.view_departments)?.length ? (item.viewDepartments || item.view_departments).map((department: any) => department.name).join(", ") : <span className="text-textSecondary">Belum dipilih</span>}
                         </td>
                       )}
                       {activeTab === "users" && (

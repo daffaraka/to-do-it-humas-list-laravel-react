@@ -38,7 +38,7 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $user = User::with(['role', 'department'])->where('email', $request->email)->first();
+        $user = User::with(['role.viewDepartments', 'department'])->where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Email atau password salah'], 401);
@@ -62,7 +62,7 @@ class AuthController extends Controller
 
     public function getMe(Request $request)
     {
-        $user = User::with(['role', 'department'])->find($request->user()->id);
+        $user = User::with(['role.viewDepartments', 'department'])->find($request->user()->id);
         return response()->json($user);
     }
 }

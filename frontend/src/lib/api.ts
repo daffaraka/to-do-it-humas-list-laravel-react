@@ -55,6 +55,12 @@ export const clearApiCache = () => {
 
 /** Return the last response immediately, while refreshing it in the background. */
 export const cachedGet = async <T = unknown>(url: string, ttl = DEFAULT_CACHE_TTL): Promise<AxiosResponse<T>> => {
+  // These responses depend on the logged-in user's role/department visibility.
+  // Reusing a session cache here can show data from a previous role selection.
+  if (/^\/(users|boards|departments|tasks)(\/|\?|$)/.test(url)) {
+    return api.get<T>(url);
+  }
+
   const cached = readCache<T>(url);
   if (cached !== null) {
     if (!cacheRequests.has(url)) {

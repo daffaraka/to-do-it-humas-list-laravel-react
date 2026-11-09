@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use App\Support\DepartmentVisibility;
 
 class DepartmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Department::all());
+        return response()->json(DepartmentVisibility::apply(Department::query(), $request->user(), 'id')->get());
     }
 
     public function store(Request $request)

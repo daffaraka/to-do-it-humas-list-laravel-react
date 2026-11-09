@@ -5,10 +5,16 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Support\DepartmentVisibility;
 
 class UserController extends Controller
 {
-    public function index() {
+    public function index(Request $request) {
+        $query = User::with(['role', 'department']);
+        return response()->json(DepartmentVisibility::apply($query, $request->user())->get());
+    }
+
+    public function collaborators() {
         return response()->json(User::with(['role', 'department'])->get());
     }
 

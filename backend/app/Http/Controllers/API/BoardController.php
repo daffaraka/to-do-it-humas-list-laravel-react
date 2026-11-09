@@ -4,11 +4,12 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Board;
+use App\Support\DepartmentVisibility;
 
 class BoardController extends Controller
 {
     public function index() {
-        $boards = Board::with(['tasks', 'user', 'kategoriProgram'])->get();
+        $boards = DepartmentVisibility::apply(Board::with(['tasks', 'user', 'kategoriProgram']), request()->user())->get();
         $boards->each->append('score');
         return response()->json($boards);
     }
@@ -58,7 +59,7 @@ class BoardController extends Controller
     }
 
     public function show($id) {
-        $board = Board::with(['tasks', 'user', 'kategoriProgram'])->findOrFail($id);
+        $board = DepartmentVisibility::apply(Board::with(['tasks', 'user', 'kategoriProgram']), request()->user())->findOrFail($id);
         $board->append('score');
         return response()->json($board);
     }

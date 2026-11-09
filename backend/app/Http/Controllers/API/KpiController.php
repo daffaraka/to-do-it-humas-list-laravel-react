@@ -7,12 +7,13 @@ use App\Models\Kpi;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use App\Support\DepartmentVisibility;
 
 class KpiController extends Controller
 {
     public function index()
     {
-        return response()->json(Kpi::with(['boards.tasks', 'boards.user', 'department'])->get());
+        return response()->json(DepartmentVisibility::apply(Kpi::with(['boards.tasks', 'boards.user', 'department']), request()->user())->get());
     }
 
     public function store(Request $request)

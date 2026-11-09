@@ -8,21 +8,36 @@ use App\Models\Role;
 class RoleController extends Controller
 {
     public function index() {
-        return response()->json(Role::all());
+        return response()->json(Role::with('viewDepartments:id,name')->get());
     }
 
     public function store(Request $request) {
-        return response()->json(Role::create($request->all()), 201);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:roles,name'],
+            'department_ids' => ['sometimes', 'array'],
+            'department_ids.*' => ['uuid', 'exists:departments,id'],
+        ]);
+        $role = Role::create(['name' => $validated['name']]);
+        $role->viewDepartments()->sync($validated['department_ids'] ?? []);
+        return response()->json($role->load('viewDepartments:id,name'), 201);
     }
 
     public function show($id) {
-        return response()->json(Role::findOrFail($id));
+        return response()->json(Role::with('viewDepartments:id,name')->findOrFail($id));
     }
 
     public function update(Request $request, $id) {
         $model = Role::findOrFail($id);
-        $model->update($request->all());
-        return response()->json($model);
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:roles,name,' . $model->id],
+            'department_ids' => ['sometimes', 'array'],
+            'department_ids.*' => ['uuid', 'exists:departments,id'],
+        ]);
+        $model->update(['name' => $validated['name']]);
+        if (array_key_exists('department_ids', $validated)) {
+            $model->viewDepartments()->sync($validated['department_ids']);
+        }
+        return response()->json($model->load('viewDepartments:id,name'));
     }
 
     public function destroy($id) {

@@ -35,7 +35,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    api.get("/users").then((res) => {
+    api.get("/users/collaborators").then((res) => {
       setUsers(res.data);
     }).catch(console.error);
   }, []);

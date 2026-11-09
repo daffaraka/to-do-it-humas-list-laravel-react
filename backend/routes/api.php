@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Timeline Spreadsheet Export Routes
     Route::get('/export/timeline-data', [ExportController::class, 'timelineData']);
     Route::get('/export/users', [ExportController::class, 'availableUsers']);
+    Route::get('/users/collaborators', [UserController::class, 'collaborators']);
     
     Route::get('/tasks/my-jobs', [TaskController::class, 'myJobs']);
     Route::apiResource('tasks', TaskController::class);

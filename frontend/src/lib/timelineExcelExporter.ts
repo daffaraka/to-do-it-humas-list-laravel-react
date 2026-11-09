@@ -97,6 +97,48 @@ function formatEstimasi(days: number | string | null | undefined): string {
   return `${Math.abs(num)} Hari`;
 }
 
+function parseDateOnly(value: string | Date | null | undefined): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+  const clean = String(value).slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(clean);
+  if (!match) return null;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return isNaN(date.getTime()) ? null : date;
+}
+
+function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+interface TaskDateRange {
+  start: Date;
+  end: Date;
+}
+
+function resolveTaskDateRange(task: TimelineTask): TaskDateRange | null {
+  const start = parseDateOnly(task.requestDate ?? task.request_date);
+  let end = parseDateOnly(task.dueDate ?? task.due_date);
+  const duration = Number(task.durationDays ?? task.duration_days);
+
+  if (!end && start && Number.isFinite(duration) && duration > 0) {
+    end = addDays(start, Math.max(0, Math.ceil(duration) - 1));
+  }
+
+  if (!start && end) return { start: end, end };
+  if (!start) return null;
+  if (!end || end < start) end = start;
+  return { start, end };
+}
+
 function getTodayDateIndo(): string {
   const today = new Date();
   const day = today.getDate();
@@ -186,8 +228,8 @@ function getStatusStyle(status: string): StatusStyle {
     case "New":
     default:
       return {
-        fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } }, // Soft slate pastel
-        font: { name: "Segoe UI", size: 10, bold: true, color: { argb: "FF475569" } }, // Slate dark
+        fill: { type: "pattern", pattern: "solid", fgColor: { argb: "FF3B82F6" } }, // Strong blue
+        font: { name: "Segoe UI", size: 10, bold: true, color: { argb: "FFFFFFFF" } }, // White bold
       };
   }
 }
@@ -491,8 +533,6 @@ function renderUserSheet(
     renderTaskRow(worksheet, idx + 5, task, idx, styles, isSingle, progText);
   });
 
-  applyProgramMerges(worksheet, programGroups, styles);
-
   // Column widths
   worksheet.columns = [
     { width: 8 },  // No.
@@ -505,7 +545,124 @@ function renderUserSheet(
     { width: 26 }, // Status (per [Tanggal])
   ];
 
+  applyProgramMerges(worksheet, programGroups, styles);
+
   worksheet.views = [{ state: "frozen", ySplit: 4, showGridLines: true }];
+}
+
+function renderGanttSheet(
+  worksheet: ExcelJS.Worksheet,
+  group: TimelineUserGroup,
+  styles: ExportStyles
+) {
+  const tasks = groupTasksByProgram(group.tasks);
+  const ranges = tasks.map((task) => resolveTaskDateRange(task));
+  const datedRanges = ranges.filter((range): range is TaskDateRange => Boolean(range));
+
+  if (datedRanges.length === 0) {
+    worksheet.getCell("A1").value = `Gantt Timeline - ${group.user.name}`;
+    worksheet.getCell("A1").font = styles.fontTitle;
+    worksheet.getCell("A3").value = "Tidak ada pekerjaan dengan tanggal persiapan atau tanggal selesai.";
+    worksheet.getCell("A3").font = styles.fontSubtitle;
+    return;
+  }
+
+  const timelineStart = new Date(Math.min(...datedRanges.map((range) => range.start.getTime())));
+  const timelineEnd = new Date(Math.max(...datedRanges.map((range) => range.end.getTime())));
+  const dates: Date[] = [];
+  for (let date = timelineStart; date <= timelineEnd; date = addDays(date, 1)) {
+    dates.push(date);
+  }
+
+  const firstTimelineColumn = 8;
+  const lastColumn = firstTimelineColumn + dates.length - 1;
+  worksheet.mergeCells(1, 1, 1, lastColumn);
+  worksheet.getCell("A1").value = `Gantt Timeline (${group.user.name})`;
+  worksheet.getCell("A1").font = styles.fontTitle;
+  worksheet.getCell("A1").alignment = { horizontal: "left", vertical: "middle" };
+  worksheet.getRow(1).height = 32;
+
+  worksheet.mergeCells(2, 1, 2, lastColumn);
+  const deptInfo = group.user.department ? ` | Departemen: ${group.user.department}` : "";
+  worksheet.getCell("A2").value = `Nama Pegawai: ${group.user.name}${deptInfo} | Blok warna menunjukkan durasi pekerjaan`;
+  worksheet.getCell("A2").font = styles.fontSubtitle;
+  worksheet.getCell("A2").alignment = { horizontal: "left", vertical: "middle" };
+  worksheet.getRow(2).height = 24;
+
+  const headers = ["No.", "Program", "Nama Kegiatan", "Prioritas", "Tanggal persiapan", "Tanggal selesai", "Status"];
+  headers.forEach((header, index) => {
+    const cell = worksheet.getCell(4, index + 1);
+    cell.value = header;
+    cell.font = styles.fontHeader;
+    cell.fill = styles.fillHeader;
+    cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+    cell.border = styles.borderThin;
+  });
+
+  dates.forEach((date, index) => {
+    const cell = worksheet.getCell(4, firstTimelineColumn + index);
+    cell.value = date;
+    cell.numFmt = "dd mmm";
+    cell.font = styles.fontHeader;
+    cell.fill = styles.fillHeader;
+    cell.alignment = { horizontal: "center", vertical: "middle", textRotation: 90 };
+    cell.border = styles.borderThin;
+  });
+  worksheet.getRow(4).height = 72;
+
+  tasks.forEach((task, index) => {
+    const rowNumber = index + 5;
+    const row = worksheet.getRow(rowNumber);
+    const status = resolveStatusHariIni(task);
+    const statusStyle = getStatusStyle(status);
+    const priorityStyle = getPriorityStyle(task.priority);
+    const range = ranges[index];
+    const values = [
+      index + 1,
+      resolveProgram(task),
+      task.title,
+      formatPriority(task.priority),
+      range ? formatDateIndo(range.start) : "-",
+      range ? formatDateIndo(range.end) : "-",
+      status,
+    ];
+
+    values.forEach((value, columnIndex) => {
+      const cell = worksheet.getCell(rowNumber, columnIndex + 1);
+      cell.value = value;
+      cell.border = styles.borderThin;
+      cell.fill = columnIndex === 3 ? priorityStyle.fill : columnIndex === 6 ? statusStyle.fill : index % 2 ? styles.fillOdd : styles.fillEven;
+      cell.font = columnIndex === 3 ? priorityStyle.font : columnIndex === 6 ? statusStyle.font : styles.fontData;
+      cell.alignment = {
+        horizontal: columnIndex === 0 || columnIndex >= 3 ? "center" : "left",
+        vertical: "middle",
+        wrapText: columnIndex === 1 || columnIndex === 2,
+      };
+    });
+
+    dates.forEach((date, dateIndex) => {
+      const cell = worksheet.getCell(rowNumber, firstTimelineColumn + dateIndex);
+      const active = Boolean(range && date >= range.start && date <= range.end);
+      cell.value = active ? "" : null;
+      cell.border = styles.borderThin;
+      cell.fill = active ? statusStyle.fill : index % 2 ? styles.fillOdd : styles.fillEven;
+    });
+    row.height = calculateTaskRowHeight(task.title, true, resolveProgram(task));
+  });
+
+  worksheet.columns = [
+    { width: 8 },
+    { width: 34 },
+    { width: 42 },
+    { width: 14 },
+    { width: 20 },
+    { width: 20 },
+    { width: 16 },
+    ...dates.map(() => ({ width: 5 })),
+  ];
+  applyProgramMerges(worksheet, findProgramGroups(tasks), styles);
+  worksheet.views = [{ state: "frozen", xSplit: firstTimelineColumn - 1, ySplit: 4, showGridLines: true }];
+  worksheet.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4 + tasks.length, column: lastColumn } };
 }
 
 export async function exportTimelineToExcel(
@@ -526,6 +683,12 @@ export async function exportTimelineToExcel(
       views: [{ showGridLines: true }],
     });
     renderUserSheet(worksheet, group, styles);
+
+    const ganttSheetName = sanitizeSheetName(`Gantt - ${rawName}`, usedSheetNames);
+    const ganttWorksheet = workbook.addWorksheet(ganttSheetName, {
+      views: [{ showGridLines: true }],
+    });
+    renderGanttSheet(ganttWorksheet, group, styles);
   }
 
   // Generate buffer and trigger browser download

@@ -18,4 +18,10 @@ class Role extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function viewDepartments()
+    {
+        return $this->belongsToMany(Department::class, 'role_department_views')
+            ->withTimestamps();
+    }
 }

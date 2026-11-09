@@ -108,7 +108,9 @@ export const useKanban = create<KanbanState>()(
           return;
         }
 
-        fetchDepartmentsPromise = cachedGet<Department[]>('/departments')
+        // Department visibility depends on the logged-in user's role, so do not reuse
+        // the shared session cache after role permissions change.
+        fetchDepartmentsPromise = api.get<Department[]>('/departments')
           .then((response) => {
             const departments = response.data;
             const currentActive = get().activeDepartment;

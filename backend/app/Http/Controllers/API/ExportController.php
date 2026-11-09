@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Task;
 use Carbon\Carbon;
+use App\Support\DepartmentVisibility;
 
 class ExportController extends Controller
 {
@@ -18,7 +19,7 @@ class ExportController extends Controller
         $userIds = $request->input('user_ids');
         $includeEmpty = $request->boolean('include_empty', false);
 
-        $query = User::with(['department:id,name', 'role:id,name'])
+        $query = DepartmentVisibility::apply(User::with(['department:id,name', 'role:id,name']), $request->user())
             ->withCount('tasks');
 
         if (!empty($userIds) && is_array($userIds)) {
@@ -33,7 +34,7 @@ class ExportController extends Controller
         $result = [];
 
         foreach ($users as $user) {
-            $tasks = Task::with(['board:id,title,kpi_id', 'department:id,name'])
+            $tasks = DepartmentVisibility::apply(Task::with(['board:id,title,kpi_id', 'department:id,name']), $request->user())
                 ->where('pic_id', $user->id)
                 ->get()
                 ->map(function ($task) {
@@ -140,9 +141,9 @@ class ExportController extends Controller
     /**
      * Get list of all users available for timeline export with task counts.
      */
-    public function availableUsers()
+    public function availableUsers(Request $request)
     {
-        $users = User::with('department:id,name')
+        $users = DepartmentVisibility::apply(User::with('department:id,name'), $request->user())
             ->withCount('tasks')
             ->orderBy('name', 'asc')
             ->get()

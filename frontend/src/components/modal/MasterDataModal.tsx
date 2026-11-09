@@ -21,6 +21,7 @@ interface MasterDataModalProps {
 export function MasterDataModal({ type, initialData, onClose, onSuccess }: MasterDataModalProps) {
   const { departments } = useKanban();
   const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Form State
@@ -73,6 +74,10 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
       } else if (type === 'labels') {
         setName(initialData.name || '');
         setColor(initialData.color || 'bg-gray-500 text-white');
+      } else if (type === 'roles') {
+        setName(initialData.name || '');
+        const viewDepartments = initialData.viewDepartments || initialData.view_departments || [];
+        setSelectedDepartmentIds(viewDepartments.map((department: any) => department.id));
       } else {
         setName(initialData.name || '');
       }
@@ -100,6 +105,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           await api.put(`/task-weights/${initialData.id}`, { weight });
         } else if (type === 'labels') {
           await api.put(`/labels/${initialData.id}`, { name, color });
+        } else if (type === 'roles') {
+          await api.patch(`/roles/${initialData.id}`, { name, departmentIds: selectedDepartmentIds });
         } else {
           await api.patch(`/${type}/${initialData.id}`, { name });
         }
@@ -112,6 +119,8 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
           await api.post('/kpis', { title, description, targetDate: targetDate ? format(targetDate, "yyyy-MM-dd") : null, departmentId });
         } else if (type === 'labels') {
           await api.post('/labels', { name, color });
+        } else if (type === 'roles') {
+          await api.post('/roles', { name, departmentIds: selectedDepartmentIds });
         } else {
           await api.post(`/${type}`, { name });
         }
@@ -169,6 +178,26 @@ export function MasterDataModal({ type, initialData, onClose, onSuccess }: Maste
                 placeholder={`Masukkan nama ${type === 'labels' ? 'label' : type.slice(0, -1)}`}
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl p-3 text-sm text-textPrimary focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 transition-all placeholder-textSecondary"
               />
+            </div>
+          )}
+
+          {/* Label Specific Fields */}
+          {type === 'roles' && (
+            <div className="space-y-2 rounded-2xl border border-borderBase bg-bgGlass/40 p-4">
+              <div>
+                <label className="text-sm font-semibold text-textPrimary">Departemen yang dapat dilihat</label>
+                <p className="mt-1 text-xs text-textSecondary">Pilih satu atau beberapa departemen yang boleh dilihat oleh role ini.</p>
+              </div>
+              <div className="grid max-h-52 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+                {departments.map((department) => {
+                  const checked = selectedDepartmentIds.includes(department.id);
+                  return <label key={department.id} className="flex cursor-pointer items-center gap-2 rounded-lg border border-borderBase bg-bgSecondary px-3 py-2 text-sm text-textPrimary transition hover:border-indigo-400">
+                    <input type="checkbox" checked={checked} onChange={() => setSelectedDepartmentIds((current) => checked ? current.filter((id) => id !== department.id) : [...current, department.id])} className="h-4 w-4 accent-indigo-600" />
+                    <span>{department.name}</span>
+                  </label>;
+                })}
+              </div>
+              {departments.length === 0 && <p className="text-xs text-textSecondary">Belum ada departemen.</p>}
             </div>
           )}
 

@@ -7,11 +7,13 @@ use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Support\DepartmentVisibility;
 
 class TaskController extends Controller
 {
     public function index(Request $request)
     {
+        $visibleDepartmentIds = DepartmentVisibility::ids($request->user());
         if ($request->has('start_date') && $request->has('end_date')) {
             // Lightweight eager loading for Calendar — only columns needed by frontend
             $query = Task::without(['taskWeight'])
@@ -44,6 +46,9 @@ class TaskController extends Controller
         if ($request->boardId) {
             $query->where('board_id', $request->boardId);
         }
+        if ($visibleDepartmentIds !== null) {
+            $query->whereIn('department_id', $visibleDepartmentIds);
+        }
         $tasks = $query->orderBy('position')->get();
         
         if ($request->has('start_date')) {
@@ -55,8 +60,8 @@ class TaskController extends Controller
 
     public function show($id)
     {
-        $task = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user'])
-            ->findOrFail($id);
+        $taskQuery = Task::with(['pic', 'board', 'department', 'labels', 'checklists', 'comments.user', 'collaborators', 'histories.user']);
+        $task = DepartmentVisibility::apply($taskQuery, request()->user())->findOrFail($id);
 
         return response()->json($task);
     }
@@ -230,11 +235,12 @@ class TaskController extends Controller
 
     public function myJobs(Request $request)
     {
-        $tasks = Task::with(['board', 'taskWeight'])
+        $tasksQuery = Task::with(['board', 'taskWeight'])
             ->select(['id', 'title', 'pic_id', 'board_id', 'column_id', 'priority', 'due_date', 'request_date', 'created_at'])
             ->where('pic_id', $request->user()->id)
             ->where('column_id', '!=', 'done')
-            ->get();
+            ;
+        $tasks = DepartmentVisibility::apply($tasksQuery, $request->user())->get();
         return response()->json($tasks);
     }
 }

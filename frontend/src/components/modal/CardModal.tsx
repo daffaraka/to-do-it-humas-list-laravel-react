@@ -76,7 +76,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
           .catch(console.error);
     }
     api
-      .get("/users")
+      .get("/users/collaborators")
       .then((res) => setUsers(res.data))
       .catch(console.error);
   }, [activeTab, card.id]);
