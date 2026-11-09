@@ -45,10 +45,12 @@ class Board extends Model
 
         foreach ($tasks as $task) {
             // Menggunakan langsung dari Task -> priority (hardcoded)
-            $weight = 0;
-            if ($task->priority === 'low') $weight = 1;
-            elseif ($task->priority === 'medium') $weight = 3;
-            elseif ($task->priority === 'high') $weight = 5;
+            $priority = strtolower(trim((string) ($task->priority ?: 'low')));
+            $weight = match ($priority) {
+                'medium' => 3,
+                'high' => 5,
+                default => 1,
+            };
 
             $occurrenceCount = max(1, (int) ($task->recurrence_count ?? 1));
             $maxScore += $weight * $occurrenceCount;

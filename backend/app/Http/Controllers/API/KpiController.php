@@ -13,7 +13,7 @@ class KpiController extends Controller
 {
     public function index()
     {
-        return response()->json(DepartmentVisibility::apply(Kpi::with(['boards.tasks', 'boards.user', 'department']), request()->user())->get());
+        return response()->json(DepartmentVisibility::apply(Kpi::with(['boards.tasks.collaborators.department', 'boards.user', 'department']), request()->user())->get());
     }
 
     public function store(Request $request)

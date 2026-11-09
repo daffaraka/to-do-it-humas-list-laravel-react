@@ -97,7 +97,7 @@ class TaskController extends Controller
                 'board_id' => $data['boardId'],
                 'department_id' => $request->user()->department_id,
                 'pic_id' => $data['picId'] ?? $request->user()->id,
-                'priority' => $data['priority'] ?? 'low',
+                'priority' => blank($data['priority'] ?? null) ? 'low' : $data['priority'],
                 'request_date' => $data['requestDate'] ?? null,
                 'due_date' => $data['dueDate'] ?? null,
                 'recurrence' => $data['recurrence'] ?? null,
@@ -171,7 +171,11 @@ class TaskController extends Controller
             $updateData['recurrence_statuses'] = $statuses;
         }
 
-        if (array_key_exists('priority', $data)) $updateData['priority'] = $data['priority'];
+        if (array_key_exists('priority', $data)) {
+            $updateData['priority'] = blank($data['priority']) ? 'low' : $data['priority'];
+        } elseif (blank($task->priority)) {
+            $updateData['priority'] = 'low';
+        }
 
         if (array_key_exists('document_link', $data)) $updateData['document_link'] = $data['document_link'];
         if (array_key_exists('documentLink', $data)) $updateData['document_link'] = $data['documentLink'];

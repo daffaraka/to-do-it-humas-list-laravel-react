@@ -9,7 +9,7 @@ use App\Support\DepartmentVisibility;
 class BoardController extends Controller
 {
     public function index() {
-        $boards = DepartmentVisibility::apply(Board::with(['tasks', 'user', 'kategoriProgram']), request()->user())->get();
+        $boards = DepartmentVisibility::apply(Board::with(['tasks.collaborators.department', 'user', 'kategoriProgram']), request()->user())->get();
         $boards->each->append('score');
         return response()->json($boards);
     }
@@ -59,7 +59,7 @@ class BoardController extends Controller
     }
 
     public function show($id) {
-        $board = DepartmentVisibility::apply(Board::with(['tasks', 'user', 'kategoriProgram']), request()->user())->findOrFail($id);
+        $board = DepartmentVisibility::apply(Board::with(['tasks.collaborators.department', 'user', 'kategoriProgram']), request()->user())->findOrFail($id);
         $board->append('score');
         return response()->json($board);
     }

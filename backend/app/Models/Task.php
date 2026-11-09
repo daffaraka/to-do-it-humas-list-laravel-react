@@ -10,6 +10,15 @@ class Task extends Model
 {
     use HasUuids;
 
+    protected static function booted(): void
+    {
+        static::saving(function (Task $task) {
+            if (blank($task->priority)) {
+                $task->priority = 'low';
+            }
+        });
+    }
+
     protected $fillable = [
         'id',
         'title',

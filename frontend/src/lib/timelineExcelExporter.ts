@@ -269,7 +269,7 @@ function getPriorityStyle(priority?: string | null): PriorityStyle {
 }
 
 function formatPriority(priority?: string | null): string {
-  if (!priority) return "-";
+  if (!priority) return "Low";
   const p = priority.toLowerCase().trim();
   if (p === "high") return "High";
   if (p === "medium") return "Medium";

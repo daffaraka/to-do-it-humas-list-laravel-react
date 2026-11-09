@@ -35,6 +35,12 @@ const PRIORITY_COLORS = {
   high: "bg-red-500 text-white font-extrabold shadow-sm",
 };
 
+const PRIORITY_WEIGHTS = {
+  low: 1,
+  medium: 3,
+  high: 5,
+} as const;
+
 export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -76,6 +82,8 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
 
   const checklist = card.checklist || [];
   const labels = card.labels || [];
+  const cardPriority = (card.priority || "low").toLowerCase() as keyof typeof PRIORITY_COLORS;
+  const priorityWeight = PRIORITY_WEIGHTS[cardPriority] ?? PRIORITY_WEIGHTS.low;
   const completedChecklist = checklist.filter((item) => item.completed).length;
 
   if (isDragging && !isOverlay) {
@@ -190,9 +198,10 @@ export function KanbanCard({ card, isOverlay }: KanbanCardProps) {
           </div>
 
           <span
-            className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-sm shrink-0 ${PRIORITY_COLORS[card.priority]}`}
+            className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-sm shrink-0 ${PRIORITY_COLORS[cardPriority]}`}
+            title={`Bobot prioritas: ${priorityWeight}`}
           >
-            {card.priority}
+            {cardPriority} · Bobot {priorityWeight}
           </span>
         </div>
 

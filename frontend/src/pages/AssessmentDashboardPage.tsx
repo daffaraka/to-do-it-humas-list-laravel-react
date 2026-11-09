@@ -42,6 +42,7 @@ type AssessmentTask = {
   columnId?: string | null;
   recurrenceCount?: number;
   recurrenceStatuses?: Record<string, "new" | "progress" | "done"> | null;
+  collaborators?: { id: string; name: string; department?: { id?: string; name?: string } | null }[];
 };
 
 type AssessmentRow = AssessmentUser & {
@@ -156,8 +157,17 @@ export default function AssessmentDashboardPage() {
     Promise.all([cachedGet<any[]>("/users"), cachedGet<any[]>("/boards")])
       .then(([usersResponse, boardsResponse]) => {
         if (!active) return;
-        setUsers(Array.isArray(usersResponse.data) ? usersResponse.data : []);
-        setBoards(Array.isArray(boardsResponse.data) ? boardsResponse.data : []);
+        const loadedUsers = Array.isArray(usersResponse.data) ? usersResponse.data : [];
+        const loadedBoards = Array.isArray(boardsResponse.data) ? boardsResponse.data : [];
+        const collaboratorUsers = loadedBoards.flatMap((board: AssessmentBoard) =>
+          (board.tasks || []).flatMap((task) => task.collaborators || []),
+        );
+        const allUsers = new Map<string, AssessmentUser>();
+        [...loadedUsers, ...collaboratorUsers].forEach((user: AssessmentUser) => {
+          if (user?.id) allUsers.set(user.id, user);
+        });
+        setUsers(Array.from(allUsers.values()));
+        setBoards(loadedBoards);
       })
       .catch(() => {
         if (active) setError("Data penilaian belum dapat dimuat.");
@@ -203,28 +213,12 @@ export default function AssessmentDashboardPage() {
       );
 
       tasks.forEach((task) => {
-        if (!task.picId) return;
-        if (!calculations.has(task.picId)) {
-          calculations.set(task.picId, {
-            totalJobs: 0,
-            newJobs: 0,
-            progressJobs: 0,
-            doneJobs: 0,
-            allocatedPoints: 0,
-            achievedPoints: 0,
-            achievement: 0,
-            wigAllocatedPoints: 0,
-            wigAchievedPoints: 0,
-            programAllocatedPoints: 0,
-            programAchievedPoints: 0,
-            combinedAllocatedPoints: 0,
-            combinedAchievedPoints: 0,
-            wigAchievement: 0,
-            combinedAchievement: 0,
-          });
-        }
+        const participantIds = Array.from(new Set([
+          task.picId,
+          ...(task.collaborators || []).map((collaborator) => collaborator.id),
+        ].filter(Boolean) as string[]));
+        if (participantIds.length === 0) return;
 
-        const row = calculations.get(task.picId)!;
         const status = task.columnId || "new";
         const priorityWeight = priorityWeights[task.priority?.toLowerCase() || "low"] || 1;
         const occurrenceCount = Math.max(1, Number(task.recurrenceCount || 1));
@@ -233,24 +227,42 @@ export default function AssessmentDashboardPage() {
         const doneOccurrences = occurrenceStatusValues.filter((value) => value === "done").length + (status === "done" ? missingOccurrences : 0);
         const progressOccurrences = occurrenceStatusValues.filter((value) => value === "progress").length + (status === "progress" ? missingOccurrences : 0);
         const newOccurrences = Math.max(0, occurrenceCount - doneOccurrences - progressOccurrences);
-        const taskPoints =
-          boardWeight > 0 && totalPriorityWeight > 0
+        // Jika bobot program belum diisi, pekerjaan tetap memiliki bobot
+        // berdasarkan prioritasnya (Low=1, Medium=3, High=5).
+        const taskPoints = totalPriorityWeight > 0
+          ? boardWeight > 0
             ? (priorityWeight * occurrenceCount / totalPriorityWeight) * boardWeight
-            : 0;
+            : priorityWeight * occurrenceCount
+          : 0;
 
-        row.totalJobs += occurrenceCount;
-        row.allocatedPoints += taskPoints;
-        row.doneJobs += doneOccurrences;
-        row.progressJobs += progressOccurrences;
-        row.newJobs += newOccurrences;
-        row.achievedPoints += taskPoints * (doneOccurrences / occurrenceCount);
-        if (board.kpi_id || board.kpiId) {
-          row.wigAllocatedPoints += taskPoints;
-          row.wigAchievedPoints += taskPoints * (doneOccurrences / occurrenceCount);
-        } else {
-          row.programAllocatedPoints += taskPoints;
-          row.programAchievedPoints += taskPoints * (doneOccurrences / occurrenceCount);
-        }
+        // Setiap peserta menerima bobot penuh yang sama; bobot tidak dibagi.
+        const participantTaskPoints = taskPoints;
+        participantIds.forEach((participantId) => {
+          if (!calculations.has(participantId)) {
+            calculations.set(participantId, {
+              totalJobs: 0, newJobs: 0, progressJobs: 0, doneJobs: 0,
+              allocatedPoints: 0, achievedPoints: 0, achievement: 0,
+              wigAllocatedPoints: 0, wigAchievedPoints: 0,
+              programAllocatedPoints: 0, programAchievedPoints: 0,
+              combinedAllocatedPoints: 0, combinedAchievedPoints: 0,
+              wigAchievement: 0, combinedAchievement: 0,
+            });
+          }
+          const row = calculations.get(participantId)!;
+          row.totalJobs += occurrenceCount;
+          row.allocatedPoints += participantTaskPoints;
+          row.doneJobs += doneOccurrences;
+          row.progressJobs += progressOccurrences;
+          row.newJobs += newOccurrences;
+          row.achievedPoints += participantTaskPoints * (doneOccurrences / occurrenceCount);
+          if (board.kpi_id || board.kpiId) {
+            row.wigAllocatedPoints += participantTaskPoints;
+            row.wigAchievedPoints += participantTaskPoints * (doneOccurrences / occurrenceCount);
+          } else {
+            row.programAllocatedPoints += participantTaskPoints;
+            row.programAchievedPoints += participantTaskPoints * (doneOccurrences / occurrenceCount);
+          }
+        });
       });
     });
 
@@ -319,18 +331,11 @@ export default function AssessmentDashboardPage() {
       );
 
       tasks.forEach((task) => {
-        const taskDepartment = task.picId ? userDepartments.get(task.picId) : null;
-        // Match the individual assessment: assign each task to the PIC's
-        // department first, then fall back to the board department.
-        const departmentId = taskDepartment?.id || board.departmentId || board.department_id || "unassigned";
-        const departmentName = taskDepartment?.name || board.department?.name || "Tanpa departemen";
-        const current = calculations.get(departmentId) || {
-          peopleIds: new Set<string>(), totalJobs: 0, newJobs: 0, progressJobs: 0, doneJobs: 0,
-          allocatedPoints: 0, achievedPoints: 0, wigAllocatedPoints: 0, wigAchievedPoints: 0,
-          programAllocatedPoints: 0, programAchievedPoints: 0,
-          combinedAllocatedPoints: 0, combinedAchievedPoints: 0,
-        };
-        if (task.picId) current.peopleIds.add(task.picId);
+        const participantIds = Array.from(new Set([
+          task.picId,
+          ...(task.collaborators || []).map((collaborator) => collaborator.id),
+        ].filter(Boolean) as string[]));
+        if (participantIds.length === 0) return;
 
         const priorityWeight = priorityWeights[task.priority?.toLowerCase() || "low"] || 1;
         const occurrenceCount = Math.max(1, Number(task.recurrenceCount || 1));
@@ -339,25 +344,42 @@ export default function AssessmentDashboardPage() {
         const doneOccurrences = occurrenceStatusValues.filter((value) => value === "done").length + (task.columnId === "done" ? missingOccurrences : 0);
         const progressOccurrences = occurrenceStatusValues.filter((value) => value === "progress").length + (task.columnId === "progress" ? missingOccurrences : 0);
         const newOccurrences = Math.max(0, occurrenceCount - doneOccurrences - progressOccurrences);
-        const taskPoints = boardWeight > 0 && totalPriorityWeight > 0
-          ? (priorityWeight * occurrenceCount / totalPriorityWeight) * boardWeight
+        const taskPoints = totalPriorityWeight > 0
+          ? boardWeight > 0
+            ? (priorityWeight * occurrenceCount / totalPriorityWeight) * boardWeight
+            : priorityWeight * occurrenceCount
           : 0;
 
-        current.totalJobs += occurrenceCount;
-        current.newJobs += newOccurrences;
-        current.progressJobs += progressOccurrences;
-        current.doneJobs += doneOccurrences;
-        if (isWigBoard) {
-          current.wigAllocatedPoints += taskPoints;
-          current.wigAchievedPoints += taskPoints * (doneOccurrences / occurrenceCount);
-        } else {
-          current.allocatedPoints += taskPoints;
-          current.achievedPoints += taskPoints * (doneOccurrences / occurrenceCount);
-          current.programAllocatedPoints += taskPoints;
-          current.programAchievedPoints += taskPoints * (doneOccurrences / occurrenceCount);
-        }
-        calculations.set(departmentId, current);
-        names.set(departmentId, departmentName);
+        // Setiap peserta menerima bobot penuh yang sama; bobot tidak dibagi.
+        const participantTaskPoints = taskPoints;
+        participantIds.forEach((participantId) => {
+          const taskDepartment = userDepartments.get(participantId);
+          // PIC dan collaborator masing-masing dihitung pada departemennya.
+          const departmentId = taskDepartment?.id || board.departmentId || board.department_id || "unassigned";
+          const departmentName = taskDepartment?.name || board.department?.name || "Tanpa departemen";
+          const current = calculations.get(departmentId) || {
+            peopleIds: new Set<string>(), totalJobs: 0, newJobs: 0, progressJobs: 0, doneJobs: 0,
+            allocatedPoints: 0, achievedPoints: 0, wigAllocatedPoints: 0, wigAchievedPoints: 0,
+            programAllocatedPoints: 0, programAchievedPoints: 0,
+            combinedAllocatedPoints: 0, combinedAchievedPoints: 0,
+          };
+          current.peopleIds.add(participantId);
+          current.totalJobs += occurrenceCount;
+          current.newJobs += newOccurrences;
+          current.progressJobs += progressOccurrences;
+          current.doneJobs += doneOccurrences;
+          if (isWigBoard) {
+            current.wigAllocatedPoints += participantTaskPoints;
+            current.wigAchievedPoints += participantTaskPoints * (doneOccurrences / occurrenceCount);
+          } else {
+            current.allocatedPoints += participantTaskPoints;
+            current.achievedPoints += participantTaskPoints * (doneOccurrences / occurrenceCount);
+            current.programAllocatedPoints += participantTaskPoints;
+            current.programAchievedPoints += participantTaskPoints * (doneOccurrences / occurrenceCount);
+          }
+          calculations.set(departmentId, current);
+          names.set(departmentId, departmentName);
+        });
       });
     });
 
@@ -539,8 +561,11 @@ export default function AssessmentDashboardPage() {
                     </div>
                   </div>
                   <div className="shrink-0 text-right">
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-textSecondary">Bobot Diraih</div>
-                    <div className="mt-1 text-2xl font-black text-indigo-500">{formatPoints(row.achievedPoints)}</div>
+                    <div className="flex items-baseline justify-end gap-2 text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                      <span>Bobot Diraih</span>
+                      <span className="text-indigo-500">{formatPoints(row.achievedPoints)}</span>
+                      <span>| KPI Diraih {row.combinedAchievement.toFixed(1)}%</span>
+                    </div>
                   </div>
                 </div>
 
@@ -595,7 +620,7 @@ export default function AssessmentDashboardPage() {
                         <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${color} text-lg font-bold text-white shadow-lg`}>{getInitials(row.name)}</div>
                         <div className="min-w-0"><h2 className="truncate text-lg font-bold text-textPrimary">{row.name}</h2><div className="mt-1 text-xs text-textSecondary">{row.people} pegawai terlibat · Klik untuk melihat penilaian individual</div></div>
                       </div>
-                      <div className="shrink-0 text-right"><div className="text-[11px] font-semibold uppercase tracking-wider text-textSecondary">Bobot Diraih</div><div className="mt-1 text-2xl font-black text-cyan-500">{formatPoints(row.combinedAchievedPoints)}</div></div>
+                      <div className="shrink-0 text-right"><div className="flex items-baseline justify-end gap-2 text-lg font-bold text-cyan-600 dark:text-cyan-400"><span>Bobot Diraih</span><span className="text-cyan-500">{formatPoints(row.combinedAchievedPoints)}</span><span>| KPI Diraih {row.combinedAchievement.toFixed(1)}%</span></div></div>
                     </div>
                     <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
                       <StatPill icon={<BriefcaseBusiness size={13} />} label="Jumlah Pekerjaan" value={row.totalJobs} tone="border-slate-500/20 bg-slate-500/5 text-slate-500" />

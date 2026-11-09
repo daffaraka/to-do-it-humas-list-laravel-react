@@ -22,7 +22,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const { addCard, labels } = useKanban();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("medium");
+  const [priority, setPriority] = useState("low");
   const [requestDate, setRequestDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
   const [recurrence, setRecurrence] = useState<"daily" | "weekly" | "monthly" | null>(null);
