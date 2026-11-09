@@ -582,6 +582,11 @@ export default function AssessmentDashboardPage() {
                     <div className="h-2.5 overflow-hidden rounded-full bg-borderBase/60"><div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all" style={{ width: `${row.wigAchievement}%` }} /></div>
                     <div className="mt-2 flex justify-between text-[11px] text-textSecondary"><span>{formatPoints(row.wigAchievedPoints)} poin tercapai</span><span>{formatPoints(row.wigAllocatedPoints)} poin dialokasikan</span></div>
                   </div>
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4">
+                    <div className="mb-2 flex items-center justify-between text-xs"><span className="font-semibold text-textSecondary">Progres Bobot Program Kerja</span><span className="font-bold text-emerald-600 dark:text-emerald-400">{(row.programAllocatedPoints > 0 ? Math.min(100, (row.programAchievedPoints / row.programAllocatedPoints) * 100) : 0).toFixed(1)}%</span></div>
+                    <div className="h-2.5 overflow-hidden rounded-full bg-borderBase/60"><div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all" style={{ width: `${row.programAllocatedPoints > 0 ? Math.min(100, (row.programAchievedPoints / row.programAllocatedPoints) * 100) : 0}%` }} /></div>
+                    <div className="mt-2 flex justify-between text-[11px] text-textSecondary"><span>{formatPoints(row.programAchievedPoints)} poin tercapai</span><span>{formatPoints(row.programAllocatedPoints)} poin dialokasikan</span></div>
+                  </div>
                   <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.04] p-4">
                     <div className="mb-2 flex items-center justify-between text-xs"><span className="font-semibold text-textSecondary">Gabungan WIG + Program Kerja</span><span className="font-bold text-indigo-600 dark:text-indigo-400">{row.combinedAchievement.toFixed(1)}%</span></div>
                     <div className="h-2.5 overflow-hidden rounded-full bg-borderBase/60"><div className={`h-full rounded-full bg-gradient-to-r ${color} transition-all`} style={{ width: `${row.combinedAchievement}%` }} /></div>
@@ -633,6 +638,11 @@ export default function AssessmentDashboardPage() {
                         <div className="mb-2 flex items-center justify-between text-xs"><span className="font-semibold text-textSecondary">Progres Bobot WIG</span><span className="font-bold text-cyan-600 dark:text-cyan-400">{row.wigAchievement.toFixed(1)}%</span></div>
                         <div className="h-2.5 overflow-hidden rounded-full bg-borderBase/60"><div className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 transition-all" style={{ width: `${row.wigAchievement}%` }} /></div>
                         <div className="mt-2 flex justify-between text-[11px] text-textSecondary"><span>{formatPoints(row.wigAchievedPoints)} poin tercapai</span><span>{formatPoints(row.wigAllocatedPoints)} poin dialokasikan</span></div>
+                      </div>
+                      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-4">
+                        <div className="mb-2 flex items-center justify-between text-xs"><span className="font-semibold text-textSecondary">Progres Bobot Program Kerja</span><span className="font-bold text-emerald-600 dark:text-emerald-400">{(row.programAllocatedPoints > 0 ? Math.min(100, (row.programAchievedPoints / row.programAllocatedPoints) * 100) : 0).toFixed(1)}%</span></div>
+                        <div className="h-2.5 overflow-hidden rounded-full bg-borderBase/60"><div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 transition-all" style={{ width: `${row.programAllocatedPoints > 0 ? Math.min(100, (row.programAchievedPoints / row.programAllocatedPoints) * 100) : 0}%` }} /></div>
+                        <div className="mt-2 flex justify-between text-[11px] text-textSecondary"><span>{formatPoints(row.programAchievedPoints)} poin tercapai</span><span>{formatPoints(row.programAllocatedPoints)} poin dialokasikan</span></div>
                       </div>
                       <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/[0.04] p-4">
                         <div className="mb-2 flex items-center justify-between text-xs"><span className="font-semibold text-textSecondary">Gabungan WIG + Program Kerja</span><span className="font-bold text-indigo-600 dark:text-indigo-400">{row.combinedAchievement.toFixed(1)}%</span></div>
