@@ -6,11 +6,12 @@ import { createPortal } from "react-dom";
 import DatePicker from "react-datepicker";
 import { id } from "date-fns/locale";
 import { format } from "date-fns";
-import { X, Type, FileText, User, Calendar, Briefcase, Users, Tag } from "lucide-react";
+import { X, Type, FileText, User, Calendar, Briefcase, Users, Tag, Repeat2 } from "lucide-react";
 import type { ColumnId } from "../../types";
 import { useKanban } from "../../store/kanbanStore";
 import api from "../../lib/api";
 import { useEffect } from "react";
+import { getRecurrenceEnd } from "@/lib/recurrence";
 
 interface CreateTaskModalProps {
   columnId: ColumnId;
@@ -24,6 +25,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
   const [priority, setPriority] = useState("medium");
   const [requestDate, setRequestDate] = useState<Date | null>(null);
   const [dueDate, setDueDate] = useState<Date | null>(null);
+  const [recurrence, setRecurrence] = useState<"daily" | "weekly" | "monthly" | null>(null);
   const [attachment, setAttachment] = useState<File | null>(null);
   const [collaboratorIds, setCollaboratorIds] = useState<string[]>([]);
   const [selectedLabels, setSelectedLabels] = useState<string[]>([]);
@@ -75,6 +77,7 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
       if (requestDate)
         formData.append("requestDate", format(requestDate, "yyyy-MM-dd"));
       if (dueDate) formData.append("dueDate", format(dueDate, "yyyy-MM-dd"));
+      if (recurrence) formData.append("recurrence", recurrence);
       if (attachment) formData.append("attachment", attachment);
       collaboratorIds.forEach((id) => formData.append("collaborator_ids[]", id));
       selectedLabels.forEach((id) => formData.append("label_ids[]", id));
@@ -85,7 +88,8 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
       
       const formattedData = {
         ...data,
-        labels: selectedLabels.map(id => labels.find(l => l.id === id)).filter(Boolean)
+        labels: selectedLabels.map(id => labels.find(l => l.id === id)).filter(Boolean),
+        collaborators: users.filter(user => collaboratorIds.includes(user.id)),
       };
       
       useKanban.setState((state) => ({ cards: [...state.cards, formattedData] }));
@@ -234,6 +238,41 @@ export function CreateTaskModal({ columnId, onClose }: CreateTaskModalProps) {
                   />
                   {errors.dueDate && <p className="text-red-500 text-xs mt-1 animate-in slide-in-from-top-1">{errors.dueDate}</p>}
                 </div>
+              </div>
+
+              {/* Recurrence */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-textSecondary flex items-center gap-2">
+                  <Repeat2 size={14} className="text-violet-400" />
+                  Pengulangan Pekerjaan
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    ["daily", "Harian"],
+                    ["weekly", "Mingguan"],
+                    ["monthly", "Bulanan"],
+                  ] as const).map(([value, label]) => (
+                    <label
+                      key={value}
+                      className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${recurrence === value ? "border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-300" : "border-borderBase bg-bgSecondary text-textSecondary hover:border-violet-400"}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={recurrence === value}
+                        onChange={() => {
+                          const nextRecurrence = recurrence === value ? null : value;
+                          setRecurrence(nextRecurrence);
+                          if (nextRecurrence && requestDate && (!dueDate || dueDate <= requestDate)) {
+                            setDueDate(getRecurrenceEnd(requestDate, dueDate, nextRecurrence));
+                          }
+                        }}
+                        className="rounded text-violet-500 focus:ring-violet-500"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+                <p className="text-[11px] text-textSecondary">Mulai dari Tanggal Mulai dan berulang sampai Target Tanggal.</p>
               </div>
 
               {/* Attachment */}

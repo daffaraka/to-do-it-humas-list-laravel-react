@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from 'zustand';
-import api from '../lib/api';
+import api, { cachedGet } from '../lib/api';
 import type { Notification } from '../types';
 
 let fetchNotificationsPromise: Promise<void> | null = null;
@@ -27,7 +27,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
 
     set({ isLoading: true });
-    fetchNotificationsPromise = api.get('/notifications')
+    fetchNotificationsPromise = cachedGet('/notifications')
       .then((response) => {
         const data = response.data as Notification[];
         const unreadCount = data.filter(n => !n.read).length;

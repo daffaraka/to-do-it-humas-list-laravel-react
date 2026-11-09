@@ -4,6 +4,8 @@ import ClientLayout from "@/layouts/ClientLayout";
 
 const JobsPage = lazy(() => import("@/pages/JobsPage"));
 const KpiPage = lazy(() => import("@/pages/KpiPage"));
+const AvicennaWayPage = lazy(() => import("@/pages/AvicennaWayPage"));
+const AssessmentDashboardPage = lazy(() => import("@/pages/AssessmentDashboardPage"));
 const ViewJobsPage = lazy(() => import("@/pages/ViewJobsPage"));
 const CalendarPage = lazy(() => import("@/pages/CalendarPage"));
 const MasterDataPage = lazy(() => import("@/pages/MasterDataPage"));
@@ -38,6 +40,22 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <KpiPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/avicenna-way"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AvicennaWayPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/penilaian"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <AssessmentDashboardPage />
               </Suspense>
             }
           />

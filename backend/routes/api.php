@@ -16,6 +16,7 @@ use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\MeetingController;
 use App\Http\Controllers\API\TaskWeightController;
 use App\Http\Controllers\API\ExportController;
+use App\Http\Controllers\API\AvicennaWayController;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -41,6 +42,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('meetings', MeetingController::class);
     Route::apiResource('task-weights', TaskWeightController::class);
     Route::apiResource('labels', \App\Http\Controllers\API\LabelController::class);
+    Route::get('/avicenna-way', [AvicennaWayController::class, 'index']);
+    Route::put('/avicenna-way/{category}', [AvicennaWayController::class, 'update']);
+    Route::post('/avicenna-way/{category}/analyze', [AvicennaWayController::class, 'analyze']);
 
     // Custom Routes for Frontend compatibility
     Route::apiResource('users', UserController::class);

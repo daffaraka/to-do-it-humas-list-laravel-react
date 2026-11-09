@@ -17,6 +17,7 @@ interface ProgramKerjaBoardProps {
   independentBoards: any[];
   departments: any[];
   users: any[];
+  initialDepartmentId?: string;
   searchKpi: string;
   isAdmin: boolean;
   user: any;
@@ -32,6 +33,7 @@ export function ProgramKerjaBoard({
   independentBoards,
   departments,
   users,
+  initialDepartmentId = "all",
   searchKpi,
   isAdmin,
   user,
@@ -43,7 +45,7 @@ export function ProgramKerjaBoard({
   isDeletingBoardId = null,
 }: ProgramKerjaBoardProps) {
   const [filterIndepDepartment, setFilterIndepDepartment] =
-    useState<string>("all");
+    useState<string>(initialDepartmentId);
   const [filterIndepPic, setFilterIndepPic] = useState<string>("all");
   const [isIndepDeptDropdownOpen, setIsIndepDeptDropdownOpen] = useState(false);
   const [isIndepPicDropdownOpen, setIsIndepPicDropdownOpen] = useState(false);

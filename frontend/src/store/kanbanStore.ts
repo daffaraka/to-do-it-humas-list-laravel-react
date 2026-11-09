@@ -4,7 +4,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Card, ColumnId, Department, ActiveDepartmentType, Board, CardLabel } from '../types';
 import { AVAILABLE_LABELS } from '../types';
-import api from '../lib/api';
+import api, { cachedGet } from '../lib/api';
 
 export type ViewMode = 'kanban' | 'calendar';
 
@@ -94,7 +94,7 @@ export const useKanban = create<KanbanState>()(
 
       fetchLabels: async () => {
         try {
-          const response = await api.get('/labels');
+          const response = await cachedGet<CardLabel[]>('/labels');
           globalLabels = response.data;
           set({ labels: response.data });
         } catch (err) {
@@ -108,7 +108,7 @@ export const useKanban = create<KanbanState>()(
           return;
         }
 
-        fetchDepartmentsPromise = api.get('/departments')
+        fetchDepartmentsPromise = cachedGet<Department[]>('/departments')
           .then((response) => {
             const departments = response.data;
             const currentActive = get().activeDepartment;
@@ -135,7 +135,7 @@ export const useKanban = create<KanbanState>()(
         }
 
         set({ isLoading: true, error: null });
-        fetchBoardsPromise = api.get('/boards')
+        fetchBoardsPromise = cachedGet<Board[]>('/boards')
           .then((response) => {
             set({ boards: response.data, isLoading: false });
           })
@@ -210,7 +210,7 @@ export const useKanban = create<KanbanState>()(
         }
 
         set({ isLoading: true, error: null });
-        fetchCardsPromises[boardId] = api.get(`/tasks?boardId=${boardId}`)
+        fetchCardsPromises[boardId] = cachedGet<any[]>(`/tasks?boardId=${boardId}`)
           .then((response) => {
             set({ cards: formatTasksWithLabels(response.data), isLoading: false });
           })
@@ -231,7 +231,7 @@ export const useKanban = create<KanbanState>()(
         }
 
         set({ isLoading: true, error: null });
-        fetchCardsByDateRangePromise = api.get(`/tasks?start_date=${startDate}&end_date=${endDate}`)
+        fetchCardsByDateRangePromise = cachedGet<any[]>(`/tasks?start_date=${startDate}&end_date=${endDate}`)
           .then((response) => {
             set({ cards: formatTasksWithLabels(response.data), isLoading: false });
           })
@@ -252,7 +252,7 @@ export const useKanban = create<KanbanState>()(
         }
 
         set({ isLoading: true, error: null });
-        fetchAllCardsPromise = api.get(`/tasks`)
+        fetchAllCardsPromise = cachedGet<any[]>(`/tasks`)
           .then((response) => {
             set({ cards: formatTasksWithLabels(response.data), isLoading: false });
           })
@@ -273,7 +273,7 @@ export const useKanban = create<KanbanState>()(
         }
 
         set({ isLoading: true, error: null });
-        fetchMyJobsPromise = api.get('/tasks/my-jobs')
+        fetchMyJobsPromise = cachedGet<any[]>('/tasks/my-jobs')
           .then((response) => {
             set({ myJobs: formatTasksWithLabels(response.data), isLoading: false });
           })

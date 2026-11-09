@@ -20,6 +20,7 @@ import { useKanban } from "../store/kanbanStore";
 import { useAuthStore } from "../store/authStore";
 import { KanbanColumn } from "./KanbanColumn";
 import { CardDragOverlay } from "./KanbanCard";
+import { RecurringTasksBoard } from "./RecurringTasksBoard";
 import {
   Tag,
   ArrowLeft,
@@ -31,6 +32,7 @@ import {
   ChevronUp,
   User,
   Flag,
+  Repeat2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { differenceInDays, startOfDay, format } from "date-fns";
@@ -73,8 +75,14 @@ export function KanbanBoard() {
   const [isPicOpen, setIsPicOpen] = useState(false);
   const [isPriorityOpen, setIsPriorityOpen] = useState(false);
   const [isBoardInfoOpen, setIsBoardInfoOpen] = useState(false);
+  const [taskTab, setTaskTab] = useState<"normal" | "recurring">("normal");
   const navigate = useNavigate();
   const activeBoard = boards.find((b) => b.id === activeBoardId);
+  const boardCards = useMemo(
+    () => COLUMNS.flatMap((column) => getFilteredCards(column.id)),
+    [COLUMNS, getFilteredCards],
+  );
+  const recurringCards = boardCards.filter((card) => Boolean(card.recurrence));
 
   const user = useAuthStore((state) => state.user);
 
@@ -752,27 +760,52 @@ export function KanbanBoard() {
         id="kanban-columns-wrapper"
         className="relative z-10 flex-1 flex gap-6 items-start w-full overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar"
       >
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-        >
-          {COLUMNS.map((column) => (
-            <KanbanColumn
-              key={column.id}
-              column={column}
-              cards={getFilteredCards(column.id)}
-            />
-          ))}
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex w-fit items-center gap-1 rounded-xl border border-borderBase bg-bgSecondary p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setTaskTab("normal")}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${taskTab === "normal" ? "bg-indigo-600 text-white shadow-sm" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}
+            >
+              Buat Pekerjaan
+            </button>
+            <button
+              type="button"
+              onClick={() => setTaskTab("recurring")}
+              className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition ${taskTab === "recurring" ? "bg-violet-600 text-white shadow-sm" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}
+            >
+              <Repeat2 size={15} />
+              Pekerjaan Mengulang
+              {recurringCards.length > 0 && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">{recurringCards.length}</span>}
+            </button>
+          </div>
 
-          {/* Add Column button could go here in future */}
+          {taskTab === "recurring" ? (
+            <RecurringTasksBoard cards={recurringCards} />
+          ) : (
+            <div className="flex w-full items-start gap-6 overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar">
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCorners}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+              >
+                {COLUMNS.map((column) => (
+                  <KanbanColumn
+                    key={column.id}
+                    column={column}
+                    cards={getFilteredCards(column.id).filter((card) => !card.recurrence)}
+                  />
+                ))}
 
-          <DragOverlay>
-            {activeCard ? <CardDragOverlay card={activeCard} /> : null}
-          </DragOverlay>
-        </DndContext>
+                <DragOverlay>
+                  {activeCard ? <CardDragOverlay card={activeCard} /> : null}
+                </DragOverlay>
+              </DndContext>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

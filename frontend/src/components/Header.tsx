@@ -17,6 +17,7 @@ import {
   Bell,
   Menu,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { AVAILABLE_LABELS } from "../types";
 import { useKanban } from "../store/kanbanStore";
@@ -51,15 +52,22 @@ export function Header() {
     useNotificationStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCalendarMenuOpen, setIsCalendarMenuOpen] = useState(false);
+  const [isProjectMenuOpen, setIsProjectMenuOpen] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
+  useEffect(() => {
+    setIsCalendarMenuOpen(false);
+    setIsProjectMenuOpen(false);
+  }, [pathname, search]);
+
   return (
     <header
       id="main-header"
-      className="bg-bgSecondary/80 backdrop-blur-md border-b border-borderBase sticky top-0 z-20 flex flex-col transition-colors duration-300"
+      className="sticky top-0 shrink-0 bg-bgSecondary border-b border-borderBase z-40 flex flex-col transition-colors duration-300 [isolation:isolate]"
     >
       {/* Main Nav */}
       <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-2 sm:gap-4">
@@ -79,56 +87,52 @@ export function Header() {
         </div>
 
         {/* Main Tabs (Tasks / Master Data / KPI / Jobs) */}
-        <div className="hidden md:flex flex-1 mx-2 lg:mx-4 gap-2 xl:gap-3 overflow-x-auto no-scrollbar items-center justify-center">
+        <div className="hidden md:flex relative z-30 flex-1 mx-2 lg:mx-4 gap-1.5 xl:gap-2 overflow-visible items-center justify-center">
           <Link
-            to="/kpi"
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/kpi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-            title="Dashboard Project"
+            to="/penilaian"
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${pathname === "/penilaian" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            title="Dashboard Penilaian"
+          >
+            Dashboard Penilaian
+          </Link>
+          <button
+            type="button"
+            onClick={() => setIsProjectMenuOpen((open) => !open)}
+            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${pathname === "/kpi" || pathname === "/avicenna-way" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            title="Menu Dashboard Project"
           >
             Dashboard Project
-          </Link>
+            <ChevronDown size={14} className={`transition-transform ${isProjectMenuOpen ? "rotate-180" : ""}`} />
+          </button>
           {/* <Link
             to="/jobs"
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/jobs" || pathname.startsWith("/board/") || pathname === "/" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${pathname === "/jobs" || pathname.startsWith("/board/") || pathname === "/" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
             title="Pekerjaan Saya"
           >
             Pekerjaan Saya
           </Link> */}
           <Link
             to="/view-jobs"
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/view-jobs" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${pathname === "/view-jobs" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
             title="Semua Pekerjaan"
           >
             Semua Pekerjaan
           </Link>
-          <Link
-            to="/calendar"
-            onClick={() => setActiveBoardId(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/calendar" && !search ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-            title="Kalender Kerja"
-          >
-            Kalender
-          </Link>
-          <Link
-            to="/calendar?type=publikasi"
-            onClick={() => setActiveBoardId(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/calendar" && search === "?type=publikasi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-            title="Kalender Publikasi"
-          >
-            Kalender Publikasi
-          </Link>
-          <Link
-            to="/calendar?type=meeting"
-            onClick={() => setActiveBoardId(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${pathname === "/calendar" && search === "?type=meeting" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-            title="Kalender Meeting"
-          >
-            Kalender Meeting
-          </Link>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsCalendarMenuOpen((open) => !open)}
+              className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${pathname === "/calendar" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+              title="Menu Kalender"
+            >
+              Kalender
+              <ChevronDown size={14} className={`transition-transform ${isCalendarMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+          </div>
           {isAdmin && (
             <Link
               to="/master"
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap ${isMasterData ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${isMasterData ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
               title="Master Data"
             >
               Master Data
@@ -238,58 +242,74 @@ export function Header() {
         </div>
       </div>
 
+      {isProjectMenuOpen && (
+        <div className="hidden md:block border-t border-borderBase bg-bgSecondary px-4 py-2 shadow-sm">
+          <div className="mx-auto flex max-w-4xl items-center justify-center gap-2">
+            <Link to="/kpi" onClick={() => setIsProjectMenuOpen(false)} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${pathname === "/kpi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Buat KPI</Link>
+            <Link to="/avicenna-way" onClick={() => setIsProjectMenuOpen(false)} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${pathname === "/avicenna-way" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Buat Avicenna Way</Link>
+          </div>
+        </div>
+      )}
+
+      {isCalendarMenuOpen && (
+        <div className="hidden md:block border-t border-borderBase bg-bgSecondary px-4 py-2 shadow-sm">
+          <div className="mx-auto flex max-w-4xl items-center justify-center gap-2">
+            <Link to="/calendar" onClick={() => { setActiveBoardId(null); setIsCalendarMenuOpen(false); }} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${pathname === "/calendar" && !search ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Kalender Kerja</Link>
+            <Link to="/calendar?type=publikasi" onClick={() => { setActiveBoardId(null); setIsCalendarMenuOpen(false); }} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${pathname === "/calendar" && search === "?type=publikasi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Kalender Publikasi</Link>
+            <Link to="/calendar?type=meeting" onClick={() => { setActiveBoardId(null); setIsCalendarMenuOpen(false); }} className={`rounded-lg px-4 py-2 text-xs font-semibold transition-colors ${pathname === "/calendar" && search === "?type=meeting" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:textTextPrimary"}`}>Kalender Meeting</Link>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Nav Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-borderBase bg-bgSecondary/95 backdrop-blur-md px-4 py-3 flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
           <Link
-            to="/kpi"
+            to="/penilaian"
             onClick={() => setIsMobileMenuOpen(false)}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/kpi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${pathname === "/penilaian" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
           >
-            Dashboard Project
+            Dashboard Penilaian
           </Link>
+          <div className="rounded-xl border border-borderBase/70 bg-bgGlass/30 p-1">
+            <button type="button" onClick={() => setIsProjectMenuOpen((open) => !open)} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold ${pathname === "/kpi" || pathname === "/avicenna-way" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:textTextPrimary hover:bg-bgGlass/50"}`}>
+              <span>Dashboard Project</span>
+              <ChevronDown size={14} className={`transition-transform ${isProjectMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isProjectMenuOpen && <div className="mt-1 flex flex-col gap-1 border-t border-borderBase/50 pt-1">
+              <Link to="/kpi" onClick={() => { setIsProjectMenuOpen(false); setIsMobileMenuOpen(false); }} className={`rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/kpi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Buat KPI</Link>
+              <Link to="/avicenna-way" onClick={() => { setIsProjectMenuOpen(false); setIsMobileMenuOpen(false); }} className={`rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/avicenna-way" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Buat Avicenna Way</Link>
+            </div>}
+          </div>
           <Link
             to="/view-jobs"
             onClick={() => setIsMobileMenuOpen(false)}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/view-jobs" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${pathname === "/view-jobs" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
           >
             Semua Pekerjaan
           </Link>
-          <Link
-            to="/calendar"
-            onClick={() => {
-              setActiveBoardId(null);
-              setIsMobileMenuOpen(false);
-            }}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/calendar" && !search ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-          >
-            Kalender
-          </Link>
-          <Link
-            to="/calendar?type=publikasi"
-            onClick={() => {
-              setActiveBoardId(null);
-              setIsMobileMenuOpen(false);
-            }}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/calendar" && search === "?type=publikasi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-          >
-            Kalender Publikasi
-          </Link>
-          <Link
-            to="/calendar?type=meeting"
-            onClick={() => {
-              setActiveBoardId(null);
-              setIsMobileMenuOpen(false);
-            }}
-            className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${pathname === "/calendar" && search === "?type=meeting" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
-          >
-            Kalender Meeting
-          </Link>
+          <div className="rounded-xl border border-borderBase/70 bg-bgGlass/30 p-1">
+            <button
+              type="button"
+              onClick={() => setIsCalendarMenuOpen((open) => !open)}
+              className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold ${pathname === "/calendar" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+            >
+              <span>Kalender</span>
+              <ChevronDown size={14} className={`transition-transform ${isCalendarMenuOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isCalendarMenuOpen && (
+              <div className="mt-1 flex flex-col gap-1 border-t border-borderBase/50 pt-1">
+                <Link to="/calendar" onClick={() => { setActiveBoardId(null); setIsCalendarMenuOpen(false); setIsMobileMenuOpen(false); }} className={`rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/calendar" && !search ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Kalender Kerja</Link>
+                <Link to="/calendar?type=publikasi" onClick={() => { setActiveBoardId(null); setIsCalendarMenuOpen(false); setIsMobileMenuOpen(false); }} className={`rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/calendar" && search === "?type=publikasi" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Kalender Publikasi</Link>
+                <Link to="/calendar?type=meeting" onClick={() => { setActiveBoardId(null); setIsCalendarMenuOpen(false); setIsMobileMenuOpen(false); }} className={`rounded-lg px-3 py-2 text-xs font-medium ${pathname === "/calendar" && search === "?type=meeting" ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:bg-bgGlass hover:text-textPrimary"}`}>Kalender Meeting</Link>
+              </div>
+            )}
+          </div>
           {isAdmin && (
             <Link
               to="/master"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isMasterData ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors ${isMasterData ? "bg-bgGlass text-textPrimary" : "text-textSecondary hover:text-textPrimary hover:bg-bgGlass/50"}`}
             >
               Master Data
             </Link>

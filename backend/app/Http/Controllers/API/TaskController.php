@@ -24,6 +24,7 @@ class TaskController extends Controller
                     'department_id',
                     'request_date',
                     'due_date',
+                    'recurrence',
                     'column_id',
                     'priority',
                     'position',
@@ -32,7 +33,8 @@ class TaskController extends Controller
 
             $query->where(function ($q) use ($request) {
                 $q->whereBetween('due_date', [$request->start_date, $request->end_date])
-                    ->orWhereBetween('request_date', [$request->start_date, $request->end_date]);
+                    ->orWhereBetween('request_date', [$request->start_date, $request->end_date])
+                    ->orWhereNotNull('recurrence');
             });
         } else {
             // Full eager loading for Kanban boards (taskWeight now explicit since removed from $with)
@@ -70,7 +72,10 @@ class TaskController extends Controller
             'priority' => 'nullable',
             'requestDate' => 'nullable',
             'dueDate' => 'nullable',
+            'recurrence' => 'nullable|in:daily,weekly,monthly',
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,doc,docx,xls,xlsx,ppt,pptx,pdf|max:10240',
+            'collaborator_ids' => 'nullable|array',
+            'collaborator_ids.*' => 'exists:users,id',
         ]);
 
         $attachmentPath = null;
@@ -90,6 +95,7 @@ class TaskController extends Controller
                 'priority' => $data['priority'] ?? 'low',
                 'request_date' => $data['requestDate'] ?? null,
                 'due_date' => $data['dueDate'] ?? null,
+                'recurrence' => $data['recurrence'] ?? null,
                 'position' => $maxPosition + 1,
                 'attachment' => $attachmentPath,
                 'new_date' => now(),
@@ -127,7 +133,7 @@ class TaskController extends Controller
             return $task;
         });
 
-        return response()->json($task, 201);
+        return response()->json($task->load(['pic', 'collaborators', 'labels', 'checklists']), 201);
     }
 
     public function update(Request $request, $id)
@@ -149,6 +155,16 @@ class TaskController extends Controller
 
         if (array_key_exists('due_date', $data)) $updateData['due_date'] = $data['due_date'];
         if (array_key_exists('dueDate', $data)) $updateData['due_date'] = $data['dueDate'];
+        if (array_key_exists('recurrence', $data)) {
+            $request->validate(['recurrence' => 'nullable|in:daily,weekly,monthly']);
+            $updateData['recurrence'] = $data['recurrence'];
+        }
+        if (array_key_exists('recurrence_statuses', $data) || array_key_exists('recurrenceStatuses', $data)) {
+            $statuses = $data['recurrence_statuses'] ?? $data['recurrenceStatuses'];
+            $request->merge(['recurrence_statuses' => $statuses]);
+            $request->validate(['recurrence_statuses' => 'nullable|array', 'recurrence_statuses.*' => 'in:new,progress,done']);
+            $updateData['recurrence_statuses'] = $statuses;
+        }
 
         if (array_key_exists('priority', $data)) $updateData['priority'] = $data['priority'];
 

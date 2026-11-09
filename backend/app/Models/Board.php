@@ -50,11 +50,13 @@ class Board extends Model
             elseif ($task->priority === 'medium') $weight = 3;
             elseif ($task->priority === 'high') $weight = 5;
 
-            $maxScore += $weight;
+            $occurrenceCount = max(1, (int) ($task->recurrence_count ?? 1));
+            $maxScore += $weight * $occurrenceCount;
             
-            if ($task->column_id === 'done') {
-                $completedScore += $weight;
-            }
+            $completedOccurrences = $task->recurrence
+                ? (int) ($task->done_recurrence_count ?? 0)
+                : ($task->column_id === 'done' ? 1 : 0);
+            $completedScore += $weight * $completedOccurrences;
         }
 
         if ($maxScore == 0) return 0;

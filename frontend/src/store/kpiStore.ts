@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from 'zustand';
-import api from '../lib/api';
+import api, { cachedGet } from '../lib/api';
 import type { Kpi } from '../types';
 
 let fetchKpisPromise: Promise<void> | null = null;
@@ -30,7 +30,7 @@ export const useKpiStore = create<KpiState>((set) => ({
     }
 
     set({ isLoading: true, error: null });
-    fetchKpisPromise = api.get('/kpis')
+    fetchKpisPromise = cachedGet<Kpi[]>('/kpis')
       .then((response) => {
         set({ kpis: response.data, isLoading: false });
       })

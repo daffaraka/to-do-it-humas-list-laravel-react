@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { useKanban } from "@/store/kanbanStore";
-import api from "@/lib/api";
+import { cachedGet } from "@/lib/api";
 import {
   Calendar,
   CheckSquare,
@@ -22,7 +22,7 @@ export default function ViewJobsPage() {
 
   useEffect(() => {
     fetchAllCards();
-    api.get('/users').then(res => setUsers(res.data)).catch(console.error);
+    cachedGet<any[]>('/users').then(res => setUsers(res.data)).catch(console.error);
   }, [fetchAllCards]);
 
   const filteredCards = cards.filter((card: any) => {
@@ -156,18 +156,27 @@ export default function ViewJobsPage() {
               const picObj = group.userObj;
               const roleName = picObj?.role?.name;
               const departmentName = picObj?.department?.name;
+              const getOccurrenceCount = (card: any) =>
+                Math.max(1, Number(card.recurrenceCount || 1));
 
-              // Calculate stats
-              const totalJobs = picCards.length;
-              const todoCount = picCards.filter(
-                (c: any) => c.columnId === "new",
-              ).length;
-              const progressCount = picCards.filter(
-                (c: any) => c.columnId === "progress",
-              ).length;
-              const doneCount = picCards.filter(
-                (c: any) => c.columnId === "done",
-              ).length;
+              // Badges summarize the PIC's complete workload across all months.
+              // The month filter remains available for the expanded task list below.
+              const totalJobs = basePicCards.reduce(
+                (sum: number, card: any) => sum + getOccurrenceCount(card),
+                0,
+              );
+              const todoCount = basePicCards.reduce(
+                (sum: number, card: any) => sum + (card.columnId === "new" ? getOccurrenceCount(card) : 0),
+                0,
+              );
+              const progressCount = basePicCards.reduce(
+                (sum: number, card: any) => sum + (card.columnId === "progress" ? getOccurrenceCount(card) : 0),
+                0,
+              );
+              const doneCount = basePicCards.reduce(
+                (sum: number, card: any) => sum + (card.columnId === "done" ? getOccurrenceCount(card) : 0),
+                0,
+              );
 
               const isExpanded = expandedPics[picName] || false;
 

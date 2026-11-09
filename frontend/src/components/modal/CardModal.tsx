@@ -17,11 +17,13 @@ import {
   Users,
   History,
   Plus,
+  Repeat2,
 } from "lucide-react";
 import { COLUMNS } from "../../types";
 import type { Card, ColumnId } from "../../types";
 import { useKanban } from "../../store/kanbanStore";
 import { useAuthStore } from "../../store/authStore";
+import { getRecurrenceEnd } from "@/lib/recurrence";
 import { v4 as uuidv4 } from "uuid";
 import api from "../../lib/api";
 import type { Comment } from "../../types";
@@ -45,6 +47,7 @@ export function CardModal({ card, onClose }: CardModalProps) {
   const [collaboratorIds, setCollaboratorIds] = useState<string[]>(card.collaborators?.map(c => c.id) || []);
   const [requestDate, setRequestDate] = useState<string | null>(card.requestDate || null);
   const [dueDate, setDueDate] = useState<string | null>(card.dueDate || null);
+  const [recurrence, setRecurrence] = useState<"daily" | "weekly" | "monthly" | null>(card.recurrence || null);
   const [showMentionDropdown, setShowMentionDropdown] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [histories, setHistories] = useState<any[]>(card.histories || []);
@@ -82,7 +85,8 @@ export function CardModal({ card, onClose }: CardModalProps) {
     // Keep local state in sync if card props change externally (except when we are editing)
     setRequestDate(card.requestDate || null);
     setDueDate(card.dueDate || null);
-  }, [card.requestDate, card.dueDate]);
+    setRecurrence(card.recurrence || null);
+  }, [card.requestDate, card.dueDate, card.recurrence]);
 
   const handleCommentSubmit = async () => {
     if (!newComment.trim()) return;
@@ -135,7 +139,8 @@ export function CardModal({ card, onClose }: CardModalProps) {
       collaborator_ids: collaboratorIds,
       collaborators: users.filter(u => collaboratorIds.includes(u.id)),
       requestDate,
-      dueDate
+      dueDate,
+      recurrence,
     } as any);
   };
 
@@ -666,6 +671,49 @@ export function CardModal({ card, onClose }: CardModalProps) {
                 onKeyDown={(e) => e.preventDefault()}
                 className="w-full bg-white border border-gray-200 dark:bg-bgSecondary dark:border-borderBase rounded-xl px-4 py-3 text-sm text-textPrimary dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-400 placeholder-textSecondary transition-all disabled:opacity-70"
               />
+            </div>
+
+            {/* Collaborators */}
+            {/* Recurrence */}
+            <div>
+              <div className="flex items-center gap-2 mb-2 mt-4">
+                <Repeat2 size={14} className="text-textSecondary" />
+                <h4 className="text-xs font-semibold text-textSecondary uppercase tracking-wider">
+                  Pengulangan Pekerjaan
+                </h4>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["daily", "Harian"],
+                  ["weekly", "Mingguan"],
+                  ["monthly", "Bulanan"],
+                ] as const).map(([value, label]) => (
+                  <label
+                    key={value}
+                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs transition-colors ${recurrence === value ? "border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-300" : "border-borderBase bg-bgSecondary text-textSecondary"} ${isOwner ? "cursor-pointer hover:border-violet-400" : "cursor-default opacity-70"}`}
+                  >
+                    <input
+                      type="checkbox"
+                      disabled={!isOwner}
+                      checked={recurrence === value}
+                      onChange={() => {
+                        const nextRecurrence = recurrence === value ? null : value;
+                        setRecurrence(nextRecurrence);
+                        if (nextRecurrence && requestDate) {
+                          const start = new Date(requestDate);
+                          const due = dueDate ? new Date(dueDate) : null;
+                          if (!due || due <= start) {
+                            setDueDate(format(getRecurrenceEnd(start, due, nextRecurrence), "yyyy-MM-dd"));
+                          }
+                        }
+                      }}
+                      className="rounded text-violet-500 focus:ring-violet-500"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+              <p className="mt-1 text-[11px] text-textSecondary">Berulang dari Tanggal Mulai sampai Target Tanggal.</p>
             </div>
 
             {/* Collaborators */}

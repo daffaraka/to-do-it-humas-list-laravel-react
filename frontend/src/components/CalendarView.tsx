@@ -15,6 +15,7 @@ import {
   getDay,
   differenceInDays,
   startOfDay,
+  getDate,
 } from "date-fns";
 import { id } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Printer, Search, Info } from "lucide-react";
@@ -24,6 +25,7 @@ import { CardModal } from "./modal/CardModal";
 import type { Card } from "../types";
 import { AVAILABLE_LABELS } from "../types";
 import { useSearchParams } from "react-router-dom";
+import { getRecurrenceEnd } from "../lib/recurrence";
 
 export function CalendarView() {
   const { cards, activeDepartment, departments, boards, fetchCardsByDateRange, isLoading } = useKanban();
@@ -33,6 +35,11 @@ export function CalendarView() {
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
+  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
   useEffect(() => {
     setIsTransitioning(true);
@@ -105,12 +112,16 @@ export function CalendarView() {
       : "all";
 
   // Helper to parse dates safely (supporting space separated dates from SQLite/Laravel)
-  const parseDateSafe = (dateStr?: string | null) => {
+  const parseDateSafe = (dateStr?: unknown) => {
     if (!dateStr) return new Date(NaN);
+    if (dateStr instanceof Date) return new Date(dateStr.getTime());
+    if (typeof dateStr === "number") return new Date(dateStr);
+
+    const value = String(dateStr);
     const normalized =
-      dateStr.includes(" ") && !dateStr.includes("T")
-        ? dateStr.replace(" ", "T")
-        : dateStr;
+      value.includes(" ") && !value.includes("T")
+        ? value.replace(" ", "T")
+        : value;
     return new Date(normalized);
   };
 
@@ -160,7 +171,7 @@ export function CalendarView() {
       };
     }
 
-    const dateString = card.dueDate || card.requestDate || card.createdAt;
+    const dateString = (card as any)._calendarDate || card.dueDate || card.requestDate || card.createdAt;
     if (!dateString) return null;
 
     const target = startOfDay(parseDateSafe(dateString));
@@ -262,7 +273,7 @@ export function CalendarView() {
         }
 
         const cardDateStr = card.requestDate || card.dueDate || card.createdAt;
-        if (cardDateStr) {
+        if (!card.recurrence && cardDateStr) {
           const cardDate = parseDateSafe(cardDateStr);
           if (filterStartDate) {
             const start = startOfDay(parseDateSafe(filterStartDate));
@@ -277,16 +288,57 @@ export function CalendarView() {
 
         return true;
       })
-      .map((card) => {
+      .flatMap((card) => {
         // Pre-compute parsed date once — avoids re-parsing 35x per render in the grid loop
         const dateStr = card.requestDate || card.dueDate || card.createdAt;
-        return {
-          ...card,
-          _parsedDate: dateStr ? parseDateSafe(dateStr) : null,
-        };
+        const baseDate = dateStr ? startOfDay(parseDateSafe(dateStr)) : null;
+        if (!baseDate || Number.isNaN(baseDate.getTime())) return [];
+
+        if (!card.recurrence) {
+          return [{ ...card, _parsedDate: baseDate }];
+        }
+
+        const recurrenceEnd = getRecurrenceEnd(
+          baseDate,
+          card.dueDate ? parseDateSafe(card.dueDate) : null,
+          card.recurrence,
+        );
+        const occurrenceStart = baseDate > startDate ? baseDate : startDate;
+        const occurrences: any[] = [];
+        let occurrenceDate = startOfDay(occurrenceStart);
+
+        while (occurrenceDate <= endDate && occurrenceDate <= recurrenceEnd) {
+          const matchesPattern =
+            card.recurrence === "daily" ||
+            (card.recurrence === "weekly" && getDay(occurrenceDate) === getDay(baseDate)) ||
+            (card.recurrence === "monthly" && getDate(occurrenceDate) === getDate(baseDate));
+
+          if (matchesPattern) {
+            const occurrenceKey = format(occurrenceDate, "yyyy-MM-dd");
+            occurrences.push({
+              ...card,
+              columnId: card.recurrenceStatuses?.[occurrenceKey] || card.columnId,
+              _parsedDate: occurrenceDate,
+              _calendarDate: occurrenceDate,
+            });
+          }
+          occurrenceDate = addDays(occurrenceDate, 1);
+        }
+
+        return occurrences;
+      })
+      .filter((card: any) => {
+        if (filterStartDate && card._parsedDate < startOfDay(parseDateSafe(filterStartDate))) return false;
+        if (filterEndDate) {
+          const end = startOfDay(parseDateSafe(filterEndDate));
+          end.setHours(23, 59, 59, 999);
+          if (card._parsedDate > end) return false;
+        }
+        return true;
       });
   }, [
     cards,
+    currentDate,
     effectiveActiveDepartment,
     filterDepartment,
     filterPic,
@@ -303,11 +355,6 @@ export function CalendarView() {
 
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday start
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
   const dateFormat = "MMMM yyyy";
   let days = [];
@@ -395,7 +442,7 @@ export function CalendarView() {
 
               return (
                 <div
-                  key={card.id}
+                  key={`${card.id}-${card._parsedDate ? format(card._parsedDate, "yyyy-MM-dd") : "date"}`}
                   onClick={() => setSelectedCard(card)}
                   className={`
                     text-xs p-1.5 rounded-md mb-1 cursor-pointer 

@@ -71,6 +71,9 @@ export interface Card {
   labels: CardLabel[];
   checklist: ChecklistItem[];
   dueDate: string | null;
+  recurrence?: 'daily' | 'weekly' | 'monthly' | null;
+  recurrenceCount?: number;
+  recurrenceStatuses?: Record<string, ColumnId> | null;
   priority: 'low' | 'medium' | 'high';
   createdAt: string;
   updatedAt: string;

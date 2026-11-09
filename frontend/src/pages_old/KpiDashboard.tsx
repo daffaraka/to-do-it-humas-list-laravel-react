@@ -34,12 +34,14 @@ import { KpiBoardCard } from "../components/KpiBoardCard";
 import { DashboardFilter } from "../components/DashboardFilter";
 interface KpiDashboardProps {
   viewType?: "all" | "me";
+  initialDepartmentId?: string;
 }
 
 import { getDaysRemaining } from "../lib/utils";
 
 export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   viewType = "me",
+  initialDepartmentId = "all",
 }) => {
   const { kpis, fetchKpis, createKpi, updateKpi, deleteKpi, isLoading } =
     useKpiStore();
@@ -93,7 +95,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
   const { createBoard, deleteBoard, updateBoard } = useKanban();
   const { departments, fetchDepartments } = useKanban();
   const [mounted, setMounted] = useState(false);
-  const [filterDepartment, setFilterDepartment] = useState<string>("all");
+  const [filterDepartment, setFilterDepartment] = useState<string>(initialDepartmentId);
   const [isDeptDropdownOpen, setIsDeptDropdownOpen] = useState(false);
   const [searchKpi, setSearchKpi] = useState("");
 
@@ -566,6 +568,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
           independentBoards={independentBoards}
           departments={departments}
           users={users}
+          initialDepartmentId={initialDepartmentId}
           searchKpi={searchKpi}
           isAdmin={isAdmin}
           user={user}
