@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\AvicennaWaySheet;
+use App\Models\User;
+use App\Support\DepartmentVisibility;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Client\ConnectionException;
@@ -60,7 +62,7 @@ class AvicennaWayController extends Controller
 
         try {
             return Carbon::parse($trimmed)->format('Y-m-d');
-        } catch (\Throwable) {
+        } catch (\Throwable $exception) {
             return null;
         }
     }
@@ -156,6 +158,157 @@ class AvicennaWayController extends Controller
         );
 
         return response()->json($sheet);
+    }
+
+    public function report(Request $request)
+    {
+        $visibleUsers = DepartmentVisibility::apply(
+            User::query()->with(['role:id,name', 'department:id,name']),
+            $request->user(),
+        )->orderBy('name')->get();
+
+        $userByName = $visibleUsers->keyBy(fn (User $user) => $this->normalizePersonName($user->name));
+        $sheets = AvicennaWaySheet::query()
+            ->whereIn('user_id', $visibleUsers->pluck('id'))
+            ->get();
+
+        $categoryTotals = collect(self::CATEGORIES)->mapWithKeys(fn (string $category) => [
+            $category => [
+                'entries' => 0,
+                'people' => 0,
+                'favorite_points' => 0,
+                'analyzed' => 0,
+                'dates' => [],
+            ],
+        ])->all();
+        $people = [];
+
+        foreach ($sheets as $sheet) {
+            $columns = is_array($sheet->columns) ? $sheet->columns : [];
+            $rows = is_array($sheet->rows) ? $sheet->rows : [];
+            $nameIndex = array_search('Nama', $columns, true);
+            $dateIndex = array_search('Tanggal', $columns, true);
+            $favoriteIndex = array_search('Perilaku Favorit (Beri simbol bintang pada salah satu nama)', $columns, true);
+            $aiIndex = array_search('AI Avicenna Way', $columns, true);
+            $nameIndex = $nameIndex === false ? 0 : $nameIndex;
+            $dateIndex = $dateIndex === false ? 1 : $dateIndex;
+
+            foreach ($rows as $row) {
+                if (!is_array($row)) continue;
+                $personName = trim((string) ($row[$nameIndex] ?? ''));
+                if ($personName === '') continue;
+
+                $person = $userByName->get($this->normalizePersonName($personName));
+                $personId = $person?->id ?: 'external:' . $this->normalizePersonName($personName);
+                if (!isset($people[$personId])) {
+                    $people[$personId] = [
+                        'id' => $personId,
+                        'name' => $person?->name ?: $personName,
+                        'role' => ['id' => $person?->role?->id, 'name' => $person?->role?->name ?: 'Belum dipetakan'],
+                        'department' => ['id' => $person?->department?->id, 'name' => $person?->department?->name],
+                        'categories' => collect(self::CATEGORIES)->mapWithKeys(fn (string $category) => [
+                            $category => ['entries' => 0, 'favorite_points' => 0, 'analyzed' => 0, 'latest_date' => null, 'dates' => [], 'missing_dates' => []],
+                        ])->all(),
+                    ];
+                }
+
+                $category = in_array($sheet->category, self::CATEGORIES, true) ? $sheet->category : null;
+                if (!$category) continue;
+                $entry = &$people[$personId]['categories'][$category];
+                $entry['entries']++;
+                $isFavorite = $favoriteIndex !== false && (string) ($row[$favoriteIndex] ?? '') === '1';
+                $hasAnalysis = $aiIndex !== false && trim((string) ($row[$aiIndex] ?? '')) !== '';
+                if ($isFavorite) $entry['favorite_points']++;
+                if ($hasAnalysis) $entry['analyzed']++;
+                $date = trim((string) ($row[$dateIndex] ?? ''));
+                $normalizedDate = $this->normalizeDateKey($date);
+                if ($normalizedDate !== null && (!$entry['latest_date'] || $normalizedDate > $entry['latest_date'])) $entry['latest_date'] = $normalizedDate;
+                if ($normalizedDate !== null && !in_array($normalizedDate, $entry['dates'], true)) $entry['dates'][] = $normalizedDate;
+                unset($entry);
+            }
+        }
+
+        // Include team members from the role directory even when they have no entries yet.
+        foreach ($visibleUsers as $person) {
+            if (isset($people[$person->id])) continue;
+            $people[$person->id] = [
+                'id' => $person->id,
+                'name' => $person->name,
+                'role' => ['id' => $person->role?->id, 'name' => $person->role?->name ?: 'Belum dipetakan'],
+                'department' => ['id' => $person->department?->id, 'name' => $person->department?->name],
+                'categories' => collect(self::CATEGORIES)->mapWithKeys(fn (string $category) => [
+                    $category => ['entries' => 0, 'favorite_points' => 0, 'analyzed' => 0, 'latest_date' => null, 'dates' => [], 'missing_dates' => []],
+                ])->all(),
+            ];
+        }
+
+        foreach ($people as $person) {
+            foreach (self::CATEGORIES as $category) {
+                $entry = $person['categories'][$category];
+                $categoryTotals[$category]['entries'] += $entry['entries'];
+                $categoryTotals[$category]['favorite_points'] += $entry['favorite_points'];
+                $categoryTotals[$category]['analyzed'] += $entry['analyzed'];
+                $categoryTotals[$category]['dates'] = array_values(array_unique(array_merge($categoryTotals[$category]['dates'], $entry['dates'])));
+                if ($entry['entries'] > 0) $categoryTotals[$category]['people']++;
+            }
+        }
+
+        $holidays = array_fill_keys([
+            '2026-01-01', '2026-01-16', '2026-02-16', '2026-02-17', '2026-03-18', '2026-03-19', '2026-03-20', '2026-03-21', '2026-03-22', '2026-03-23', '2026-03-24', '2026-04-03', '2026-04-05', '2026-05-01', '2026-05-14', '2026-05-15', '2026-05-27', '2026-05-28', '2026-05-31', '2026-06-01', '2026-06-16', '2026-08-17', '2026-08-25', '2026-12-24', '2026-12-25',
+        ], true);
+        foreach ($people as &$person) {
+            foreach (self::CATEGORIES as $category) {
+                $rangeDates = $categoryTotals[$category]['dates'];
+                if (!$rangeDates) continue;
+                sort($rangeDates);
+                try {
+                    $start = Carbon::createFromFormat('Y-m-d', $rangeDates[0]);
+                    $end = Carbon::createFromFormat('Y-m-d', $rangeDates[count($rangeDates) - 1]);
+                } catch (\Throwable $exception) {
+                    continue;
+                }
+                if ($start->gt($end) || $start->diffInDays($end) > 3660) continue;
+                $loggedDates = array_fill_keys($person['categories'][$category]['dates'], true);
+                $missingDates = [];
+                for ($cursor = $start->copy(); $cursor->lte($end); $cursor->addDay()) {
+                    $iso = $cursor->format('Y-m-d');
+                    if ($cursor->isWeekday() && !isset($holidays[$iso]) && !isset($loggedDates[$iso])) $missingDates[] = $iso;
+                }
+                $person['categories'][$category]['missing_dates'] = $missingDates;
+            }
+        }
+        unset($person);
+
+        $roleGroups = collect($people)->groupBy(fn (array $person) => $person['role']['id'] ?: 'unassigned')
+            ->map(function ($members, $roleId) {
+                $first = $members->first();
+                $categories = collect(self::CATEGORIES)->mapWithKeys(function (string $category) use ($members) {
+                    return [$category => [
+                        'entries' => $members->sum(fn (array $member) => $member['categories'][$category]['entries']),
+                        'people' => $members->filter(fn (array $member) => $member['categories'][$category]['entries'] > 0)->count(),
+                        'favorite_points' => $members->sum(fn (array $member) => $member['categories'][$category]['favorite_points']),
+                        'analyzed' => $members->sum(fn (array $member) => $member['categories'][$category]['analyzed']),
+                    ]];
+                })->all();
+
+                return [
+                    'id' => $roleId,
+                    'name' => $first['role']['name'] ?: 'Belum dipetakan',
+                    'members' => $members->values()->all(),
+                    'categories' => $categories,
+                ];
+            })->sortBy('name')->values()->all();
+
+        return response()->json([
+            'categories' => self::CATEGORIES,
+            'category_totals' => $categoryTotals,
+            'roles' => $roleGroups,
+        ]);
+    }
+
+    private function normalizePersonName(?string $name): string
+    {
+        return Str::of((string) $name)->lower()->squish()->toString();
     }
 
     public function analyze(Request $request, string $category)

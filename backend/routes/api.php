@@ -17,12 +17,14 @@ use App\Http\Controllers\API\MeetingController;
 use App\Http\Controllers\API\TaskWeightController;
 use App\Http\Controllers\API\ExportController;
 use App\Http\Controllers\API\AvicennaWayController;
+use App\Http\Controllers\API\DashboardController;
 
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'getMe']);
+    Route::get('/dashboard/summary', [DashboardController::class, 'summary']);
     
     // Timeline Spreadsheet Export Routes
     Route::get('/export/timeline-data', [ExportController::class, 'timelineData']);
@@ -44,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('task-weights', TaskWeightController::class);
     Route::apiResource('labels', \App\Http\Controllers\API\LabelController::class);
     Route::get('/avicenna-way', [AvicennaWayController::class, 'index']);
+    Route::get('/avicenna-way/report', [AvicennaWayController::class, 'report']);
     Route::put('/avicenna-way/{category}', [AvicennaWayController::class, 'update']);
     Route::post('/avicenna-way/{category}/analyze', [AvicennaWayController::class, 'analyze']);
 

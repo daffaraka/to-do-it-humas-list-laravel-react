@@ -84,6 +84,11 @@ type DepartmentAssessmentRow = {
   combinedAchievement: number;
 };
 
+type AvicennaCategoryStats = { entries: number; favoritePoints: number };
+type AvicennaMemberSummary = { id: string; name: string; department?: { name?: string | null }; categories: Record<string, AvicennaCategoryStats> };
+type AvicennaReportSummary = { categories: string[]; roles: { members: AvicennaMemberSummary[] }[] };
+
+
 const priorityWeights: Record<string, number> = {
   low: 1,
   medium: 3,
@@ -119,6 +124,9 @@ const avatarColor = (name: string) => {
   return avatarColors[Math.abs(hash) % avatarColors.length];
 };
 
+const getAvicennaStats = (categories: Record<string, AvicennaCategoryStats>, category: string) => categories[category] || Object.entries(categories).find(([key]) => key.toLowerCase() === category.toLowerCase())?.[1] || { entries: 0, favoritePoints: 0 };
+
+
 function StatPill({
   icon,
   label,
@@ -141,6 +149,15 @@ function StatPill({
   );
 }
 
+function AvicennaInlineSummary({ rowName, report }: { rowName: string; report: AvicennaReportSummary | null }) {
+  if (!report) return null;
+  const member = report.roles.flatMap((role) => role.members).find((item) => item.name.trim().toLowerCase() === rowName.trim().toLowerCase());
+  if (!member) return null;
+  const totalLogs = report.categories.reduce((sum, category) => sum + getAvicennaStats(member.categories, category).entries, 0);
+  const totalFavorites = report.categories.reduce((sum, category) => sum + getAvicennaStats(member.categories, category).favoritePoints, 0);
+  return <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] p-4"><div className="mb-3 flex items-center justify-between gap-3"><span className="font-semibold text-textSecondary">Penilaian Avicenna Way</span><span className="text-xs font-semibold text-purple-600 dark:text-purple-400">{totalLogs} log · {totalFavorites} favorit</span></div><div className="grid grid-cols-2 gap-2 sm:grid-cols-5">{report.categories.map((category) => { const stats = getAvicennaStats(member.categories, category); return <div key={category} className="rounded-xl border border-borderBase bg-bgSecondary px-3 py-2 text-center"><div className="text-[11px] font-semibold text-textSecondary">{category}</div><div className="mt-1 text-sm font-bold text-textPrimary">{stats.entries}</div><div className="text-[11px] text-purple-500">{stats.favoritePoints} fav</div></div>; })}</div><div className="mt-3 flex flex-wrap justify-end gap-4 text-xs font-semibold text-textSecondary"><span>Total log aktivitas: <b className="text-textPrimary">{totalLogs}</b></span><span>Total favorit: <b className="text-purple-500">{totalFavorites}</b></span></div></div>;
+}
+
 export default function AssessmentDashboardPage() {
   const [users, setUsers] = useState<AssessmentUser[]>([]);
   const [boards, setBoards] = useState<AssessmentBoard[]>([]);
@@ -150,6 +167,7 @@ export default function AssessmentDashboardPage() {
   const [activeTab, setActiveTab] = useState<"individual" | "department">("individual");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [avicennaReport, setAvicennaReport] = useState<AvicennaReportSummary | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -180,6 +198,15 @@ export default function AssessmentDashboardPage() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    cachedGet<AvicennaReportSummary>("/avicenna-way/report", 30_000)
+      .then((response) => { if (active && response.data?.roles) setAvicennaReport(response.data); })
+      .catch(() => { if (active) setAvicennaReport(null); });
+    return () => { active = false; };
+  }, []);
+
 
   const rows = useMemo<AssessmentRow[]>(() => {
     const calculations = new Map<string, Omit<AssessmentRow, keyof AssessmentUser>>();
@@ -592,6 +619,7 @@ export default function AssessmentDashboardPage() {
                     <div className="h-2.5 overflow-hidden rounded-full bg-borderBase/60"><div className={`h-full rounded-full bg-gradient-to-r ${color} transition-all`} style={{ width: `${row.combinedAchievement}%` }} /></div>
                     <div className="mt-2 flex justify-between text-[11px] text-textSecondary"><span>{formatPoints(row.combinedAchievedPoints)} poin tercapai</span><span>{formatPoints(row.combinedAllocatedPoints)} poin dialokasikan</span></div>
                   </div>
+                  <AvicennaInlineSummary rowName={row.name} report={avicennaReport} />
                 </div>
               </article>
             );

@@ -5,7 +5,7 @@ import ClientLayout from "@/layouts/ClientLayout";
 const JobsPage = lazy(() => import("@/pages/JobsPage"));
 const KpiPage = lazy(() => import("@/pages/KpiPage"));
 const AvicennaWayPage = lazy(() => import("@/pages/AvicennaWayPage"));
-const AssessmentDashboardPage = lazy(() => import("@/pages/AssessmentDashboardPage"));
+const AssessmentWorkspacePage = lazy(() => import("@/pages/AssessmentWorkspacePage"));
 const ViewJobsPage = lazy(() => import("@/pages/ViewJobsPage"));
 const CalendarPage = lazy(() => import("@/pages/CalendarPage"));
 const MasterDataPage = lazy(() => import("@/pages/MasterDataPage"));
@@ -27,6 +27,8 @@ function App() {
       <Routes>
         <Route element={<ClientLayout />}>
           <Route path="/" element={<Navigate to="/kpi" replace />} />
+          <Route path="/dashboard" element={<Navigate to="/penilaian?tab=executive" replace />} />
+          <Route path="/workload" element={<Navigate to="/penilaian?tab=workload" replace />} />
           <Route
             path="/jobs"
             element={
@@ -55,7 +57,7 @@ function App() {
             path="/penilaian"
             element={
               <Suspense fallback={<PageLoader />}>
-                <AssessmentDashboardPage />
+                <AssessmentWorkspacePage />
               </Suspense>
             }
           />

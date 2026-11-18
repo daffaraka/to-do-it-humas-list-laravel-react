@@ -59,6 +59,8 @@ export default function ClientLayout() {
   useEffect(() => {
     const titles: Record<string, string> = {
       "/penilaian": "Dashboard Penilaian - Portal Humas & Jaringan",
+      "/dashboard": "Dashboard Eksekutif - Portal Humas & Jaringan",
+      "/workload": "Workload Management - Portal Humas & Jaringan",
       "/kpi": "Dashboard KPI - Portal Humas & Jaringan",
       "/avicenna-way": "Avicenna Ways - Portal Humas & Jaringan",
       "/jobs": "Pekerjaan Saya - Portal Humas & Jaringan",
