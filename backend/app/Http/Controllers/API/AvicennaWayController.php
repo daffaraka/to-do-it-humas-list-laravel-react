@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\AvicennaWaySheet;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
@@ -39,16 +40,88 @@ class AvicennaWayController extends Controller
         ];
     }
 
+    private function normalizeDateKey(mixed $value): ?string
+    {
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $trimmed, $matches)) {
+            if (checkdate((int) $matches[2], (int) $matches[3], (int) $matches[1])) {
+                return $trimmed;
+            }
+            return null;
+        }
+
+        try {
+            return Carbon::parse($trimmed)->format('Y-m-d');
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function sortRowsByDateDescending(array $columns, array $rows): array
+    {
+        $dateIndex = array_search('Tanggal', $columns, true);
+        if ($dateIndex === false) {
+            $dateIndex = 1;
+        }
+
+        $indexed = [];
+        foreach (array_values($rows) as $index => $row) {
+            $normalizedRow = is_array($row) ? array_values($row) : [];
+            $dateKey = $this->normalizeDateKey($normalizedRow[$dateIndex] ?? null);
+            $indexed[] = [
+                'index' => $index,
+                'dateKey' => $dateKey,
+                'row' => $normalizedRow,
+            ];
+        }
+
+        usort($indexed, function (array $a, array $b): int {
+            if ($a['dateKey'] === null && $b['dateKey'] === null) {
+                return $a['index'] <=> $b['index'];
+            }
+            if ($a['dateKey'] === null) {
+                return 1;
+            }
+            if ($b['dateKey'] === null) {
+                return -1;
+            }
+            if ($a['dateKey'] !== $b['dateKey']) {
+                return $b['dateKey'] <=> $a['dateKey'];
+            }
+
+            return $a['index'] <=> $b['index'];
+        });
+
+        return array_map(static fn (array $item): array => $item['row'], $indexed);
+    }
+
     public function index(Request $request)
     {
         $userId = $request->user()->id;
         $existing = AvicennaWaySheet::where('user_id', $userId)->get()->keyBy('category');
 
         $sheets = collect(self::CATEGORIES)->map(function (string $category) use ($existing, $userId) {
-            $sheet = $existing->get($category);
-            if ($sheet) return $sheet;
-
             $defaults = $this->defaults($category);
+            $sheet = $existing->get($category);
+            if ($sheet) {
+                $sheet->setAttribute(
+                    'rows',
+                    $this->sortRowsByDateDescending(
+                        $sheet->columns ?? $defaults['columns'],
+                        $sheet->rows ?? $defaults['rows']
+                    )
+                );
+                return $sheet;
+            }
+
             return AvicennaWaySheet::create([
                 'id' => (string) Str::uuid(),
                 'user_id' => $userId,
@@ -71,11 +144,14 @@ class AvicennaWayController extends Controller
         ]);
 
         $defaults = $this->defaults($category);
+        $columns = $validated['columns'] ?? $defaults['columns'];
+        $rows = $this->sortRowsByDateDescending($columns, $validated['rows'] ?? $defaults['rows']);
+
         $sheet = AvicennaWaySheet::updateOrCreate(
             ['user_id' => $request->user()->id, 'category' => $category],
             [
-                'columns' => $validated['columns'] ?? $defaults['columns'],
-                'rows' => $validated['rows'] ?? $defaults['rows'],
+                'columns' => $columns,
+                'rows' => $rows,
             ]
         );
 
