@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { ChevronDown, ChevronRight, Plus, Trash2 } from "lucide-react";
 import {
   AI_COLUMN_NAME,
@@ -20,6 +19,7 @@ interface TableHandlers {
   onDateFocusStart: (rowId: string, currentDate: string) => void;
   onDateFocusEnd: (rowId: string) => void;
   onAddRow: (defaultDate?: string) => void;
+  onAddTodayFromBottom: () => void;
   onDeleteRow: (rowId: string) => void;
   onAnalyzeRow: (rowId: string) => void;
   onClearAnalysis: (rowId: string) => void;
@@ -188,20 +188,17 @@ export function AvicennaWayTable({
   sheet,
   groups,
   isLoading,
+  isGroupCollapsed,
+  onToggleGroup,
   handlers,
 }: {
   sheet: AvicennaWaySheet;
   groups: AvicennaWayDateGroup[];
   isLoading: boolean;
+  isGroupCollapsed: (dateKey: string) => boolean;
+  onToggleGroup: (dateKey: string) => void;
   handlers: TableHandlers;
 }) {
-  const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
-
-  const toggleGroup = (dateKey: string) => {
-    const key = `${sheet.category}:${dateKey}`;
-    setCollapsedDates((current) => ({ ...current, [key]: !current[key] }));
-  };
-
   return (
     <>
       <div className="overflow-x-auto">
@@ -240,10 +237,8 @@ export function AvicennaWayTable({
                 group={group}
                 columns={sheet.columns}
                 totalRowCount={sheet.rows.length}
-                isCollapsed={Boolean(
-                  collapsedDates[`${sheet.category}:${group.dateKey}`],
-                )}
-                onToggleCollapse={() => toggleGroup(group.dateKey)}
+                isCollapsed={isGroupCollapsed(group.dateKey)}
+                onToggleCollapse={() => onToggleGroup(group.dateKey)}
                 handlers={handlers}
               />
             ))
@@ -253,8 +248,9 @@ export function AvicennaWayTable({
       <div className="border-t border-borderBase px-4 py-3">
         <button
           type="button"
-          onClick={() => handlers.onAddRow()}
-          className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-indigo-500 transition hover:bg-indigo-500/10"
+          onClick={handlers.onAddTodayFromBottom}
+          disabled={isLoading}
+          className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-indigo-500 transition hover:bg-indigo-500/10 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus size={16} /> Tambah baris (Hari ini)
         </button>

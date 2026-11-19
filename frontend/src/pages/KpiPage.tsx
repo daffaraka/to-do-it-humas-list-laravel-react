@@ -27,18 +27,20 @@ export default function KpiPage() {
     const selectedDepartment = departments.find((department) => department.id === selectedDepartmentId);
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex items-center justify-between border-b border-borderBase bg-bgPrimary px-4 py-3 sm:px-6">
-          <button
-            type="button"
-            onClick={() => setSelectedDepartmentId(null)}
-            className="inline-flex items-center gap-2 rounded-xl border border-borderBase bg-bgSecondary px-3 py-2 text-sm font-semibold text-textSecondary transition hover:border-indigo-400 hover:text-indigo-500"
-          >
-            <ArrowLeft size={16} />
-            Klasifikasi Departemen
-          </button>
-          <span className="hidden text-sm font-semibold text-textSecondary sm:block">
-            {selectedDepartment?.name || "Dashboard KPI"}
-          </span>
+        <div className="border-b border-borderBase bg-bgPrimary px-4 py-3 sm:px-6">
+          <div className="mx-auto flex w-full max-w-[1920px] items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setSelectedDepartmentId(null)}
+              className="inline-flex items-center gap-2 rounded-xl border border-borderBase bg-bgSecondary px-3 py-2 text-sm font-semibold text-textSecondary transition hover:border-indigo-400 hover:text-indigo-500"
+            >
+              <ArrowLeft size={16} />
+              Klasifikasi Departemen
+            </button>
+            <span className="hidden text-sm font-semibold text-textSecondary sm:block">
+              {selectedDepartment?.name || "Dashboard KPI"}
+            </span>
+          </div>
         </div>
         <KpiDashboard viewType="all" initialDepartmentId={selectedDepartmentId} />
       </div>

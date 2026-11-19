@@ -74,7 +74,7 @@ export function Dashboard() {
 
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-bgPrimary transition-colors duration-300">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-[1920px] mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-textPrimary">Main Jobs</h1>

@@ -1,6 +1,7 @@
+import { useRef, useState, type ReactNode } from "react";
 import ExcelJS from "exceljs";
-import { Check, Download, Save } from "lucide-react";
-import { AVICENNA_CATEGORIES } from "@/lib/avicennaWay";
+import { Check, Download, Plus, Save } from "lucide-react";
+import { AVICENNA_CATEGORIES, getTodayIsoDate } from "@/lib/avicennaWay";
 import { AvicennaWayTable } from "@/components/avicenna-way/AvicennaWayTable";
 import { AvicennaWayFavoriteSummary } from "@/components/avicenna-way/AvicennaWayFavoriteSummary";
 import {
@@ -109,36 +110,70 @@ function AvicennaWayBanner({ saveState }: { saveState: SaveState }) {
   );
 }
 
+function useCollapsedDateGroups(category: string) {
+  const [collapsedDates, setCollapsedDates] = useState<Record<string, boolean>>({});
+
+  const isGroupCollapsed = (dateKey: string) =>
+    Boolean(collapsedDates[`${category}:${dateKey}`]);
+
+  const toggleGroup = (dateKey: string) => {
+    const key = `${category}:${dateKey}`;
+    setCollapsedDates((current) => ({ ...current, [key]: !current[key] }));
+  };
+
+  const expandGroup = (dateKey: string) => {
+    const key = `${category}:${dateKey}`;
+    setCollapsedDates((current) =>
+      current[key] ? { ...current, [key]: false } : current,
+    );
+  };
+
+  return { isGroupCollapsed, toggleGroup, expandGroup };
+}
+
 function AvicennaWayCategoryTabs({
   activeCategory,
   onSelectCategory,
+  action,
+  withTopBorder = true,
 }: {
   activeCategory: string;
   onSelectCategory: (category: string) => void;
+  action?: ReactNode;
+  withTopBorder?: boolean;
 }) {
   return (
-    <div className="border-t border-borderBase bg-bgGlass/50 px-3 pt-3">
-      <div
-        className="flex gap-1 overflow-x-auto"
-        role="tablist"
-        aria-label="Kategori Avicenna Way"
-      >
-        {AVICENNA_CATEGORIES.map((category) => (
-          <button
-            key={category}
-            type="button"
-            role="tab"
-            aria-selected={activeCategory === category}
-            onClick={() => onSelectCategory(category)}
-            className={`whitespace-nowrap rounded-t-xl border border-b-0 px-4 py-3 text-sm font-semibold transition ${
-              activeCategory === category
-                ? "border-borderBase bg-bgSecondary text-indigo-500"
-                : "border-transparent text-textSecondary hover:bg-bgSecondary/60 hover:text-textPrimary"
-            }`}
-          >
-            {category}
-          </button>
-        ))}
+    <div
+      className={`${withTopBorder ? "border-t border-borderBase" : ""} bg-bgGlass/50 px-3 pt-3`}
+    >
+      <div className="flex flex-col-reverse gap-2.5 md:flex-row md:items-end md:justify-between">
+        <div
+          className="flex gap-1 overflow-x-auto"
+          role="tablist"
+          aria-label="Kategori Avicenna Way"
+        >
+          {AVICENNA_CATEGORIES.map((category) => (
+            <button
+              key={category}
+              type="button"
+              role="tab"
+              aria-selected={activeCategory === category}
+              onClick={() => onSelectCategory(category)}
+              className={`whitespace-nowrap rounded-t-xl border border-b-0 px-4 py-3 text-sm font-semibold transition ${
+                activeCategory === category
+                  ? "border-borderBase bg-bgSecondary text-indigo-500"
+                  : "border-transparent text-textSecondary hover:bg-bgSecondary/60 hover:text-textPrimary"
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+        {action && (
+          <div className="flex shrink-0 justify-end pb-1 md:pb-2">
+            {action}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -162,31 +197,64 @@ export default function AvicennaWayPage() {
     clearAnalysis,
     analyzeRow,
   } = useAvicennaWaySheets();
+  const { isGroupCollapsed, toggleGroup, expandGroup } =
+    useCollapsedDateGroups(activeCategory);
+  const sheetSectionRef = useRef<HTMLElement>(null);
+
+  const handleAddRow = (defaultDate = getTodayIsoDate()) => {
+    expandGroup(defaultDate);
+    addRow(defaultDate);
+  };
+
+  const handleAddTodayFromBottom = () => {
+    handleAddRow(getTodayIsoDate());
+    sheetSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   return (
     <div className="flex-1 overflow-y-auto bg-bgPrimary p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl space-y-5">
+      <div className="mx-auto max-w-[1920px] space-y-5">
         <AvicennaWayBanner saveState={saveState} />
 
         <div className="flex justify-end">
           <button type="button" onClick={() => void downloadAvicennaWorkbook(sheets)} disabled={isLoading} className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-400"><Download size={16} /> Download Excel</button>
         </div>
 
-        <section className="overflow-hidden rounded-2xl border border-borderBase bg-bgSecondary shadow-sm">
+        <section
+          ref={sheetSectionRef}
+          className="overflow-hidden rounded-2xl border border-borderBase bg-bgSecondary shadow-sm"
+        >
           <AvicennaWayCategoryTabs
             activeCategory={activeCategory}
             onSelectCategory={setActiveCategory}
+            withTopBorder={false}
+            action={
+              <button
+                type="button"
+                onClick={() => handleAddRow()}
+                disabled={isLoading}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3.5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
+                <Plus size={16} /> Tambah baris (Hari ini)
+              </button>
+            }
           />
 
           <AvicennaWayTable
             sheet={sheet}
             groups={dateGroups}
             isLoading={isLoading}
+            isGroupCollapsed={isGroupCollapsed}
+            onToggleGroup={toggleGroup}
             handlers={{
               onSetCell: setCell,
               onDateFocusStart: handleDateFocusStart,
               onDateFocusEnd: handleDateFocusEnd,
-              onAddRow: addRow,
+              onAddRow: handleAddRow,
+              onAddTodayFromBottom: handleAddTodayFromBottom,
               onDeleteRow: deleteRow,
               onAnalyzeRow: analyzeRow,
               onClearAnalysis: clearAnalysis,

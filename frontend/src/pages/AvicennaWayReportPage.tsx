@@ -65,7 +65,7 @@ export default function AvicennaWayReportPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-bgPrimary p-4 sm:p-6 lg:p-10">
-      <div className="mx-auto max-w-7xl space-y-6">
+      <div className="mx-auto max-w-[1920px] space-y-6">
         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.25em] text-indigo-500">Avicenna Way Report</p>

@@ -35,7 +35,7 @@ export default function MeetingsPage() {
   if (isLoading) {
     return (
       <div className="flex-1 p-6 overflow-y-auto">
-        <div className="animate-pulse space-y-4">
+        <div className="mx-auto max-w-[1920px] animate-pulse space-y-4">
           <div className="h-8 bg-bgGlass rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
@@ -49,6 +49,7 @@ export default function MeetingsPage() {
 
   return (
     <div className="flex-1 p-6 overflow-y-auto bg-bgPrimary">
+      <div className="mx-auto max-w-[1920px]">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-textPrimary">Daftar Meeting</h1>
       </div>
@@ -104,6 +105,7 @@ export default function MeetingsPage() {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 }

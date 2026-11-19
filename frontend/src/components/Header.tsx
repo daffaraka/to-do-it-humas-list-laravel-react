@@ -70,7 +70,7 @@ export function Header() {
       className="sticky top-0 shrink-0 bg-bgSecondary border-b border-borderBase z-40 flex flex-col transition-colors duration-300 [isolation:isolate]"
     >
       {/* Main Nav */}
-      <div className="px-4 sm:px-6 py-4 flex items-center justify-between gap-2 sm:gap-4">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-2 sm:gap-4">
         {/* Mobile Menu Button */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

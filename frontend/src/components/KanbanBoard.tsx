@@ -230,7 +230,7 @@ export function KanbanBoard() {
       {/* Sub Nav / Toolbar */}
       <div
         id="kanban-sub-nav"
-        className="relative z-40 flex flex-col gap-4 mb-6"
+        className="relative z-40 w-full max-w-[1920px] mx-auto flex flex-col gap-4 mb-6"
       >
         {/* Row 1: Back Button */}
         <div>
@@ -483,7 +483,7 @@ export function KanbanBoard() {
 
       {/* Board Info Panel */}
       {activeBoard && isBoardInfoOpen && (
-        <div className="relative z-30 mb-6 bg-white/80 dark:bg-bgSecondary/80 backdrop-blur-md border border-borderBase rounded-2xl p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+        <div className="relative z-30 w-full max-w-[1920px] mx-auto mb-6 bg-white/80 dark:bg-bgSecondary/80 backdrop-blur-md border border-borderBase rounded-2xl p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Column 1: Basic Info */}
             <div className="space-y-4">
@@ -758,7 +758,7 @@ export function KanbanBoard() {
 
       <div
         id="kanban-columns-wrapper"
-        className="relative z-10 flex-1 flex gap-6 items-start w-full overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar"
+        className="relative z-10 flex-1 flex gap-6 items-start w-full max-w-[1920px] mx-auto overflow-x-auto overflow-y-hidden pb-4 custom-scrollbar"
       >
         <div className="flex w-full flex-col gap-4">
           <div className="flex w-fit items-center gap-1 rounded-xl border border-borderBase bg-bgSecondary p-1 shadow-sm">

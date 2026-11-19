@@ -564,7 +564,7 @@ export function CalendarView() {
           }
         }
       `}</style>
-      <div className="flex-1 flex flex-col h-full bg-bgPrimary p-6 overflow-hidden transition-colors duration-300 print:h-auto print:overflow-visible print:p-0 print:bg-white">
+      <div className="flex-1 flex flex-col w-full max-w-[1920px] mx-auto h-full bg-bgPrimary p-6 overflow-hidden transition-colors duration-300 print:max-w-none print:h-auto print:overflow-visible print:p-0 print:bg-white">
         {/* Filter Bar */}
         <div className="mb-4 bg-gray-100 dark:bg-zinc-900 border border-gray-300 dark:border-zinc-800 rounded-lg p-3 flex flex-col gap-3 print:hidden shrink-0">
           <div className="flex flex-col sm:flex-row items-center gap-3">

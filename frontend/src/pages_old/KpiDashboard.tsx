@@ -304,6 +304,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
 
   return (
     <div className="flex-1 overflow-auto p-4 sm:p-6 bg-bgPrimary">
+      <div className="mx-auto max-w-[1920px]">
       <DashboardFilter
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -698,6 +699,7 @@ export const KpiDashboard: React.FC<KpiDashboardProps> = ({
         onSubmit={handleCreateBoardSubmit}
         isSubmitting={isSubmittingBoard}
       />
+      </div>
     </div>
   );
 };

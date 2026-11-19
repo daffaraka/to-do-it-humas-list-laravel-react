@@ -3,7 +3,7 @@ import React from 'react';
 export function DashboardSkeleton() {
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-10 bg-bgPrimary animate-pulse">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-[1920px] mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div className="space-y-2">
             <div className="h-7 w-48 bg-gray-250 dark:bg-zinc-800 rounded-lg"></div>

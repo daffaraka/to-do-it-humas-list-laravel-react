@@ -91,7 +91,7 @@ export function MasterData() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-bgPrimary p-6 sm:p-10">
-      <div className="max-w-8xl mx-auto space-y-8">
+      <div className="max-w-[1920px] mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
