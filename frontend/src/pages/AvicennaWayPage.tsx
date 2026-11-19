@@ -219,7 +219,15 @@ export default function AvicennaWayPage() {
       <div className="mx-auto max-w-[1920px] space-y-5">
         <AvicennaWayBanner saveState={saveState} />
 
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => addRow()}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus size={16} /> Tambah baris (Hari ini)
+          </button>
           <button type="button" onClick={() => void downloadAvicennaWorkbook(sheets)} disabled={isLoading} className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-400"><Download size={16} /> Download Excel</button>
         </div>
 

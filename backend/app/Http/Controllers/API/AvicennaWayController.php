@@ -108,20 +108,36 @@ class AvicennaWayController extends Controller
     public function index(Request $request)
     {
         $userId = $request->user()->id;
-        $existing = AvicennaWaySheet::where('user_id', $userId)->get()->keyBy('category');
+        $allSheets = AvicennaWaySheet::query()->get()->groupBy('category');
 
-        $sheets = collect(self::CATEGORIES)->map(function (string $category) use ($existing, $userId) {
+        // Avicenna Way is a collaborative workbook. The rows are not owned by
+        // the account that initially created the sheet, so every user must see
+        // the complete, de-duplicated dataset.
+        $sheets = collect(self::CATEGORIES)->map(function (string $category) use ($allSheets, $userId) {
             $defaults = $this->defaults($category);
-            $sheet = $existing->get($category);
-            if ($sheet) {
-                $sheet->setAttribute(
-                    'rows',
-                    $this->sortRowsByDateDescending(
-                        $sheet->columns ?? $defaults['columns'],
-                        $sheet->rows ?? $defaults['rows']
-                    )
-                );
-                return $sheet;
+            $sources = $allSheets->get($category, collect());
+            $source = $sources->first();
+            $columns = $source?->columns ?: $defaults['columns'];
+            $uniqueRows = [];
+            $seenRows = [];
+
+            foreach ($sources as $sourceSheet) {
+                foreach (is_array($sourceSheet->rows) ? $sourceSheet->rows : [] as $row) {
+                    if (!is_array($row)) continue;
+                    $normalizedRow = array_values($row);
+                    if (!collect($normalizedRow)->contains(fn ($cell) => trim((string) $cell) !== '')) continue;
+                    $rowKey = json_encode($normalizedRow);
+                    if (isset($seenRows[$rowKey])) continue;
+                    $seenRows[$rowKey] = true;
+                    $uniqueRows[] = $normalizedRow;
+                }
+            }
+
+            $rows = $this->sortRowsByDateDescending($columns, $uniqueRows ?: $defaults['rows']);
+            if ($source) {
+                $source->setAttribute('columns', $columns);
+                $source->setAttribute('rows', $rows);
+                return $source;
             }
 
             return AvicennaWaySheet::create([
@@ -149,13 +165,28 @@ class AvicennaWayController extends Controller
         $columns = $validated['columns'] ?? $defaults['columns'];
         $rows = $this->sortRowsByDateDescending($columns, $validated['rows'] ?? $defaults['rows']);
 
-        $sheet = AvicennaWaySheet::updateOrCreate(
-            ['user_id' => $request->user()->id, 'category' => $category],
-            [
+        // Keep the workbook collaborative. All accounts read the combined
+        // category data, so synchronize the saved snapshot to every existing
+        // category sheet; otherwise a deleted row could reappear from another
+        // user's older copy on the next refresh.
+        $sheets = AvicennaWaySheet::where('category', $category)->get();
+        if ($sheets->isEmpty()) {
+            $sheet = AvicennaWaySheet::create([
+                'id' => (string) Str::uuid(),
+                'user_id' => $request->user()->id,
+                'category' => $category,
                 'columns' => $columns,
                 'rows' => $rows,
-            ]
-        );
+            ]);
+        } else {
+            $sheets->each(function (AvicennaWaySheet $categorySheet) use ($columns, $rows): void {
+                $categorySheet->update([
+                    'columns' => $columns,
+                    'rows' => $rows,
+                ]);
+            });
+            $sheet = $sheets->first()->fresh();
+        }
 
         return response()->json($sheet);
     }
@@ -366,7 +397,7 @@ class AvicennaWayController extends Controller
                 $status = $response->status();
                 $providerMessage = data_get($response->json(), 'error.message');
                 if ($status === 429) {
-                    return response()->json(['message' => 'Kredit API OpenAI habis atau batas pemakaian tercapai. Tambahkan saldo/billing OpenAI lalu coba lagi.'], 429);
+                    return response()->json(['message' => 'Kredit API Gemini habis atau batas pemakaian tercapai. Periksa kuota dan konfigurasi Gemini lalu coba lagi.'], 429);
                 }
                 return response()->json(['message' => $providerMessage ?: 'Layanan AI tidak dapat memproses analisis saat ini.'], 502);
             }
@@ -380,7 +411,7 @@ class AvicennaWayController extends Controller
             return response()->json($analysis);
         } catch (ConnectionException $exception) {
             report($exception);
-            return response()->json(['message' => 'Server tidak dapat terhubung ke layanan AI OpenAI. Periksa koneksi internet, firewall, atau proxy server.'], 503);
+            return response()->json(['message' => 'Server tidak dapat terhubung ke layanan AI Gemini. Periksa koneksi internet, firewall, atau proxy server.'], 503);
         } catch (\Throwable $exception) {
             report($exception);
             return response()->json(['message' => 'Analisis AI gagal diproses.'], 502);
