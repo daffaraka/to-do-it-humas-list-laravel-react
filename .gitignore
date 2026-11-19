@@ -16,3 +16,7 @@ backend/public/assets/
 backend/public/index.html
 backend/public/favicon.svg
 backend/public/icons.svg
+
+
+# DB
+database/*
